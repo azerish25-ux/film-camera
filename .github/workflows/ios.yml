@@ -1,6 +1,7 @@
 name: iOS macOS validation
 on:
   push:
+    branches-ignore: ['diagnostics/**']
     paths:
       - 'FilmCamera/**'
       - 'FilmCameraTests/**'

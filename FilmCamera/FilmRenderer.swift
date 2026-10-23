@@ -11,7 +11,7 @@ final class FilmRenderer {
         let created = try OriginalFilmPipeline(); pipeline = created; return created
     }
     let context = CIContext(options: [.cacheIntermediates: false])
-    func render(_ source: CIImage, settings s: FilmSettings, lut: CubeLUT? = nil, time: Double = 0) throws -> CIImage {
+    func render(_ source: CIImage, settings s: FilmSettings, lut: CubeLUT? = nil, time: Double = 0, diagnostics: ((String,Data) -> Void)? = nil) throws -> CIImage {
         let normalized = source.transformed(by:CGAffineTransform(translationX:-source.extent.minX,y:-source.extent.minY))
         let bounds = normalized.extent
         let portrait = bounds.width < bounds.height
@@ -20,7 +20,7 @@ final class FilmRenderer {
         let rect = CGRect(x:(landscape.extent.width-size.width)/2,y:(landscape.extent.height-size.height)/2,width:size.width,height:size.height)
         let cropped = landscape.cropped(to:rect).transformed(by:CGAffineTransform(translationX:-rect.minX,y:-rect.minY))
         let pipeline = try originalPipeline()
-        let processed = try pipeline.render(cropped,settings:s,lut:lut,time:time)
+        let processed = try pipeline.render(cropped,settings:s,lut:lut,time:time,diagnostics:diagnostics)
         return portrait ? processed.oriented(.left) : processed
     }
     private func source(_ image: UIImage) throws -> CIImage {

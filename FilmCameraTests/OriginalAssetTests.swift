@@ -121,7 +121,14 @@ final class OriginalAssetTests: XCTestCase {
             settings["scratches"] = 0; settings["verticalScratch"] = 1; settings.curveY = settings.curveX
             let name = String(format:"chain-film-%02d",index)
             let expected = Array(try AndroidFixtures.data(name))
-            let actual = readPixels(try renderer.render(source,settings:settings,time:0))
+            var stages: [String:Data] = [:]
+            let actual = readPixels(try renderer.render(source,settings:settings,time:0,diagnostics:{stages[$0] = $1}))
+            var stageErrors: [String:Int] = [:]
+            for stage in ["exposure","gate","tone"] {
+                let target = Array(try AndroidFixtures.data("chain-"+stage)), produced = Array(try XCTUnwrap(stages[stage]))
+                let error = zip(target,produced).enumerated().filter {$0.offset%4 != 3}.map {abs(Int($0.element.0)-Int($0.element.1))}.max() ?? 0
+                stageErrors[stage] = error
+            }
             var maximum = 0, sum = 0
             for y in 0..<96 {for x in 0..<128 {for channel in 0..<3 {
                 let delta = abs(Int(actual[(y*128+x)*4+channel])-Int(expected[((95-y)*128+x)*4+channel]))
@@ -129,7 +136,7 @@ final class OriginalAssetTests: XCTestCase {
             }}}
             let mean = Double(sum)/Double(128*96*3)
             XCTAssertLessThanOrEqual(maximum,3,film.name); XCTAssertLessThan(mean,0.5,film.name)
-            report.append(["film":film.name,"maximumByteError":maximum,"meanByteError":mean])
+            report.append(["film":film.name,"maximumByteError":maximum,"meanByteError":mean,"stageMaximumErrors":stageErrors])
         }
         let attachment = XCTAttachment(data:try JSONSerialization.data(withJSONObject:report,options:.prettyPrinted),uniformTypeIdentifier:"public.json")
         attachment.name = "Production pipeline Android comparison"; attachment.lifetime = .keepAlways; add(attachment)
@@ -138,12 +145,17 @@ final class OriginalAssetTests: XCTestCase {
         let renderer = FilmRenderer()
         for size in [CGSize(width:256,height:192),CGSize(width:192,height:256)] {
             let source = CIImage(color:CIColor(red:0.32,green:0.52,blue:0.72)).cropped(to:CGRect(origin:.zero,size:size))
-            for film in OriginalFilm.all {for frame in FilmFrame.allCases {
-                var settings = FilmSettings(); settings.look = film.name; settings.frame = frame
-                let image = try renderer.render(source,settings:settings,time:0)
-                XCTAssertNotNil(renderer.context.createCGImage(image,from:image.extent),"\(film.name) / \(frame)")
-                XCTAssertEqual(image.extent.width < image.extent.height,size.width < size.height)
-            }}
+            for film in OriginalFilm.all {
+                print("Render matrix: \(film.name), \(size)")
+                for frame in FilmFrame.allCases {
+                    try autoreleasepool {
+                        var settings = FilmSettings(); settings.look = film.name; settings.frame = frame
+                        let image = try renderer.render(source,settings:settings,time:0)
+                        XCTAssertNotNil(renderer.context.createCGImage(image,from:image.extent),"\(film.name) / \(frame)")
+                        XCTAssertEqual(image.extent.width < image.extent.height,size.width < size.height)
+                    }
+                }
+            }
         }
     }
     func testEveryAnimatedAssetDecodesAcrossLoopBoundary() throws {
@@ -182,7 +194,7 @@ final class OriginalAssetTests: XCTestCase {
         let bypass = readPixels(try renderer.render(source,settings:settings,time:0))
         settings["grain"] = 0.009
         let subthreshold = readPixels(try renderer.render(source,settings:settings,time:0))
-        XCTAssertEqual(bypass,subthreshold,"Android j4.p.d selects the no-grain shader below 0.01")
+        XCTAssertTrue(bypass == subthreshold,"Android j4.p.d selects the no-grain shader below 0.01")
     }
     func testFogVariesIndependentlyOfFilmBreath() {
         var settings = FilmSettings(); settings["leakBlue"] = 0.5; settings["flicker"] = 0
@@ -272,10 +284,10 @@ final class OriginalAssetTests: XCTestCase {
         var settings = FilmSettings(); settings.frame = .super16
         settings["grain"] = 0; settings["blur"] = 0; settings["scratches"] = 0; settings["verticalScratch"] = 1
         let first = readPixels(try renderer.render(source,settings:settings,time:0))
-        XCTAssertEqual(first,readPixels(try renderer.render(source,settings:settings,time:0)))
+        XCTAssertTrue(first == readPixels(try renderer.render(source,settings:settings,time:0)),"Seeking/repeating the same burn frame changed its pixels")
         let later = readPixels(try renderer.render(source,settings:settings,time:0.5))
-        XCTAssertNotEqual(first,later,"The film gate clip must animate")
-        XCTAssertEqual(first,readPixels(try renderer.render(source,settings:settings,time:0)))
+        XCTAssertTrue(first != later,"The film gate clip must animate")
+        XCTAssertTrue(first == readPixels(try renderer.render(source,settings:settings,time:0)),"Seeking/repeating the same burn frame changed its pixels")
     }
 
 }

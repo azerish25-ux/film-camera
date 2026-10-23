@@ -107,6 +107,12 @@ final class OriginalFilmPipeline {
         setup(p); glDrawArrays(GLenum(GL_TRIANGLE_STRIP),0,4)
         let error = glGetError(); guard error == GL_NO_ERROR else {throw PortError.message("Film GPU error \(error)")}
     }
+    private func record(_ stage: String, diagnostics: ((String,Data) -> Void)?) {
+        guard let diagnostics else {return}
+        var bytes = [UInt8](repeating:0,count:width*height*4)
+        bytes.withUnsafeMutableBytes {glReadPixels(0,0,GLsizei(width),GLsizei(height),GLenum(GL_RGBA),GLenum(GL_UNSIGNED_BYTE),$0.baseAddress)}
+        diagnostics(stage,Data(bytes))
+    }
     private func array(_ p: GLuint,_ name: String,_ values: [Float]) {
         values.withUnsafeBufferPointer {glUniform1fv(glGetUniformLocation(p,name),GLsizei(values.count),$0.baseAddress)}
     }
@@ -177,7 +183,7 @@ final class OriginalFilmPipeline {
         colors.withUnsafeBytes {glTexImage3D(GLenum(GL_TEXTURE_3D),0,GL_RGB8,GLsizei(dimension),GLsizei(dimension),GLsizei(dimension),0,GLenum(GL_RGB),GLenum(GL_UNSIGNED_BYTE),$0.baseAddress)}
         lutKey = key
     }
-    func render(_ source: CIImage, settings s: FilmSettings, lut: CubeLUT?, time: Double) throws -> CIImage {
+    func render(_ source: CIImage, settings s: FilmSettings, lut: CubeLUT?, time: Double, diagnostics: ((String,Data) -> Void)? = nil) throws -> CIImage {
         lock.lock(); defer {EAGLContext.setCurrent(nil); lock.unlock()}
         guard EAGLContext.setCurrent(gl) else {throw PortError.message("Cannot activate the film GPU context.")}
         for _ in 0..<16 {if glGetError() == GL_NO_ERROR {break}}
@@ -198,6 +204,7 @@ final class OriginalFilmPipeline {
             f(p,prefix+"vignetteFalloff",s["vignette"]); f(p,prefix+"pseudoExposure",pow(2,s["exposure"])); f(p,prefix+"contrast",s["contrast"])
             f(p,"chroma_value",s["chroma"]); v(p,prefix+"iResolution",Double(w),Double(h))
         }
+        record("exposure",diagnostics:diagnostics)
         if lastTime < 0 || time < lastTime {dynamics = FilmDynamics()}
         dynamics.advance(settings:s,width:w,height:h,time:time)
         let mask = try s.frame.originalMask.map {try imageTexture($0)} ?? textures[7]
@@ -216,6 +223,7 @@ final class OriginalFilmPipeline {
             bind(p,"frameTexture",film,3); bind(p,"frameSuper16mm",staticFrame,4)
             f(p,"randomX",dynamics.shiftX); f(p,"randomY",dynamics.shiftY+dynamics.fastShake)
         }
+        record("gate",diagnostics:diagnostics)
         try draw("c_f25862o",to:textures[10]) {p in bind(p,"sourceTexture",textures[9])}
         try draw("c_f25862o",to:textures[9]) {p in bind(p,"sourceTexture",textures[1])}
         lastTime = time
@@ -263,6 +271,7 @@ final class OriginalFilmPipeline {
             v(p,"holes.amountX",dynamics.holeTopX,dynamics.holeBottomX)
             v(p,"holes.xMultiplier",1/pow(0.625,dynamics.holeTopX*40),1/pow(0.625,dynamics.holeBottomX*40))
         }
+        record("tone",diagnostics:diagnostics)
         try uploadLUT(lut,look:s.look)
         let noise = try imageTexture("e4e45cae0068917f80a90a1a8380ee5ac1176e88")
         try draw(s["grain"] >= 0.01 ? "c_f25865r" : "c_f25866s",to:textures[6]) {p in
@@ -278,6 +287,7 @@ final class OriginalFilmPipeline {
         }
         var output = [UInt8](repeating:0,count:w*h*4)
         output.withUnsafeMutableBytes {glReadPixels(0,0,GLsizei(w),GLsizei(h),GLenum(GL_RGBA),GLenum(GL_UNSIGNED_BYTE),$0.baseAddress)}
+        diagnostics?("output",Data(output))
         return CIImage(bitmapData:Data(output),bytesPerRow:w*4,size:CGSize(width:w,height:h),format:.RGBA8,colorSpace:CGColorSpaceCreateDeviceRGB()).oriented(.downMirrored)
     }
     /// Isolated shader probe used to compare the same recovered pass on Android and iOS.

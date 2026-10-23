@@ -65,3 +65,16 @@ extension FilmFrame {
         switch self {case .super16:return 0.11; case .sixteen,.raw2:return 0.15; case .eight,.bolex:return 0.16; default:return 0}
     }
 }
+
+extension FilmFrame {
+    var holeGeometry: (Double,Double,Double) {
+        switch self {
+        case .super16:return (0.77,1.4,-0.35)
+        case .sixteen:return (0.77,1.4,-0.39)
+        case .raw2:return (0.63,1.4,-0.35)
+        case .bolex:return (0.86,1,-0.44)
+        case .kiev:return (0.71,1.4,-0.35)
+        default:return (1,1,0)
+        }
+    }
+}

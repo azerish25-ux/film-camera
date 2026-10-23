@@ -8,6 +8,7 @@ import UIKit
 final class OriginalFilmPipeline {
     private let lock = NSLock()
     private let assets = OriginalAssetSampler()
+    private var dynamics = FilmDynamics()
     private var auxiliary: [String: GLuint] = [:]
     private var lastTime: Double = -1
     private let gl: EAGLContext
@@ -89,6 +90,17 @@ final class OriginalFilmPipeline {
         setup(p); glDrawArrays(GLenum(GL_TRIANGLE_STRIP),0,4)
         let error = glGetError(); guard error == GL_NO_ERROR else {throw PortError.message("Film GPU error \(error)")}
     }
+    private func array(_ p: GLuint,_ name: String,_ values: [Float]) {
+        values.withUnsafeBufferPointer {glUniform1fv(glGetUniformLocation(p,name),GLsizei(values.count),$0.baseAddress)}
+    }
+    deinit {
+        EAGLContext.setCurrent(gl)
+        if !textures.isEmpty {glDeleteTextures(GLsizei(textures.count),&textures)}
+        var extra = Array(auxiliary.values); if !extra.isEmpty {glDeleteTextures(GLsizei(extra.count),&extra)}
+        glDeleteTextures(1,&lutTexture); glDeleteFramebuffers(1,&frameBuffer); glDeleteBuffers(1,&vbo); glDeleteVertexArrays(1,&vao)
+        for p in programs.values {glDeleteProgram(p)}
+        EAGLContext.setCurrent(nil)
+    }
     private func imageTexture(_ name: String, time: Double? = nil) throws -> GLuint {
         if time == nil, let cached = auxiliary[name] {return cached}
         let image: CGImage
@@ -148,6 +160,8 @@ final class OriginalFilmPipeline {
             f(p,prefix+"vignetteFalloff",s["vignette"]); f(p,prefix+"pseudoExposure",pow(2,s["exposure"])); f(p,prefix+"contrast",s["contrast"])
             f(p,"chroma_value",s["chroma"]); v(p,prefix+"iResolution",Double(w),Double(h))
         }
+        if lastTime < 0 || time < lastTime {dynamics = FilmDynamics()}
+        dynamics.advance(settings:s,width:w,height:h,time:time)
         let mask = try s.frame.originalMask.map {try imageTexture($0)} ?? textures[7]
         let film = try s.frame.originalVideo.map {try imageTexture($0,time:time)} ?? textures[7]
         let staticFrame: GLuint
@@ -162,7 +176,7 @@ final class OriginalFilmPipeline {
         try draw("frame_"+s.frame.originalShader,to:textures[8]) {p in
             bind(p,"mTextureID",textures[1]); bind(p,"mTextureID1",textures[9],1); bind(p,"mTextureID2",textures[10],2)
             bind(p,"frameTexture",film,3); bind(p,"frameSuper16mm",staticFrame,4)
-            f(p,"randomX",sin(time*1.7)*s["jitter"]/720); f(p,"randomY",sin(time*37)*s["shake"]/720)
+            f(p,"randomX",dynamics.shiftX); f(p,"randomY",dynamics.shiftY+dynamics.fastShake)
         }
         try draw("c_f25862o",to:textures[10]) {p in bind(p,"sourceTexture",textures[9])}
         try draw("c_f25862o",to:textures[9]) {p in bind(p,"sourceTexture",textures[1])}
@@ -188,18 +202,26 @@ final class OriginalFilmPipeline {
         if s["blur"] > 0 {
             for offset in Self.blurSchedule[min(19,max(0,Int(s["blur"])))] {
                 let target = current == textures[2] ? textures[3] : textures[2]
-                try draw("c_f25856i",to:target) {p in bind(p,"blurTempTexture",current); v(p,"blurResInv",1/Double(w),1/Double(h)); f(p,"blurOffset",Double(offset)+0.5); f(p,"blurFramePadding",s.frame.blurPadding)}; current = target
+                try draw("c_f25856i",to:target) {p in bind(p,"blurTempTexture",current); v(p,"blurResInv",1/Double(w),1/Double(h)); f(p,"blurOffset",Double(offset)+0.5); f(p,"blurFramePadding",s.frame.blurPadding-dynamics.shiftX)}; current = target
             }
         }
         try draw("c_f25861n",to:textures[5]) {p in
             bind(p,"textureInPass3",current); bind(p,"textureLuminance",current,2); bind(p,"framePerforationsTexture",mask,3); bind(p,"lightLeakTexture",textures[7],4)
             var curve = Self.curve(temperature:s["temperature"],tint:s["tint"],samples:FilmCurve.samples(x:s.curveX,y:s.curveY))
             curve.withUnsafeMutableBufferPointer {glUniform3fv(glGetUniformLocation(p,"curve"),66,$0.baseAddress)}
-            for channel in ["R","G","B"] {f(p,"filmBreath"+channel,sin(time*8)*s["flicker"]*0.05)}
-            f(p,"expiredFoggingAmp",s["leakBlue"]); f(p,"lightLeak.amp",s["leakRed"])
-            f(p,"lightLeak.top",0.1); f(p,"lightLeak.bottom",0.1); f(p,"lightLeak.topMultiplier",1); f(p,"lightLeak.bottomMultiplier",1)
-            f(p,"holes.internalOffset",0.125); f(p,"holes.externalOffset",1); f(p,"holes.amp",s["leakHoles"])
-            v(p,"holes.amountY",0.1,0.1); v(p,"holes.amountX",0.1,0.1); v(p,"holes.xMultiplier",1,1)
+            for (index,channel) in ["R","G","B"].enumerated() {f(p,"filmBreath"+channel,dynamics.breathRGB[index])}
+            f(p,"srandomX",dynamics.shiftX); f(p,"srandomY",dynamics.shiftY+dynamics.fastShake)
+            f(p,"expiredFoggingAmp",dynamics.fogAmplitude)
+            let redAmp = min(1,max(0,(1-dynamics.redBottom)/0.2))
+            f(p,"lightLeak.amp",redAmp*redAmp*(3-2*redAmp))
+            f(p,"lightLeak.top",dynamics.redTop); f(p,"lightLeak.bottom",dynamics.redBottom)
+            f(p,"lightLeak.topMultiplier",1/pow(0.625,dynamics.redTop*40)); f(p,"lightLeak.bottomMultiplier",1/pow(0.625,dynamics.redBottom*40))
+            let holes = s.frame.holeGeometry
+            f(p,"holes.internalOffset",holes.0); f(p,"holes.externalOffset",holes.1); f(p,"holes.seed",Double((dynamics.frame%400)*2)*holes.0/400)
+            let holeAmp = min(1,max(0,1-dynamics.holeTopX)); f(p,"holes.amp",holeAmp*holeAmp*(3-2*holeAmp))
+            v(p,"holes.amountY",dynamics.holeTopY+holes.2,dynamics.holeBottomY+holes.2)
+            v(p,"holes.amountX",dynamics.holeTopX,dynamics.holeBottomX)
+            v(p,"holes.xMultiplier",1/pow(0.625,dynamics.holeTopX*40),1/pow(0.625,dynamics.holeBottomX*40))
         }
         try uploadLUT(lut,look:s.look)
         try draw(s["grain"] > 0 ? "c_f25865r" : "c_f25866s",to:textures[6]) {p in
@@ -207,8 +229,11 @@ final class OriginalFilmPipeline {
             f(p,"saturation",s["saturation"]); f(p,"perfColor",s["perfColor"]); v(p,"noiseRes",Double(w),Double(h))
             f(p,"grainSize",s["grainSize"]); f(p,"grainStrength",s["grain"]); f(p,"grainSmoohtness",s["grainSmoothness"]); f(p,"grainChroma",s["grainChroma"]); f(p,"grainDarkLevel",s["grainShadows"])
             i(p,"seed",(Int(time*24)*71)%500)
-            // Scratch event state is supplied separately; disabled events must never divide black by zero.
-            i(p,"stain.time",0); i(p,"scratch.time",0); i(p,"scratch_v.time",0)
+            f(p,"srandomX",dynamics.shiftX); f(p,"srandomY",dynamics.shiftY-dynamics.fastShake)
+            i(p,"stain.x",dynamics.stainX); i(p,"stain.y",dynamics.stainY); i(p,"stain.w",dynamics.stainW); i(p,"stain.h",dynamics.stainH); i(p,"stain.time",dynamics.stainTime); array(p,"stain.mask",dynamics.stainMask)
+            f(p,"scratch.x",dynamics.scratchX); f(p,"scratch.y",dynamics.scratchY); f(p,"scratch.vx",dynamics.scratchVX); f(p,"scratch.vy",dynamics.scratchVY); f(p,"scratch.len",dynamics.scratchLength); i(p,"scratch.time",dynamics.scratchTime); array(p,"scratch.D",dynamics.scratchD)
+            array(p,"scratch_v.x",dynamics.verticalX); array(p,"scratch_v.t",dynamics.verticalT); i(p,"scratch_v.time",dynamics.verticalTime)
+            f(p,"gScratchesColor",s["scratchColor"]); f(p,"gVerticalScratchIntensity",s["verticalScratch"])
         }
         var output = [UInt8](repeating:0,count:w*h*4)
         output.withUnsafeMutableBytes {glReadPixels(0,0,GLsizei(w),GLsizei(h),GLenum(GL_RGBA),GLenum(GL_UNSIGNED_BYTE),$0.baseAddress)}

@@ -12,9 +12,7 @@ final class AndroidParityTests: XCTestCase {
             XCTAssertEqual(actual.count,expected.count)
             let differences = zip(expected,actual).enumerated().filter {$0.offset%4 != 3}.map {abs(Int($0.element.0)-Int($0.element.1))}
             let mean = Double(differences.reduce(0,+))/Double(differences.count), maximum = differences.max() ?? 0
-            // Procedural noise hashes are GPU-dependent. Bound its distribution separately.
-            if config.name == "grain" {XCTAssertLessThan(mean,12,config.name)}
-            else {XCTAssertLessThan(mean,2.5,config.name); XCTAssertLessThanOrEqual(maximum,16,config.name)}
+            XCTAssertLessThan(mean,2.5,config.name); XCTAssertLessThanOrEqual(maximum,16,config.name)
             report.append(["pass":config.name,"meanAbsoluteByteError":mean,"maximumByteError":maximum])
         }
         let data = try JSONSerialization.data(withJSONObject:report,options:.prettyPrinted)

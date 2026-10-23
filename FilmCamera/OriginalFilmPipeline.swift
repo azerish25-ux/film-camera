@@ -25,7 +25,7 @@ final class OriginalFilmPipeline {
     init() throws {
         guard let context = EAGLContext(api:.openGLES3) else {throw PortError.message("OpenGL ES 3 is unavailable.")}
         gl = context
-        EAGLContext.setCurrent(gl)
+        guard EAGLContext.setCurrent(gl) else {throw PortError.message("Cannot activate the film GPU context.")}
         glGenFramebuffers(1,&frameBuffer)
         glGenVertexArrays(1,&vao); glBindVertexArray(vao)
         glGenBuffers(1,&vbo); glBindBuffer(GLenum(GL_ARRAY_BUFFER),vbo)
@@ -110,6 +110,17 @@ final class OriginalFilmPipeline {
     }
     private func imageTexture(_ name: String, time: Double? = nil) throws -> GLuint {
         if time == nil, let cached = auxiliary[name] {return cached}
+        if name == "e4e45cae0068917f80a90a1a8380ee5ac1176e88" {
+            guard let url = Bundle.main.url(forResource:name,withExtension:"noise") else {throw PortError.message("Missing original film-grain noise table.")}
+            let bytes = try Data(contentsOf:url)
+            guard bytes.count == 1024*1024*4 else {throw PortError.message("Invalid film-grain noise table.")}
+            var texture: GLuint = 0; glGenTextures(1,&texture); auxiliary[name] = texture
+            glActiveTexture(GLenum(GL_TEXTURE10)); glBindTexture(GLenum(GL_TEXTURE_2D),texture)
+            glTexParameteri(GLenum(GL_TEXTURE_2D),GLenum(GL_TEXTURE_MIN_FILTER),GL_NEAREST); glTexParameteri(GLenum(GL_TEXTURE_2D),GLenum(GL_TEXTURE_MAG_FILTER),GL_NEAREST)
+            glTexParameteri(GLenum(GL_TEXTURE_2D),GLenum(GL_TEXTURE_WRAP_S),GL_REPEAT); glTexParameteri(GLenum(GL_TEXTURE_2D),GLenum(GL_TEXTURE_WRAP_T),GL_REPEAT)
+            bytes.withUnsafeBytes {glTexImage2D(GLenum(GL_TEXTURE_2D),0,GL_RGBA8,1024,1024,0,GLenum(GL_RGBA),GLenum(GL_UNSIGNED_BYTE),$0.baseAddress)}
+            return texture
+        }
         let image: CGImage
         if let time {image = try assets.frame(name,time:time)}
         else {
@@ -154,8 +165,8 @@ final class OriginalFilmPipeline {
     }
     func render(_ source: CIImage, settings s: FilmSettings, lut: CubeLUT?, time: Double) throws -> CIImage {
         lock.lock(); defer {EAGLContext.setCurrent(nil); lock.unlock()}
-        EAGLContext.setCurrent(gl)
-        while glGetError() != GL_NO_ERROR {}
+        guard EAGLContext.setCurrent(gl) else {throw PortError.message("Cannot activate the film GPU context.")}
+        for _ in 0..<16 {if glGetError() == GL_NO_ERROR {break}}
         let w = Int(source.extent.width), h = Int(source.extent.height)
         guard w > 0, h > 0, w <= 8192, h <= 8192, w*h <= 16_777_216 else {throw PortError.message("Image dimensions exceed the supported 16-megapixel processing limit, or the image is empty.")}
         allocate(w,h)
@@ -239,8 +250,9 @@ final class OriginalFilmPipeline {
             v(p,"holes.xMultiplier",1/pow(0.625,dynamics.holeTopX*40),1/pow(0.625,dynamics.holeBottomX*40))
         }
         try uploadLUT(lut,look:s.look)
+        let noise = try imageTexture("e4e45cae0068917f80a90a1a8380ee5ac1176e88")
         try draw(s["grain"] > 0 ? "c_f25865r" : "c_f25866s",to:textures[6]) {p in
-            bind(p,"grainInputTexture",textures[5]); bind(p,"mLutID",lutTexture,1,GLenum(GL_TEXTURE_3D)); bind(p,"framePerforationsTexture",mask,2)
+            bind(p,"grainInputTexture",textures[5]); bind(p,"mLutID",lutTexture,1,GLenum(GL_TEXTURE_3D)); bind(p,"framePerforationsTexture",mask,2); bind(p,"noiseTexture",noise,10)
             f(p,"saturation",s["saturation"]); f(p,"perfColor",s["perfColor"]); v(p,"noiseRes",Double(w),Double(h))
             f(p,"grainSize",s["grainSize"]); f(p,"grainStrength",s["grain"]); f(p,"grainSmoohtness",s["grainSmoothness"]); f(p,"grainChroma",s["grainChroma"]); f(p,"grainDarkLevel",s["grainShadows"])
             i(p,"seed",(dynamics.frame*71)%500)
@@ -252,12 +264,13 @@ final class OriginalFilmPipeline {
         }
         var output = [UInt8](repeating:0,count:w*h*4)
         output.withUnsafeMutableBytes {glReadPixels(0,0,GLsizei(w),GLsizei(h),GLenum(GL_RGBA),GLenum(GL_UNSIGNED_BYTE),$0.baseAddress)}
-        return CIImage(bitmapData:Data(output),bytesPerRow:w*4,size:CGSize(width:w,height:h),format:.RGBA8,colorSpace:CGColorSpaceCreateDeviceRGB())
+        return CIImage(bitmapData:Data(output),bytesPerRow:w*4,size:CGSize(width:w,height:h),format:.RGBA8,colorSpace:CGColorSpaceCreateDeviceRGB()).oriented(.downMirrored)
     }
     /// Isolated shader probe used to compare the same recovered pass on Android and iOS.
     func probe(_ config: ReferenceCase) throws -> Data {
         lock.lock(); defer {EAGLContext.setCurrent(nil); lock.unlock()}
-        EAGLContext.setCurrent(gl); while glGetError() != GL_NO_ERROR {}
+        guard EAGLContext.setCurrent(gl) else {throw PortError.message("Cannot activate the film GPU context.")}
+        for _ in 0..<16 {if glGetError() == GL_NO_ERROR {break}}
         allocate(128,96)
         for kind in 0..<3 {
             var bytes = [UInt8](repeating:0,count:128*96*4)
@@ -273,7 +286,7 @@ final class OriginalFilmPipeline {
             bytes.withUnsafeBytes {glTexSubImage2D(GLenum(GL_TEXTURE_2D),0,0,0,128,96,GLenum(GL_RGBA),GLenum(GL_UNSIGNED_BYTE),$0.baseAddress)}
         }
         try uploadLUT(nil,look:"Normal Mode")
-        let lookup: [String:GLuint] = ["source":textures[0],"background":textures[1],"clear":textures[7],"lut":lutTexture]
+        let lookup: [String:GLuint] = ["source":textures[0],"background":textures[1],"clear":textures[7],"lut":lutTexture,"noise":try imageTexture("e4e45cae0068917f80a90a1a8380ee5ac1176e88")]
         try draw(config.shader,to:textures[6]) {p in
             for (key,value) in config.floats {f(p,key,value)}
             for (key,value) in config.vectors {v(p,key,value[0],value[1])}

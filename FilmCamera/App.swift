@@ -240,17 +240,7 @@ struct EditorScreen: View {
         }
         if let item = player?.currentItem {
             let renderer = FilmRenderer()
-            item.videoComposition = AVVideoComposition(asset:item.asset) {request in
-                do {
-            let source = request.sourceImage
-                let previewScale = min(1,1280/max(source.extent.width,source.extent.height))
-                let result = try renderer.render(source.transformed(by:CGAffineTransform(scaleX:previewScale,y:previewScale)),settings:settings,lut:lut,time:request.compositionTime.seconds)
-                let target = request.sourceImage.extent, scale = min(request.sourceImage.extent.width/result.extent.width,request.sourceImage.extent.height/result.extent.height)
-                let fit = result.transformed(by:CGAffineTransform(scaleX:scale,y:scale))
-                let centered = fit.transformed(by:CGAffineTransform(translationX:(target.width-fit.extent.width)/2,y:(target.height-fit.extent.height)/2))
-                request.finish(with:centered.composited(over:CIImage(color:.black).cropped(to:target)),context:renderer.context)
-            } catch {request.finish(with:error)}
-            }
+            item.videoComposition = renderer.videoComposition(asset:item.asset,settings:settings,lut:lut,preview:true)
         }
     }
     private func export() {

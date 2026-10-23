@@ -1,5 +1,6 @@
 import CoreImage
 import UIKit
+import AVFoundation
 
 final class FilmRenderer {
     private let pipelineLock = NSLock()
@@ -15,17 +16,12 @@ final class FilmRenderer {
         let bounds = normalized.extent
         let portrait = bounds.width < bounds.height
         let landscape = portrait ? normalized.oriented(.right) : normalized
+        let size = s.frame.outputSize(for:landscape.extent.size)
+        let rect = CGRect(x:(landscape.extent.width-size.width)/2,y:(landscape.extent.height-size.height)/2,width:size.width,height:size.height)
+        let cropped = landscape.cropped(to:rect).transformed(by:CGAffineTransform(translationX:-rect.minX,y:-rect.minY))
         let pipeline = try originalPipeline()
-        let processed = try pipeline.render(landscape,settings:s,lut:lut,time:time)
-        var image = portrait ? processed.oriented(.left) : processed
-        var crop = image.extent
-        if let ratio = s.frame.ratio {
-            let r = bounds.width < bounds.height ? 1/ratio : ratio
-            if bounds.width/bounds.height > r { crop.size.width = bounds.height*r; crop.origin.x += (bounds.width-crop.width)/2 }
-            else { crop.size.height = bounds.width/r; crop.origin.y += (bounds.height-crop.height)/2 }
-        }
-        image = image.cropped(to:crop).transformed(by:CGAffineTransform(translationX:-crop.minX,y:-crop.minY))
-        return image
+        let processed = try pipeline.render(cropped,settings:s,lut:lut,time:time)
+        return portrait ? processed.oriented(.left) : processed
     }
     private func source(_ image: UIImage) throws -> CIImage {
         guard let pixels = image.ciImage ?? image.cgImage.map({CIImage(cgImage:$0)}) else {throw PortError.message("Cannot decode image.")}
@@ -56,4 +52,22 @@ final class FilmRenderer {
         guard let cg = context.createCGImage(result,from:result.extent) else { throw PortError.message("Cannot render image.") }
         return UIImage(cgImage:cg)
     }
+    func videoComposition(asset: AVAsset, settings: FilmSettings, lut: CubeLUT?, preview: Bool = false) -> AVMutableVideoComposition {
+        let composition = AVMutableVideoComposition(asset:asset) {[self] request in
+            do {
+                let raw = request.sourceImage
+                let scale = preview ? min(1,1280/max(raw.extent.width,raw.extent.height)) : 1
+                let input = raw.transformed(by:CGAffineTransform(scaleX:scale,y:scale))
+                let image = try render(input,settings:settings,lut:lut,time:request.compositionTime.seconds)
+                let target = CGRect(origin:.zero,size:request.renderSize)
+                let fitScale = min(target.width/image.extent.width,target.height/image.extent.height)
+                let fitted = image.transformed(by:CGAffineTransform(scaleX:fitScale,y:fitScale))
+                let centered = fitted.transformed(by:CGAffineTransform(translationX:(target.width-fitted.extent.width)/2,y:(target.height-fitted.extent.height)/2))
+                request.finish(with:centered.composited(over:CIImage(color:.black).cropped(to:target)).cropped(to:target),context:context)
+            } catch {request.finish(with:error)}
+        }
+        composition.renderSize = settings.frame.outputSize(for:composition.renderSize)
+        return composition
+    }
+
 }

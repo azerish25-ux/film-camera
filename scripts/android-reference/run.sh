@@ -11,6 +11,7 @@ REMOTE=/data/local/tmp/film-reference
 mkdir -p "$WORK/classes" "$WORK/dex" "$WORK/assets" "$ROOT/android-reference"
 cp FilmCamera/Resources/Shaders/*.glsl "$WORK/assets/"
 cp FilmCamera/Resources/reference-cases.json "$WORK/assets/"
+cp FilmCamera/Resources/OriginalAssets/e4e45cae0068917f80a90a1a8380ee5ac1176e88.noise "$WORK/assets/noise.rgba"
 javac -source 8 -target 8 -classpath "$JAR" -d "$WORK/classes" scripts/android-reference/src/com/azerish/reference/ReferenceMain.java
 "$TOOLS/d8" --lib "$JAR" --output "$WORK/dex" "$WORK/classes/com/azerish/reference/ReferenceMain.class"
 (cd "$WORK/dex" && zip -q -j "$WORK/reference.jar" classes.dex)

@@ -47,6 +47,24 @@ final class OriginalAssetTests: XCTestCase {
         XCTAssertEqual(Double(output[center+1]),128,accuracy:12)
         XCTAssertEqual(Double(output[center+2]),179,accuracy:12)
     }
+    func testOriginalFrameContainerRatios() {
+        for frame in [FilmFrame.super16,.sixteen,.raw2,.classic,.beaulieu,.kiev] {XCTAssertEqual(frame.ratio,4.0/3)}
+        for frame in [FilmFrame.eight,.framed,.bolex,.wide] {XCTAssertEqual(frame.ratio,16.0/9)}
+        XCTAssertEqual(FilmFrame.super16.outputSize(for:CGSize(width:1280,height:720)),CGSize(width:960,height:720))
+        XCTAssertEqual(FilmFrame.bolex.outputSize(for:CGSize(width:960,height:720)),CGSize(width:960,height:540))
+    }
+    func testFilmReadbackPreservesVerticalImageOrder() throws {
+        var bytes = [UInt8]()
+        for row in 0..<96 {for _ in 0..<128 {bytes += row < 48 ? [200,80,40,255] : [40,80,200,255]}}
+        let source = CIImage(bitmapData:Data(bytes),bytesPerRow:512,size:CGSize(width:128,height:96),format:.RGBA8,colorSpace:CGColorSpaceCreateDeviceRGB())
+        var settings = FilmSettings(); settings["blur"] = 0; settings["scratches"] = 0; settings["verticalScratch"] = 1; settings.curveY = settings.curveX
+        let result = try FilmRenderer().render(source,settings:settings)
+        var output = [UInt8](repeating:0,count:bytes.count)
+        let context = CIContext(options:[.workingColorSpace:NSNull(),.outputColorSpace:NSNull()])
+        output.withUnsafeMutableBytes {context.render(result,toBitmap:$0.baseAddress!,rowBytes:512,bounds:result.extent,format:.RGBA8,colorSpace:CGColorSpaceCreateDeviceRGB())}
+        XCTAssertEqual(Double(output[(24*128+64)*4]),200,accuracy:15)
+        XCTAssertEqual(Double(output[(72*128+64)*4]),40,accuracy:15)
+    }
     func testEveryPresetRendersWithItsOriginalAssets() throws {
         let source = CIImage(color:CIColor(red:0.3,green:0.5,blue:0.7)).cropped(to:CGRect(x:0,y:0,width:192,height:144))
         let renderer = FilmRenderer()

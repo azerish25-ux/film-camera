@@ -6,7 +6,8 @@ enum FilmFrame: String, Codable, CaseIterable, Identifiable {
     var ratio: Double? {
         switch self {
         case .original: return nil
-        case .super16, .framed, .raw2, .bolex: return 1.66
+        case .super16, .raw2: return 4.0/3
+        case .framed, .bolex, .eight: return 16.0/9
         case .wide: return 16.0/9
         case .scope: return 2.39
         default: return 4.0/3

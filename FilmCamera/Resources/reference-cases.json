@@ -155,7 +155,8 @@
     "samplers": {
       "grainInputTexture": "source",
       "framePerforationsTexture": "clear",
-      "mLutID": "lut"
+      "mLutID": "lut",
+      "noiseTexture": "noise"
     },
     "ints": {
       "seed": 71,

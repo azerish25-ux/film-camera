@@ -86,3 +86,14 @@ extension FilmFrame {
 enum FilmBurn {
     static let clips = ["fb6de461e7725ac8c6adc93ce40d9be33058f87b","7279f61845c546ea5a98521a24361e0fd7f1dab8","ebf7742d8724b91d81f26c099a7b84aafced9c9c","219d4a1d9955023fb00ee040507bfba392157e26","a071faf6bfb388993c6db6ead6942ffd89da9334","917d6d8b0e4a29253b6f0bcd1626c5f7483b1a78","0a4c51f6cc776d9a4c73e2eb83acf7e777e2b0e5"]
 }
+
+extension FilmFrame {
+    /// Android's container ratios (o4.h5), including the full scanned gate.
+    func outputSize(for source: CGSize) -> CGSize {
+        guard let ratio else {return source}
+        let target = source.width < source.height ? 1/ratio : ratio
+        let width = min(source.width,source.height*target)
+        let height = min(source.height,source.width/target)
+        return CGSize(width:max(2,floor(width/2)*2),height:max(2,floor(height/2)*2))
+    }
+}

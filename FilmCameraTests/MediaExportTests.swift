@@ -11,13 +11,15 @@ final class MediaExportTests: XCTestCase {
         defer {try? FileManager.default.removeItem(at:folder)}
         let source = try await Self.movie(in:folder)
         let exporter = MediaExporter(), output = folder.appendingPathComponent("graded.mov")
-        var settings = FilmSettings(); settings["exposure"] = -0.5; settings["halation"] = 0.2
+        var settings = FilmSettings(); settings["exposure"] = -0.5; settings["halation"] = 0.2; settings.frame = .wide
         try await exporter.exportVideo(source:source,destination:output,settings:settings,lut:nil,start:0.125,end:0.375,resolution:AVAssetExportPreset1280x720)
         let asset = AVURLAsset(url:output)
         let duration = try await asset.load(.duration).seconds
         XCTAssertEqual(duration,0.25,accuracy:0.05)
         let audio = try await asset.loadTracks(withMediaType:.audio), video = try await asset.loadTracks(withMediaType:.video)
         XCTAssertEqual(audio.count,1); XCTAssertEqual(video.count,1)
+        let size = try await XCTUnwrap(video.first).load(.naturalSize)
+        XCTAssertEqual(size.width/size.height,16.0/9,accuracy:0.01)
         let generator = AVAssetImageGenerator(asset:asset)
         XCTAssertNotNil(try generator.copyCGImage(at:CMTime(seconds:0.1,preferredTimescale:600),actualTime:nil))
         XCTAssertFalse(exporter.busy); XCTAssertEqual(exporter.progress,1)

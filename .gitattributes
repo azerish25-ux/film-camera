@@ -9,3 +9,6 @@
 *.lut binary
 *.mp4 binary
 *.png binary
+
+*.noise binary
+*.rgba binary

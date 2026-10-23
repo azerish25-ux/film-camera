@@ -21,18 +21,7 @@ final class MediaExporter: ObservableObject {
         export.shouldOptimizeForNetworkUse = false
         let begin = max(0,min(start,duration.seconds-0.01)), finish = max(begin+0.01,min(end ?? duration.seconds,duration.seconds))
         export.timeRange = CMTimeRange(start:CMTime(seconds:begin,preferredTimescale:600),end:CMTime(seconds:finish,preferredTimescale:600))
-        let renderer = self.renderer
-        export.videoComposition = AVVideoComposition(asset:asset) { request in
-            do {
-            let result = try renderer.render(request.sourceImage,settings:settings,lut:lut,time:request.compositionTime.seconds)
-            // AVVideoComposition requires a constant render extent. Fit the film crop into that extent.
-            let target = request.sourceImage.extent
-            let scale = min(target.width/result.extent.width,target.height/result.extent.height)
-            let fitted = result.transformed(by:CGAffineTransform(scaleX:scale,y:scale))
-            let centered = fitted.transformed(by:CGAffineTransform(translationX:(target.width-fitted.extent.width)/2,y:(target.height-fitted.extent.height)/2))
-            request.finish(with:centered.composited(over:CIImage(color:.black).cropped(to:target)).cropped(to:target),context:renderer.context)
-            } catch {request.finish(with:error)}
-        }
+        export.videoComposition = renderer.videoComposition(asset:asset,settings:settings,lut:lut)
         let monitor = Task { @MainActor in
             while !Task.isCancelled { progress = export.progress; try? await Task.sleep(nanoseconds:150_000_000) }
         }

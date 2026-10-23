@@ -41,7 +41,8 @@ jobs:
           path: FilmCamera/Resources/AndroidReference
       - name: Generate Xcode project
         run: |
-          brew install xcodegen
+          brew install xcodegen librsvg
+          rsvg-convert -o FilmCamera/Assets.xcassets/AppIcon.appiconset/AppIcon.png FilmCamera/Resources/app-icon.svg
           rm -f FilmCamera/Resources/AndroidReference/reference-cases.json
           xcodegen generate
           xcodebuild -version
@@ -61,6 +62,8 @@ jobs:
         run: |
           mkdir -p build/deliverables
           cp -R FilmCamera.xcodeproj build/deliverables/
+          if [ -f FilmCamera/Assets.xcassets/AppIcon.appiconset/AppIcon.png ]; then cp FilmCamera/Assets.xcassets/AppIcon.appiconset/AppIcon.png build/deliverables/AppIcon.png; fi
+          if [ -d FilmCamera/Resources/AndroidReference ]; then cp -R FilmCamera/Resources/AndroidReference build/deliverables/AndroidReference; fi
           if [ -d build/device/Build/Products/Debug-iphoneos/FilmCamera.app ]; then
             mkdir -p build/unsigned/Payload
             cp -R build/device/Build/Products/Debug-iphoneos/FilmCamera.app build/unsigned/Payload/

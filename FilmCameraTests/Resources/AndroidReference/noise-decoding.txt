@@ -1,0 +1,1 @@
+Android ETC1 decoded all 1048576 noise pixels identically to the iOS table

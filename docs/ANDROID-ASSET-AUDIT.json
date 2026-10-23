@@ -1,4 +1,7 @@
 {
+  "noiseOriginalSHA256": "0ac52a50ebfa65c7c0eba3d0ac30c641c708296311df28ba8de94f0894389f54",
+  "noiseCompressedSHA256": "7a8f7cf35457c14ffb31dfb6f2607bbb17ce1962e11730affc8094741b8032d1",
+  "noiseDecodedSHA256": "61f6070ccda2b84ac71efb195221ac14fdf79c1f1cc091f178c0f20bf4cb411c",
   "filmTablesVerified": 87,
   "shaderFilesVerified": 56,
   "tables": [

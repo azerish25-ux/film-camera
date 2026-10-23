@@ -24,6 +24,14 @@ for film in json.loads((root/'FilmCamera/Resources/film-catalog.json').read_text
 shaders=list((root/'Reference/AndroidShaders').glob('*.glsl'))
 for p in shaders:
     assert p.read_bytes()==(root/'FilmCamera/Resources/Shaders'/p.name).read_bytes(),p.name
-result=dict(filmTablesVerified=len(report),shaderFilesVerified=len(shaders),tables=report)
+noiseOriginal=(assets/'e4e45cae0068917f80a90a1a8380ee5ac1176e88').read_bytes()
+noiseCompressed=(root/'Reference/AndroidNoise.etc1').read_bytes()
+assert noiseOriginal[16:]==noiseCompressed
+noiseDecoded=(root/'FilmCamera/Resources/OriginalAssets/e4e45cae0068917f80a90a1a8380ee5ac1176e88.noise').read_bytes()
+assert len(noiseDecoded)==1024*1024*4
+result=dict(noiseOriginalSHA256=hashlib.sha256(noiseOriginal).hexdigest(),
+            noiseCompressedSHA256=hashlib.sha256(noiseCompressed).hexdigest(),
+            noiseDecodedSHA256=hashlib.sha256(noiseDecoded).hexdigest(),
+            filmTablesVerified=len(report),shaderFilesVerified=len(shaders),tables=report)
 args.output.write_text(json.dumps(result,indent=2)+'\n')
 print(f'Verified {len(report)} original film tables byte-for-byte and {len(shaders)} preserved shader files')

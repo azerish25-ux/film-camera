@@ -4,7 +4,7 @@ import os
 os.chdir(Path(__file__).resolve().parents[1])
 w,h=128,96
 noise=np.frombuffer(Path('FilmCamera/Resources/OriginalAssets/e4e45cae0068917f80a90a1a8380ee5ac1176e88.noise').read_bytes(),np.uint8).reshape(1024,1024,4)[:,:,:3].astype(np.float32)/255
-expected=np.frombuffer(Path('FilmCamera/Resources/AndroidReference/grain.rgba').read_bytes(),np.uint8).reshape(h,w,4)[:,:,:3]
+expected=np.frombuffer(Path('FilmCameraTests/Resources/AndroidReference/grain.rgba').read_bytes(),np.uint8).reshape(h,w,4)[:,:,:3]
 x,y=np.meshgrid(np.arange(w),np.arange(h));uv=np.stack([x+.5,y+.5],axis=-1).astype(np.float32)
 source=np.stack([1+x*253//127,1+y*253//95,1+(x+y)*253//222],axis=-1).astype(np.float32)/255
 scale=np.float32((.5-.4*.4)*2);p=uv*scale;cell=np.floor(p);f=p-cell

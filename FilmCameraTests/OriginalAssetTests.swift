@@ -120,8 +120,7 @@ final class OriginalAssetTests: XCTestCase {
             var settings = FilmSettings(); settings.look = film.name; settings["blur"] = 0
             settings["scratches"] = 0; settings["verticalScratch"] = 1; settings.curveY = settings.curveX
             let name = String(format:"chain-film-%02d",index)
-            let url = try XCTUnwrap(Bundle.main.url(forResource:name,withExtension:"rgba"))
-            let expected = Array(try Data(contentsOf:url))
+            let expected = Array(try AndroidFixtures.data(name))
             let actual = readPixels(try renderer.render(source,settings:settings,time:0))
             var maximum = 0, sum = 0
             for y in 0..<96 {for x in 0..<128 {for channel in 0..<3 {
@@ -209,6 +208,60 @@ final class OriginalAssetTests: XCTestCase {
             let renderer = FilmRenderer(), output = try renderer.render(source,settings:settings,time:0)
             XCTAssertEqual(output.extent.size,size)
             XCTAssertNotNil(renderer.context.createCGImage(output,from:output.extent))
+        }
+    }
+
+    func testAllFilmPhotoContactSheets() throws {
+        let url = try XCTUnwrap(Bundle.main.url(forResource:"EditorFixture",withExtension:"jpg"))
+        let source = try XCTUnwrap(UIImage(contentsOfFile:url.path))
+        let renderer = FilmRenderer()
+        for start in stride(from:0,to:OriginalFilm.all.count,by:16) {
+            let end = min(start+16,OriginalFilm.all.count)
+            var images: [(String,UIImage)] = []
+            for index in start..<end {
+                var settings = FilmSettings(); settings.look = OriginalFilm.all[index].name
+                settings["blur"] = 0; settings["scratches"] = 0; settings["verticalScratch"] = 1
+                images.append((OriginalFilm.all[index].name,try renderer.photo(source,settings:settings,lut:nil)))
+            }
+            let format = UIGraphicsImageRendererFormat(); format.scale = 1
+            let sheet = UIGraphicsImageRenderer(size:CGSize(width:1000,height:900),format:format).image {context in
+                UIColor.black.setFill(); context.fill(CGRect(x:0,y:0,width:1000,height:900))
+                for (index,item) in images.enumerated() {
+                    let x = CGFloat(index%4)*250, y = CGFloat(index/4)*225
+                    item.1.draw(in:CGRect(x:x,y:y,width:250,height:187.5))
+                    (item.0 as NSString).draw(in:CGRect(x:x+5,y:y+190,width:240,height:35),withAttributes:[.font:UIFont.systemFont(ofSize:11),.foregroundColor:UIColor.white])
+                }
+            }
+            let attachment = XCTAttachment(image:sheet); attachment.name = "All films \(start)-\(end-1)"; attachment.lifetime = .keepAlways; add(attachment)
+        }
+    }
+
+    func testEveryAdjustmentChangesRenderedPhotoWhenItsEffectIsEnabled() throws {
+        let url = try XCTUnwrap(Bundle.main.url(forResource:"EditorFixture",withExtension:"jpg"))
+        let cg = try XCTUnwrap(UIImage(contentsOfFile:url.path)?.cgImage)
+        let source = CIImage(cgImage:cg)
+        for spec in Adjustment.all {
+            var lower = FilmSettings()
+            lower["blur"] = 0; lower["scratches"] = 0; lower["verticalScratch"] = 1
+            if spec.id.hasPrefix("grain") && spec.id != "grain" {lower["grain"] = 0.5}
+            if spec.id.hasPrefix("halation") && spec.id != "halation" {
+                lower["halation"] = 0.8; lower["halationRadius"] = 10; lower["halationCutoff"] = 0.1
+            }
+            if ["leakHoles","perfColor"].contains(spec.id) {lower.frame = .super16}
+            if spec.id == "scratchColor" {lower["scratches"] = 100}
+            if spec.id == "burnClip" {lower["burn"] = 1}
+            lower[spec.id] = spec.range.lowerBound
+            var upper = lower; upper[spec.id] = spec.range.upperBound
+            let a = FilmRenderer(), b = FilmRenderer()
+            let frameCount = spec.id == "verticalScratch" ? 65 : 4
+            var changed = false
+            for frame in 0..<frameCount {
+                let time = Double(frame)/8
+                let left = readPixels(try a.render(source,settings:lower,time:time))
+                let right = readPixels(try b.render(source,settings:upper,time:time))
+                if left != right {changed = true}
+            }
+            XCTAssertTrue(changed,"\(spec.id) has no visible effect at its endpoints")
         }
     }
 

@@ -11,7 +11,8 @@ final class FilmDynamics {
         var mean: Double {values.reduce(0,+)/Double(values.count)}
     }
     private var random = JavaRandom(seed:0x16)
-    private var x = Ring(9), y = Ring(9), shake = Ring(5)
+    private var dirtRandom = JavaRandom(seed:0x17)
+    private var x = Ring(9), y = Ring(9), shake = Ring(3)
     private var breath = [Ring(25),Ring(25),Ring(25)], fog = Ring(25)
     private var red = Ring(8,fill:1), holesX = Ring(20), holesY = Ring(45)
     private var redTarget = 1.0, holesTargetX = 1.0, holesTargetY = 0.0
@@ -30,16 +31,16 @@ final class FilmDynamics {
     private(set) var verticalX = [Float](repeating:0,count:8), verticalT = [Float](repeating:0,count:8), verticalTime = 0
     func advance(settings s: FilmSettings, width: Int, height: Int, time: Double) {
         let jitter = Int(s["jitter"]*Double(height)/720), vertical = Int(s["shake"]*Double(height)/720)
+        if vertical > 0 {shake.push((Double(random.int(vertical*3))-Double(vertical)*0.8)/Double(height)/5)}
         if jitter > 0 {x.push(Double(random.int(jitter*3))/Double(width)); y.push(Double(random.int(jitter*3+1))/Double(height))}
         shiftX = jitter > 0 ? x.mean : 0; shiftY = jitter > 0 ? y.mean : 0
-        if vertical > 0 {shake.push((Double(random.int(vertical*3))-Double(vertical)*0.8)/Double(height)/5)}
         fastShake = vertical > 0 ? max(0,shake.mean)*(frame%2 == 0 ? 1 : -1) : 0
         let amount = Int(s["flicker"])
         for channel in 0..<3 {
             if amount > 0 {breath[channel].push(Double(random.int(amount)-amount/2)/255)}
             breathRGB[channel] = amount > 0 ? breath[channel].mean : 0
         }
-        fog.push(amount > 0 ? Double(random.int(amount)-amount/2)/255 : 0)
+        fog.push(random.unit()-0.5)
         fogAmplitude = min(1,max(0,(fog.mean*0.8+1)*s["leakBlue"]))
         if time >= redNext {
             let value = random.unit()*s["leakRed"]
@@ -61,12 +62,12 @@ final class FilmDynamics {
     }
     private func dirt(_ s: FilmSettings, width: Int,height: Int) {
         let odds = max(0,100-Int(s["scratches"]))
-        func trigger() -> Bool {odds == 0 || (s["scratches"] > 0 && random.int(odds) == 0)}
+        func trigger() -> Bool {odds == 0 || (s["scratches"] > 0 && dirtRandom.int(odds) == 0)}
         stainTime -= 1
         if stainTime <= 0 && trigger() {
-            stainTime = 1; stainW = random.int(22)+2; stainH = random.int(22)+2
-            stainX = random.int(max(1,width-stainW)); stainY = random.int(max(1,height-stainH))
-            var offsets = (0..<9).map {_ in random.unit()*1.2+0.5}; offsets[4] = 0
+            stainTime = 1; stainW = dirtRandom.int(22)+2; stainH = dirtRandom.int(22)+2
+            stainX = dirtRandom.int(max(1,width-stainW)); stainY = dirtRandom.int(max(1,height-stainH))
+            var offsets = (0..<9).map {_ in dirtRandom.unit()*1.2+0.5}; offsets[4] = 0
             let directions = [(-1,-1),(-1,1),(1,-1),(1,1),(0,0),(0,-1),(0,1),(-1,0),(1,0)]
             stainMask = [Float](repeating:1,count:576)
             for row in 0..<stainH {for column in 0..<stainW {
@@ -80,17 +81,17 @@ final class FilmDynamics {
         scratchTime -= 1
         if scratchTime <= 0 && trigger() {
             scratchTime = 1
-            let dx = Double(random.int(200)-100), dy = Double(random.int(200)-100), length = sqrt(dx*dx+dy*dy)+1e-6
-            scratchX = Double(random.int(max(1,width-100))+50); scratchY = Double(random.int(max(1,height-100))+50)
-            scratchVX = dx/length; scratchVY = dy/length; scratchLength = Double(random.int(92)+8)
+            let dx = Double(dirtRandom.int(200)-100), dy = Double(dirtRandom.int(200)-100), length = sqrt(dx*dx+dy*dy)+1e-6
+            scratchX = Double(dirtRandom.int(max(1,width-100))+50); scratchY = Double(dirtRandom.int(max(1,width-100))+50)
+            scratchVX = dx/length; scratchVY = dy/length; scratchLength = Double(dirtRandom.int(92)+8)
             var phase = 0.0
-            for index in 0..<Int(scratchLength) {phase += random.unit()*2; scratchD[index] = Float(scratchLength*0.05*cos(0.1*phase))}
+            for index in 0..<Int(scratchLength) {phase += dirtRandom.unit()*2; scratchD[index] = Float(scratchLength*0.05*cos(0.1*phase))}
         }
         verticalTime -= 1
-        if verticalTime <= 0 && random.int(15) == 0 {
-            verticalTime = 60; verticalX[0] = Float(random.int(max(1,width-150))+150); verticalT[0] = Float(random.unit()*0.5+0.5)
+        if verticalTime <= 0 && dirtRandom.int(15) == 0 {
+            verticalTime = 60; verticalX[0] = Float(dirtRandom.int(max(1,width-150))+150); verticalT[0] = Float(dirtRandom.unit()*0.5+0.5)
         } else {verticalX[0] = verticalX[7]; verticalT[0] = verticalT[7]}
-        for index in 1..<8 {verticalX[index] = verticalX[index-1]+Float(random.unit()*2-1); verticalT[index] = Float(1-random.unit()*0.7)}
+        for index in 1..<8 {verticalX[index] = verticalX[index-1]+Float(dirtRandom.unit()*2-1); verticalT[index] = Float(1-dirtRandom.unit()*0.7)}
     }
 }
 struct JavaRandom {

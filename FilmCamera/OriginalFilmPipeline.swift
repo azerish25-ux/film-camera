@@ -48,7 +48,10 @@ final class OriginalFilmPipeline {
         let precise = source.replacingOccurrences(of:"\\b(lowp|mediump)\\b",with:"highp",options:.regularExpression)
         // Spell nearest/repeat lookup as integer texel access. The original noise
         // coordinates land on texel boundaries, whose hardware tie handling differs.
-        return precise.replacingOccurrences(of:"textureLod\\s*\\(\\s*noiseTexture\\s*,\\s*(\\w+)\\s*,\\s*0\\.0\\s*\\)",with:"texelFetch(noiseTexture, ivec2(mod(floor($1 * vec2(1024.0)), vec2(1024.0))), 0)",options:.regularExpression)
+        // Grain cells use fragment pixels; interpolated UV rounding can
+        // otherwise select an adjacent random-noise cell at exact boundaries.
+        let pixelAligned = name == "c_f25865r" ? precise.replacingOccurrences(of:"tmpvar_5 = (vTextureCoord * noiseRes);",with:"tmpvar_5 = gl_FragCoord.xy;") : precise
+        return pixelAligned.replacingOccurrences(of:"textureLod\\s*\\(\\s*noiseTexture\\s*,\\s*(\\w+)\\s*,\\s*0\\.0\\s*\\)",with:"texelFetch(noiseTexture, ivec2(mod(floor($1 * vec2(1024.0)), vec2(1024.0))), 0)",options:.regularExpression)
     }
     private func compile(_ source: String, type: GLenum) throws -> GLuint {
         let shader = glCreateShader(type)
@@ -249,7 +252,7 @@ final class OriginalFilmPipeline {
             f(p,"lightLeak.top",dynamics.redTop); f(p,"lightLeak.bottom",dynamics.redBottom)
             f(p,"lightLeak.topMultiplier",1/pow(0.625,dynamics.redTop*40)); f(p,"lightLeak.bottomMultiplier",1/pow(0.625,dynamics.redBottom*40))
             let holes = s.frame.holeGeometry
-            f(p,"holes.internalOffset",holes.0); f(p,"holes.externalOffset",holes.1); f(p,"holes.seed",Double((dynamics.frame%400)*2)*holes.0/400)
+            f(p,"holes.internalOffset",holes.0); f(p,"holes.externalOffset",holes.1); f(p,"holes.seed",Double(((dynamics.frame-1)%400)*2)*holes.0/400)
             let holeAmp = min(1,max(0,1-dynamics.holeTopX)); f(p,"holes.amp",holeAmp*holeAmp*(3-2*holeAmp))
             v(p,"holes.amountY",dynamics.holeTopY+holes.2,dynamics.holeBottomY+holes.2)
             v(p,"holes.amountX",dynamics.holeTopX,dynamics.holeBottomX)
@@ -257,12 +260,12 @@ final class OriginalFilmPipeline {
         }
         try uploadLUT(lut,look:s.look)
         let noise = try imageTexture("e4e45cae0068917f80a90a1a8380ee5ac1176e88")
-        try draw(s["grain"] > 0 ? "c_f25865r" : "c_f25866s",to:textures[6]) {p in
+        try draw(s["grain"] >= 0.01 ? "c_f25865r" : "c_f25866s",to:textures[6]) {p in
             bind(p,"grainInputTexture",textures[5]); bind(p,"mLutID",lutTexture,1,GLenum(GL_TEXTURE_3D)); bind(p,"framePerforationsTexture",mask,2); bind(p,"noiseTexture",noise,10)
             f(p,"saturation",s["saturation"]); f(p,"perfColor",s["perfColor"]); v(p,"noiseRes",Double(w),Double(h))
             f(p,"grainSize",s["grainSize"]); f(p,"grainStrength",s["grain"]); f(p,"grainSmoohtness",s["grainSmoothness"]); f(p,"grainChroma",s["grainChroma"]); f(p,"grainDarkLevel",s["grainShadows"])
             i(p,"seed",(dynamics.frame*71)%500)
-            f(p,"srandomX",dynamics.shiftX); f(p,"srandomY",dynamics.shiftY-dynamics.fastShake)
+            f(p,"srandomX",dynamics.shiftX); f(p,"srandomY",dynamics.shiftY+dynamics.fastShake)
             i(p,"stain.x",dynamics.stainX); i(p,"stain.y",dynamics.stainY); i(p,"stain.w",dynamics.stainW); i(p,"stain.h",dynamics.stainH); i(p,"stain.time",dynamics.stainTime); array(p,"stain.mask",dynamics.stainMask)
             f(p,"scratch.x",dynamics.scratchX); f(p,"scratch.y",dynamics.scratchY); f(p,"scratch.vx",dynamics.scratchVX); f(p,"scratch.vy",dynamics.scratchVY); f(p,"scratch.len",dynamics.scratchLength); i(p,"scratch.time",dynamics.scratchTime); array(p,"scratch.D",dynamics.scratchD)
             array(p,"scratch_v.x",dynamics.verticalX); array(p,"scratch_v.t",dynamics.verticalT); i(p,"scratch_v.time",dynamics.verticalTime)
@@ -273,7 +276,7 @@ final class OriginalFilmPipeline {
         return CIImage(bitmapData:Data(output),bytesPerRow:w*4,size:CGSize(width:w,height:h),format:.RGBA8,colorSpace:CGColorSpaceCreateDeviceRGB()).oriented(.downMirrored)
     }
     /// Isolated shader probe used to compare the same recovered pass on Android and iOS.
-    func probe(_ config: ReferenceCase) throws -> Data {
+    func probe(_ config: ReferenceCase, inputData: Data? = nil) throws -> Data {
         lock.lock(); defer {EAGLContext.setCurrent(nil); lock.unlock()}
         guard EAGLContext.setCurrent(gl) else {throw PortError.message("Cannot activate the film GPU context.")}
         for _ in 0..<16 {if glGetError() == GL_NO_ERROR {break}}
@@ -296,13 +299,9 @@ final class OriginalFilmPipeline {
                 }
                 bytes[n+3] = kind == 2 ? 0 : 255
             }}
-            if kind == 0, config.pattern == 3 {
-                guard let url = Bundle.main.url(forResource:"ReferenceScene",withExtension:"rgba") else {throw PortError.message("Missing scene fixture")}
-                bytes = Array(try Data(contentsOf:url))
-            }
-            if kind == 0, let input = config.inputCase {
-                guard let url = Bundle.main.url(forResource:input,withExtension:"rgba") else {throw PortError.message("Missing chain fixture \(input)")}
-                bytes = Array(try Data(contentsOf:url))
+            if kind == 0, let inputData {
+                guard inputData.count == bytes.count else {throw PortError.message("Invalid probe input size")}
+                bytes = Array(inputData)
             }
             let texture = kind == 2 ? textures[7] : textures[kind]
             glActiveTexture(GLenum(GL_TEXTURE0)); glBindTexture(GLenum(GL_TEXTURE_2D),texture)

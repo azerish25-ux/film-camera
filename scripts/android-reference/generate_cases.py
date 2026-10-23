@@ -26,6 +26,9 @@ for index,film in enumerate(films):
     variant('film-lut-saturation',f'film-{index:02d}-scene',look=film['name'],lookAsset=film['asset'],pattern=3,floats={'saturation':1})
     # Actual colored LUT + grain, not just the neutral lookup table.
     variant('grain',f'film-{index:02d}-grain',look=film['name'],lookAsset=film['asset'],pattern=1)
+# Test all 101 selectable grain-size steps, including integer cell crossings.
+for step in range(101):
+    variant('grain',f'grain-size-step-{step:03d}',floats={'grainSize':step/100},pattern=1)
 # Branches and control endpoints, plus intermediate values where sampling matters.
 for key,values in {'grainStrength':[0.001,0.5,1], 'grainSize':[0,0.27,0.5,1],
                    'grainSmoohtness':[0,0.5,1], 'grainChroma':[0,0.5,1],
@@ -72,5 +75,5 @@ for index,film in enumerate(films):
     variant('film-lut-saturation',f'chain-film-{index:02d}',inputCase='chain-tone',
         look=film['name'],lookAsset=film['asset'],floats={'saturation':1})
 assert len({c['name'] for c in cases}) == len(cases)
-(ROOT/'FilmCamera/Resources/reference-cases.json').write_text(json.dumps(cases,indent=2)+'\n')
+(ROOT/'FilmCameraTests/Resources/reference-cases.json').write_text(json.dumps(cases,indent=2)+'\n')
 print(f'Generated {len(cases)} shader cases covering all {len(films)} films')

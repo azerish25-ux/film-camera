@@ -4,12 +4,14 @@ final class AndroidParityTests: XCTestCase {
     func testRecoveredPassesAgainstAndroidEmulator() throws {
         let url = try XCTUnwrap(Bundle.main.url(forResource:"reference-cases",withExtension:"json"))
         let cases = try JSONDecoder().decode([ReferenceCase].self,from:Data(contentsOf:url))
+        XCTAssertGreaterThan(cases.count, 1100, "The exhaustive matrix must be generated before testing")
+        XCTAssertEqual(Set(cases.compactMap(\.look)), Set(OriginalFilm.all.map(\.name)))
         let pipeline = try OriginalFilmPipeline()
         var report: [[String:Any]] = []
         for config in cases {
             let expectedURL = try XCTUnwrap(Bundle.main.url(forResource:config.name,withExtension:"rgba"))
             let expected = Array(try Data(contentsOf:expectedURL)), actual = Array(try pipeline.probe(config))
-            XCTAssertEqual(actual.count,expected.count)
+            guard actual.count == expected.count, actual.count == 128*96*4 else { XCTFail("Invalid fixture size: \(config.name)"); continue }
             let pixels = XCTAttachment(data:Data(actual),uniformTypeIdentifier:"public.data"); pixels.name=config.name+".rgba"; pixels.lifetime = .keepAlways; add(pixels)
             let differences = zip(expected,actual).enumerated().filter {$0.offset%4 != 3}.map {abs(Int($0.element.0)-Int($0.element.1))}
             let mean = Double(differences.reduce(0,+))/Double(differences.count), maximum = differences.max() ?? 0

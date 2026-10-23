@@ -15,6 +15,7 @@ public final class ReferenceMain {
   }
   void write(String name,byte[] bytes) throws Exception {try(FileOutputStream s=new FileOutputStream(new File(root,name))){s.write(bytes);}}
   String read(String name) throws Exception {try(java.util.zip.ZipFile zip=new java.util.zip.ZipFile(new File(root,"reference.jar"));InputStream s=zip.getInputStream(zip.getEntry("assets/"+name));ByteArrayOutputStream o=new ByteArrayOutputStream()){byte[] b=new byte[8192];int n;while((n=s.read(b))>0)o.write(b,0,n);return new String(o.toByteArray(),"UTF-8");}}
+  byte[] asset(String name) throws Exception {try(java.util.zip.ZipFile zip=new java.util.zip.ZipFile(new File(root,"reference.jar"));InputStream input=zip.getInputStream(zip.getEntry("assets/"+name));ByteArrayOutputStream out=new ByteArrayOutputStream()){byte[] chunk=new byte[8192];int n;while((n=input.read(chunk))>0)out.write(chunk,0,n);return out.toByteArray();}}
   String shader(String name) throws Exception {if(name.startsWith("frame_")) return shader("c_f25860m").replace("//{frame_func}",shader(name.substring(6)));return read(name+".glsl").replaceAll("(?m)^#extension GL_OES_EGL_image_external.*$","").replace("samplerExternalOES","sampler2D");}
   int compile(String text,int type) {int s=GLES30.glCreateShader(type);GLES30.glShaderSource(s,text);GLES30.glCompileShader(s);int[] ok={0};GLES30.glGetShaderiv(s,GLES30.GL_COMPILE_STATUS,ok,0);if(ok[0]==0)throw new RuntimeException(GLES30.glGetShaderInfoLog(s));return s;}
   int program(String fragment) throws Exception {int v=compile(shader(fragment.startsWith("frame_")?"b_f25843a":"a_f25836b"),GLES30.GL_VERTEX_SHADER),f=compile(shader(fragment),GLES30.GL_FRAGMENT_SHADER);int p=GLES30.glCreateProgram();GLES30.glAttachShader(p,v);GLES30.glAttachShader(p,f);GLES30.glLinkProgram(p);int[] ok={0};GLES30.glGetProgramiv(p,GLES30.GL_LINK_STATUS,ok,0);if(ok[0]==0)throw new RuntimeException(GLES30.glGetProgramInfoLog(p));GLES30.glDeleteShader(v);GLES30.glDeleteShader(f);return p;}
@@ -39,15 +40,26 @@ public final class ReferenceMain {
     GLES30.glGenVertexArrays(1,vao,0);GLES30.glBindVertexArray(vao[0]);GLES30.glGenBuffers(1,vbo,0);GLES30.glBindBuffer(GLES30.GL_ARRAY_BUFFER,vbo[0]);
     float[] verts={-1,-1,0,0,1,-1,1,0,-1,1,0,1,1,1,1,1};FloatBuffer vb=ByteBuffer.allocateDirect(64).order(ByteOrder.nativeOrder()).asFloatBuffer();vb.put(verts).position(0);GLES30.glBufferData(GLES30.GL_ARRAY_BUFFER,64,vb,GLES30.GL_STATIC_DRAW);GLES30.glEnableVertexAttribArray(0);GLES30.glVertexAttribPointer(0,2,GLES30.GL_FLOAT,false,16,0);GLES30.glEnableVertexAttribArray(1);GLES30.glVertexAttribPointer(1,2,GLES30.GL_FLOAT,false,16,8);
     JSONArray cases=new JSONArray(read("reference-cases.json"));
+    Map<String,Integer> programs=new HashMap<>();
+    String currentLook="";
     for(int index=0;index<cases.length();index++){
-      JSONObject c=cases.getJSONObject(index);int p=program(c.getString("shader"));GLES30.glUseProgram(p);GLES30.glViewport(0,0,W,H);
+      JSONObject c=cases.getJSONObject(index);
+      String look=c.optString("lookAsset","");
+      if(index==0 || !look.equals(currentLook)) {
+        GLES30.glActiveTexture(GLES30.GL_TEXTURE0);GLES30.glBindTexture(GLES30.GL_TEXTURE_3D,ids[3]);
+        GLES30.glTexImage3D(GLES30.GL_TEXTURE_3D,0,GLES30.GL_RGB8,64,64,64,0,GLES30.GL_RGB,GLES30.GL_UNSIGNED_BYTE,buffer(look.isEmpty()?lut:asset(look+".lut")));currentLook=look;
+      }
+      byte[] source=pixels(0);int pattern=c.optInt("pattern",0);
+      for(int y=0;y<H;y++)for(int x=0;x<W;x++){int n=(y*W+x)*4,k=y*W+x;if(pattern==1){source[n]=(byte)((k%23)*255/22);source[n+1]=(byte)(((k/23)%23)*255/22);source[n+2]=(byte)(((k/529)%23)*255/22);}else if(pattern==2){source[n]=source[n+1]=source[n+2]=(byte)(x*255/127);}}
+      GLES30.glActiveTexture(GLES30.GL_TEXTURE0);GLES30.glBindTexture(GLES30.GL_TEXTURE_2D,ids[0]);GLES30.glTexSubImage2D(GLES30.GL_TEXTURE_2D,0,0,0,W,H,GLES30.GL_RGBA,GLES30.GL_UNSIGNED_BYTE,buffer(source));
+      String shaderName=c.getString("shader");if(!programs.containsKey(shaderName))programs.put(shaderName,program(shaderName));int p=programs.get(shaderName);GLES30.glUseProgram(p);GLES30.glViewport(0,0,W,H);
       JSONObject fs=c.getJSONObject("floats");for(Iterator<String> keys=fs.keys();keys.hasNext();){String key=keys.next();GLES30.glUniform1f(GLES30.glGetUniformLocation(p,key),(float)fs.getDouble(key));}
       JSONObject vs=c.getJSONObject("vectors");for(Iterator<String> keys=vs.keys();keys.hasNext();){String key=keys.next();JSONArray v=vs.getJSONArray(key);GLES30.glUniform2f(GLES30.glGetUniformLocation(p,key),(float)v.getDouble(0),(float)v.getDouble(1));}
       JSONObject is=c.getJSONObject("ints");for(Iterator<String> keys=is.keys();keys.hasNext();){String key=keys.next();GLES30.glUniform1i(GLES30.glGetUniformLocation(p,key),is.getInt(key));}
       JSONObject arrays=c.getJSONObject("arrays");for(Iterator<String> keys=arrays.keys();keys.hasNext();){String key=keys.next();JSONArray a=arrays.getJSONArray(key);float[] values=new float[a.length()];for(int n=0;n<values.length;n++)values[n]=(float)a.getDouble(n);if(key.equals("curve"))GLES30.glUniform3fv(GLES30.glGetUniformLocation(p,key),values.length/3,values,0);else GLES30.glUniform1fv(GLES30.glGetUniformLocation(p,key),values.length,values,0);}
       JSONObject samplers=c.getJSONObject("samplers");int unit=0;for(Iterator<String> keys=samplers.keys();keys.hasNext();){String key=keys.next(),name=samplers.getString(key);GLES30.glActiveTexture(GLES30.GL_TEXTURE0+unit);GLES30.glBindTexture(name.equals("lut")?GLES30.GL_TEXTURE_3D:GLES30.GL_TEXTURE_2D,textures.get(name));GLES30.glUniform1i(GLES30.glGetUniformLocation(p,key),unit++);}
       GLES30.glDrawArrays(GLES30.GL_TRIANGLE_STRIP,0,4);int error=GLES30.glGetError();if(error!=0)throw new RuntimeException(c.getString("name")+": GLES "+error);
-      ByteBuffer output=ByteBuffer.allocateDirect(W*H*4);GLES30.glReadPixels(0,0,W,H,GLES30.GL_RGBA,GLES30.GL_UNSIGNED_BYTE,output);byte[] data=new byte[W*H*4];output.get(data);write(c.getString("name")+".rgba",data);GLES30.glDeleteProgram(p);
+      ByteBuffer output=ByteBuffer.allocateDirect(W*H*4);GLES30.glReadPixels(0,0,W,H,GLES30.GL_RGBA,GLES30.GL_UNSIGNED_BYTE,output);byte[] data=new byte[W*H*4];output.get(data);write(c.getString("name")+".rgba",data);
     }
     write("renderer.txt",(GLES30.glGetString(GLES30.GL_RENDERER)+"\n"+GLES30.glGetString(GLES30.GL_VERSION)).getBytes("UTF-8"));
   }

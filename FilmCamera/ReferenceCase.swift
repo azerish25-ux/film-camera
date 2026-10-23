@@ -1,6 +1,8 @@
 import Foundation
 struct ReferenceCase: Codable {
     let name: String
+    let look: String?
+    let pattern: Int?
     let shader: String
     let floats: [String: Double]
     let vectors: [String: [Double]]

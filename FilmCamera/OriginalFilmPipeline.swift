@@ -285,13 +285,22 @@ final class OriginalFilmPipeline {
                 bytes[n] = UInt8(kind == 0 ? 1+x*253/127 : kind == 1 ? 60 : 0)
                 bytes[n+1] = UInt8(kind == 0 ? 1+y*253/95 : kind == 1 ? 90 : 0)
                 bytes[n+2] = UInt8(kind == 0 ? 1+(x+y)*253/222 : kind == 1 ? 120 : 0)
+                if kind == 0, config.pattern == 1 {
+                    let index = y*128+x
+                    bytes[n] = UInt8((index%23)*255/22)
+                    bytes[n+1] = UInt8(((index/23)%23)*255/22)
+                    bytes[n+2] = UInt8(((index/529)%23)*255/22)
+                } else if kind == 0, config.pattern == 2 {
+                    let level = UInt8(x*255/127)
+                    bytes[n] = level; bytes[n+1] = level; bytes[n+2] = level
+                }
                 bytes[n+3] = kind == 2 ? 0 : 255
             }}
             let texture = kind == 2 ? textures[7] : textures[kind]
             glActiveTexture(GLenum(GL_TEXTURE0)); glBindTexture(GLenum(GL_TEXTURE_2D),texture)
             bytes.withUnsafeBytes {glTexSubImage2D(GLenum(GL_TEXTURE_2D),0,0,0,128,96,GLenum(GL_RGBA),GLenum(GL_UNSIGNED_BYTE),$0.baseAddress)}
         }
-        try uploadLUT(nil,look:"Normal Mode")
+        try uploadLUT(nil,look:config.look ?? "Normal Mode")
         let lookup: [String:GLuint] = ["source":textures[0],"background":textures[1],"clear":textures[7],"lut":lutTexture,"noise":try imageTexture("e4e45cae0068917f80a90a1a8380ee5ac1176e88")]
         try draw(config.shader,to:textures[6]) {p in
             for (key,value) in config.floats {f(p,key,value)}

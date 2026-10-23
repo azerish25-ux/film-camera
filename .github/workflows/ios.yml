@@ -29,6 +29,7 @@ jobs:
       - uses: android-actions/setup-android@v3
         with:
           packages: platform-tools
+      - run: python3 scripts/android-reference/generate_cases.py
       - uses: reactivecircus/android-emulator-runner@v2
         with:
           api-level: 29
@@ -55,7 +56,7 @@ jobs:
         run: |
           brew install xcodegen librsvg
           rsvg-convert -o FilmCamera/Assets.xcassets/AppIcon.appiconset/AppIcon.png FilmCamera/Resources/app-icon.svg
-          rm -f FilmCamera/Resources/AndroidReference/reference-cases.json
+          mv FilmCamera/Resources/AndroidReference/reference-cases.json FilmCamera/Resources/reference-cases.json
           xcodegen generate
           xcodebuild -version
       - name: Build iPhone app

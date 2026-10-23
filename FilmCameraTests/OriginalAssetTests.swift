@@ -32,6 +32,20 @@ final class OriginalAssetTests: XCTestCase {
         XCTAssertEqual(rgb[63*3],128)
         XCTAssertEqual(rgb[0],0)
     }
+    func testNeutralPipelinePreservesNonblackSourcePixels() throws {
+        let bytes = Array(repeating:[UInt8(76),128,179,255],count:128*96).flatMap {$0}
+        let source = CIImage(bitmapData:Data(bytes),bytesPerRow:128*4,size:CGSize(width:128,height:96),format:.RGBA8,colorSpace:CGColorSpaceCreateDeviceRGB())
+        var settings = FilmSettings(); settings["blur"] = 0; settings["scratches"] = 0; settings["verticalScratch"] = 1
+        settings.curveY = settings.curveX
+        let result = try FilmRenderer().render(source,settings:settings,time:0)
+        var output = [UInt8](repeating:0,count:128*96*4)
+        let context = CIContext(options:[.workingColorSpace:NSNull(),.outputColorSpace:NSNull()])
+        output.withUnsafeMutableBytes {context.render(result,toBitmap:$0.baseAddress!,rowBytes:128*4,bounds:result.extent,format:.RGBA8,colorSpace:CGColorSpaceCreateDeviceRGB())}
+        let center = (48*128+64)*4
+        XCTAssertEqual(Double(output[center]),76,accuracy:12)
+        XCTAssertEqual(Double(output[center+1]),128,accuracy:12)
+        XCTAssertEqual(Double(output[center+2]),179,accuracy:12)
+    }
     func testEveryPresetRendersWithItsOriginalAssets() throws {
         let source = CIImage(color:CIColor(red:0.3,green:0.5,blue:0.7)).cropped(to:CGRect(x:0,y:0,width:192,height:144))
         let renderer = FilmRenderer()

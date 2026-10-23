@@ -21,19 +21,6 @@ final class FilmRenderer {
             else { crop.size.height = bounds.width/r; crop.origin.y += (bounds.height-crop.height)/2 }
         }
         image = image.cropped(to:crop).transformed(by:CGAffineTransform(translationX:-crop.minX,y:-crop.minY))
-        if s.frame.perforations || s.frame == .framed {
-            let e = image.extent, rail = max(3,e.width*0.055)
-            let black = CIImage(color:.black)
-            image = black.cropped(to:CGRect(x:0,y:0,width:rail,height:e.height)).composited(over:image)
-            if s.frame == .framed { image = black.cropped(to:CGRect(x:e.width-rail,y:0,width:rail,height:e.height)).composited(over:image) }
-            if s.frame.perforations {
-                let color = CIImage(color:CIColor(red:s["perfColor"],green:s["perfColor"],blue:s["perfColor"]))
-                for n in 0..<8 {
-                    let hole = CGRect(x:rail*0.2,y:CGFloat(n)*e.height/8 + e.height/40,width:rail*0.6,height:e.height/18)
-                    image = color.cropped(to:hole).composited(over:image)
-                }
-            }
-        }
         return image
     }
     func photo(_ image: UIImage, settings: FilmSettings, lut: CubeLUT?) throws -> UIImage {

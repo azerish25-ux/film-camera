@@ -1,11 +1,15 @@
 import Foundation
 import CoreImage
 import OpenGLES
+import UIKit
 
 /// Executes the recovered Android GLES 3 shaders. Only external-camera samplers
 /// are changed to ordinary 2D textures; the fragment calculations are preserved.
 final class OriginalFilmPipeline {
     private let lock = NSLock()
+    private let assets = OriginalAssetSampler()
+    private var auxiliary: [String: GLuint] = [:]
+    private var lastTime: Double = -1
     private let gl: EAGLContext
     private let ci = CIContext(options:[.workingColorSpace:NSNull(),.outputColorSpace:NSNull()])
     private var programs: [String: GLuint] = [:]
@@ -31,6 +35,10 @@ final class OriginalFilmPipeline {
         EAGLContext.setCurrent(nil)
     }
     private func shaderText(_ name: String) throws -> String {
+        if name.hasPrefix("frame_") {
+            let function = String(name.dropFirst(6))
+            return try shaderText("c_f25860m").replacingOccurrences(of:"//{frame_func}",with:shaderText(function))
+        }
         guard let url = Bundle.main.url(forResource:name,withExtension:"glsl") else {throw PortError.message("Missing original shader \(name)")}
         return try String(contentsOf:url,encoding:.utf8).components(separatedBy:.newlines).filter {!$0.contains("#extension GL_OES_EGL_image_external")}.joined(separator:"\n").replacingOccurrences(of:"samplerExternalOES",with:"sampler2D")
     }
@@ -47,7 +55,7 @@ final class OriginalFilmPipeline {
     }
     private func program(_ fragment: String) throws -> GLuint {
         if let p = programs[fragment] {return p}
-        let vertex = try compile(shaderText("a_f25836b"),type:GLenum(GL_VERTEX_SHADER))
+        let vertex = try compile(shaderText(fragment.hasPrefix("frame_") ? "b_f25843a" : "a_f25836b"),type:GLenum(GL_VERTEX_SHADER))
         let pixel = try compile(shaderText(fragment),type:GLenum(GL_FRAGMENT_SHADER))
         defer {glDeleteShader(vertex); glDeleteShader(pixel)}
         let p = glCreateProgram(); glAttachShader(p,vertex); glAttachShader(p,pixel); glLinkProgram(p)
@@ -62,7 +70,7 @@ final class OriginalFilmPipeline {
     private func allocate(_ w: Int,_ h: Int) {
         guard width != w || height != h else {return}
         if !textures.isEmpty {glDeleteTextures(GLsizei(textures.count),&textures)}
-        width = w; height = h; textures = [GLuint](repeating:0,count:8); glGenTextures(8,&textures)
+        width = w; height = h; lastTime = -1; textures = [GLuint](repeating:0,count:11); glGenTextures(11,&textures)
         for t in textures {
             glBindTexture(GLenum(GL_TEXTURE_2D),t)
             glTexParameteri(GLenum(GL_TEXTURE_2D),GLenum(GL_TEXTURE_MIN_FILTER),GL_LINEAR)
@@ -81,6 +89,24 @@ final class OriginalFilmPipeline {
         setup(p); glDrawArrays(GLenum(GL_TRIANGLE_STRIP),0,4)
         let error = glGetError(); guard error == GL_NO_ERROR else {throw PortError.message("Film GPU error \(error)")}
     }
+    private func imageTexture(_ name: String, time: Double? = nil) throws -> GLuint {
+        if time == nil, let cached = auxiliary[name] {return cached}
+        let image: CGImage
+        if let time {image = try assets.frame(name,time:time)}
+        else {
+            guard let url = Bundle.main.url(forResource:name,withExtension:"png"), let cg = UIImage(contentsOfFile:url.path)?.cgImage else {throw PortError.message("Missing original mask \(name)")}
+            image = cg
+        }
+        var texture = auxiliary[name] ?? 0
+        if texture == 0 {glGenTextures(1,&texture); auxiliary[name] = texture}
+        glActiveTexture(GLenum(GL_TEXTURE12)); glBindTexture(GLenum(GL_TEXTURE_2D),texture)
+        glTexParameteri(GLenum(GL_TEXTURE_2D),GLenum(GL_TEXTURE_MIN_FILTER),GL_LINEAR); glTexParameteri(GLenum(GL_TEXTURE_2D),GLenum(GL_TEXTURE_MAG_FILTER),GL_LINEAR)
+        glTexParameteri(GLenum(GL_TEXTURE_2D),GLenum(GL_TEXTURE_WRAP_S),GL_CLAMP_TO_EDGE); glTexParameteri(GLenum(GL_TEXTURE_2D),GLenum(GL_TEXTURE_WRAP_T),GL_CLAMP_TO_EDGE)
+        var bytes = [UInt8](repeating:0,count:image.width*image.height*4)
+        bytes.withUnsafeMutableBytes {ci.render(CIImage(cgImage:image),toBitmap:$0.baseAddress!,rowBytes:image.width*4,bounds:CGRect(x:0,y:0,width:image.width,height:image.height),format:.RGBA8,colorSpace:CGColorSpaceCreateDeviceRGB())}
+        bytes.withUnsafeBytes {glTexImage2D(GLenum(GL_TEXTURE_2D),0,GL_RGBA8,GLsizei(image.width),GLsizei(image.height),0,GLenum(GL_RGBA),GLenum(GL_UNSIGNED_BYTE),$0.baseAddress)}
+        return texture
+    }
     private func uploadLUT(_ lut: CubeLUT?, look: String) throws {
         let key = lut?.id.uuidString ?? look
         guard lutKey != key else {return}
@@ -94,7 +120,7 @@ final class OriginalFilmPipeline {
             guard colors.count == 64*64*64*3 else {throw PortError.message("Invalid original film table.")}
         } else {
             colors.reserveCapacity(dimension*dimension*dimension*3)
-            for b in 0..<dimension {for g in 0..<dimension {for r in 0..<dimension {colors += [UInt8(r*255/(dimension-1)),UInt8(g*255/(dimension-1)),UInt8(b*255/(dimension-1))]}}}
+            for b in 0..<dimension {for g in 0..<dimension {for r in 0..<dimension {colors += [UInt8(r*255/dimension),UInt8(g*255/dimension),UInt8(b*255/dimension)]}}}
         }
         glActiveTexture(GLenum(GL_TEXTURE1)); glBindTexture(GLenum(GL_TEXTURE_3D),lutTexture)
         for axis in [GL_TEXTURE_WRAP_S,GL_TEXTURE_WRAP_T,GL_TEXTURE_WRAP_R] {glTexParameteri(GLenum(GL_TEXTURE_3D),GLenum(axis),GL_CLAMP_TO_EDGE)}
@@ -122,7 +148,26 @@ final class OriginalFilmPipeline {
             f(p,prefix+"vignetteFalloff",s["vignette"]); f(p,prefix+"pseudoExposure",pow(2,s["exposure"])); f(p,prefix+"contrast",s["contrast"])
             f(p,"chroma_value",s["chroma"]); v(p,prefix+"iResolution",Double(w),Double(h))
         }
-        var current = textures[1]
+        let mask = try s.frame.originalMask.map {try imageTexture($0)} ?? textures[7]
+        let film = try s.frame.originalVideo.map {try imageTexture($0,time:time)} ?? textures[7]
+        let staticFrame: GLuint
+        if s.frame == .kiev || s.frame == .framed {
+            staticFrame = try imageTexture(s.frame == .kiev ? "b8650c3c26a4b77d6b9899dffb91e5e5876edbd8" : "bab945a9d56dcb9e116bd018c81fecc093e5b5b2")
+        } else {staticFrame = textures[7]}
+        if lastTime < 0 || time <= lastTime {
+            for history in [textures[9],textures[10]] {
+                try draw("c_f25862o",to:history) {p in bind(p,"sourceTexture",textures[1])}
+            }
+        }
+        try draw("frame_"+s.frame.originalShader,to:textures[8]) {p in
+            bind(p,"mTextureID",textures[1]); bind(p,"mTextureID1",textures[9],1); bind(p,"mTextureID2",textures[10],2)
+            bind(p,"frameTexture",film,3); bind(p,"frameSuper16mm",staticFrame,4)
+            f(p,"randomX",sin(time*1.7)*s["jitter"]/720); f(p,"randomY",sin(time*37)*s["shake"]/720)
+        }
+        try draw("c_f25862o",to:textures[10]) {p in bind(p,"sourceTexture",textures[9])}
+        try draw("c_f25862o",to:textures[9]) {p in bind(p,"sourceTexture",textures[1])}
+        lastTime = time
+        var current = textures[8]
         if s["halation"] >= 0.002 {
             try draw("c_f25858k",to:textures[2]) {p in bind(p,"halationHighSourceTexture",current); f(p,"halationIntensity",s["halation"]); f(p,"halationCuttoff",min(0.995,s["halationCutoff"]))}
             var blurred = textures[2]
@@ -143,12 +188,12 @@ final class OriginalFilmPipeline {
         if s["blur"] > 0 {
             for offset in Self.blurSchedule[min(19,max(0,Int(s["blur"])))] {
                 let target = current == textures[2] ? textures[3] : textures[2]
-                try draw("c_f25856i",to:target) {p in bind(p,"blurTempTexture",current); v(p,"blurResInv",1/Double(w),1/Double(h)); f(p,"blurOffset",Double(offset)+0.5); f(p,"blurFramePadding",0)}; current = target
+                try draw("c_f25856i",to:target) {p in bind(p,"blurTempTexture",current); v(p,"blurResInv",1/Double(w),1/Double(h)); f(p,"blurOffset",Double(offset)+0.5); f(p,"blurFramePadding",s.frame.blurPadding)}; current = target
             }
         }
         try draw("c_f25861n",to:textures[5]) {p in
-            bind(p,"textureInPass3",current); bind(p,"textureLuminance",current,2); bind(p,"framePerforationsTexture",textures[7],3); bind(p,"lightLeakTexture",textures[7],4)
-            var curve = Self.curve(temperature:s["temperature"],tint:s["tint"])
+            bind(p,"textureInPass3",current); bind(p,"textureLuminance",current,2); bind(p,"framePerforationsTexture",mask,3); bind(p,"lightLeakTexture",textures[7],4)
+            var curve = Self.curve(temperature:s["temperature"],tint:s["tint"],samples:FilmCurve.samples(x:s.curveX,y:s.curveY))
             curve.withUnsafeMutableBufferPointer {glUniform3fv(glGetUniformLocation(p,"curve"),66,$0.baseAddress)}
             for channel in ["R","G","B"] {f(p,"filmBreath"+channel,sin(time*8)*s["flicker"]*0.05)}
             f(p,"expiredFoggingAmp",s["leakBlue"]); f(p,"lightLeak.amp",s["leakRed"])
@@ -158,7 +203,7 @@ final class OriginalFilmPipeline {
         }
         try uploadLUT(lut,look:s.look)
         try draw(s["grain"] > 0 ? "c_f25865r" : "c_f25866s",to:textures[6]) {p in
-            bind(p,"grainInputTexture",textures[5]); bind(p,"mLutID",lutTexture,1,GLenum(GL_TEXTURE_3D)); bind(p,"framePerforationsTexture",textures[7],2)
+            bind(p,"grainInputTexture",textures[5]); bind(p,"mLutID",lutTexture,1,GLenum(GL_TEXTURE_3D)); bind(p,"framePerforationsTexture",mask,2)
             f(p,"saturation",s["saturation"]); f(p,"perfColor",s["perfColor"]); v(p,"noiseRes",Double(w),Double(h))
             f(p,"grainSize",s["grainSize"]); f(p,"grainStrength",s["grain"]); f(p,"grainSmoohtness",s["grainSmoothness"]); f(p,"grainChroma",s["grainChroma"]); f(p,"grainDarkLevel",s["grainShadows"])
             i(p,"seed",(Int(time*24)*71)%500)
@@ -170,7 +215,7 @@ final class OriginalFilmPipeline {
         return CIImage(bitmapData:Data(output),bytesPerRow:w*4,size:CGSize(width:w,height:h),format:.RGBA8,colorSpace:CGColorSpaceCreateDeviceRGB())
     }
     static let blurSchedule: [[Int]] = [[],[0],[0,0],[0,1],[0,1,1],[0,1,2],[0,1,1,2],[0,1,2,3],[0,1,2,2,3],[0,1,2,3,4],[0,1,2,3,3,4],[0,1,2,3,4,5],[0,1,2,3,4,4,5],[0,1,2,3,4,5,6],[0,1,2,3,4,5,5,6],[0,1,2,3,4,5,6,7],[0,1,2,3,4,5,7,8],[0,1,2,3,4,5,7,8,9],[0,1,2,3,4,5,7,8,8,9],[0,1,2,3,4,5,7,8,9,10]]
-    static func curve(temperature: Double,tint: Double) -> [Float] {
+    static func curve(temperature: Double,tint: Double,samples: [Double] = (0...255).map(Double.init)) -> [Float] {
         let t = floor(temperature/100), halfTint = floor(tint/2)
         let r = t <= 66 ? 255-halfTint : 329.698727446*pow(t-60,-0.1332047592)-halfTint
         let g = t <= 66 ? 99.4708025861*log(t)-161.1195681661+tint : 288.1221695283*pow(t-60,-0.0755148492)+tint
@@ -178,7 +223,7 @@ final class OriginalFilmPipeline {
         let white = [r,g,b].map {min(1,max(0,$0/255))}
         return (0..<66).flatMap {index -> [Float] in
             let sample = index == 0 ? 0 : index == 65 ? 255 : (index-1)*4
-            return white.map {Float($0*Double(sample)/255)}
+            return white.map {Float($0*samples[sample]/255)}
         }
     }
 }

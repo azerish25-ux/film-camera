@@ -28,7 +28,7 @@ struct Adjustment: Identifiable {
         .init(id:"grain",label:"Grain amount",range:0...1,initial:0),
         .init(id:"grainSize",label:"Grain size",range:0...1,initial:0.5),
         .init(id:"grainChroma",label:"Grain chroma",range:0...1,initial:0),
-        .init(id:"grainShadows",label:"Grain shadows",range:0...1,initial:0.5),
+        .init(id:"grainShadows",label:"Grain shadows",range:0...1,initial:0),
         .init(id:"grainSmoothness",label:"Grain smoothness",range:0...1,initial:0),
         .init(id:"vignette",label:"Vignette",range:0...1,initial:0),
         .init(id:"halation",label:"Halation",range:0...1,initial:0),
@@ -38,10 +38,10 @@ struct Adjustment: Identifiable {
         .init(id:"halationBlue",label:"Halation blue",range:0...1,initial:0.04),
         .init(id:"blur",label:"Blur",range:0...19,initial:0),
         .init(id:"chroma",label:"Chromatic aberration",range:0...19,initial:0),
-        .init(id:"flicker",label:"Film breath",range:0...1,initial:0),
-        .init(id:"jitter",label:"Slow shift",range:0...1,initial:0),
-        .init(id:"shake",label:"Fast shake",range:0...1,initial:0),
-        .init(id:"scratches",label:"Scratches intensity",range:0...1,initial:0),
+        .init(id:"flicker",label:"Film breath",range:0...100,initial:0),
+        .init(id:"jitter",label:"Slow shift",range:0...30,initial:0),
+        .init(id:"shake",label:"Fast shake",range:0...30,initial:0),
+        .init(id:"scratches",label:"Scratches intensity",range:0...100,initial:0),
         .init(id:"verticalScratch",label:"Vertical scratch",range:0...1,initial:0),
         .init(id:"scratchColor",label:"Scratches color",range:0...1,initial:0.8),
         .init(id:"leakRed",label:"Red light leak",range:0...1,initial:0),
@@ -55,6 +55,8 @@ struct FilmSettings: Codable, Equatable {
     var frame: FilmFrame = .original
     var look = "Normal Mode"
     var lutID: UUID?
+    var curveX: [Double] = [0,50,100,150,200,255]
+    var curveY: [Double] = [30,50,100,150,200,255]
     subscript(_ key: String) -> Double {
         get { values[key] ?? Adjustment.all.first(where: { $0.id == key })?.initial ?? 0 }
         set {

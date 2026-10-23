@@ -30,6 +30,14 @@ struct AdjustmentsView: View {
                 Text("None").tag(nil as UUID?)
                 ForEach(store.state.luts) {Text($0.name).tag(Optional($0.id))}
             }
+            DisclosureGroup("Characteristic curve") {
+                ForEach(0..<6,id:\.self) {index in
+                    VStack(alignment:.leading) {
+                        Text("Input \(Int(store.state.settings.curveX[index]))")
+                        Slider(value:$store.state.settings.curveY[index],in:0...255).accessibilityLabel("Curve point \(index+1)")
+                    }
+                }
+            }
             ForEach(Adjustment.all) { item in
                 VStack(alignment:.leading) {
                     HStack { Text(item.label); Spacer(); Text(store.state.settings[item.id],format:.number.precision(.fractionLength(2))).foregroundStyle(.secondary).monospacedDigit() }

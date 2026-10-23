@@ -1,0 +1,4 @@
+# Port status and validation plan
+The Swift camera/editor is implemented. GitHub macOS device builds pass. Simulator processing, LUT parsing and local persistence tests pass; a preset-keyboard UI navigation failure is being repaired.
+Recovered original GLSL is executed with external sampler declarations adapted to 2D iOS textures. All 88 original film choices and 10 original camera presets are recovered. Original frame masks and video overlays are recovered. Functional parity and cross-platform pixel comparisons remain in progress; this is not a completion claim.
+Remaining: validate frame and temporal processing against Android, add media export integration coverage and UI flow evidence, audit all feature controls, sync the verified project to D:/IOS APPS/IOS APP 1/IOS Port and delete temporary C: development files after verification.

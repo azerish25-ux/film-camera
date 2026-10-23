@@ -51,6 +51,9 @@ struct PresetsScreen: View {
                         Button(preset.name) {store.state.settings = preset.settings; store.persist()}
                     }.onDelete {offsets in store.state.presets.remove(atOffsets:offsets); store.persist()}
                 }
+                Section("Original camera presets") {
+                    ForEach(FilmPreset.originals) {preset in Button(preset.name) {store.state.settings = preset.settings; store.persist()}}
+                }
                 Section("Film looks") {ForEach(FilmSettings.looks,id:\.self) {look in Button(look) {store.state.settings.look = look; store.persist()}}}
                 Section("CUBE lookup tables") {
                     Button("Import CUBE LUT") {importing = true}

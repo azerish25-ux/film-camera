@@ -4,3 +4,6 @@ artifacts/
 xcuserdata/
 *.xcuserstate
 .DS_Store
+.tools/
+*.pyc
+__pycache__/

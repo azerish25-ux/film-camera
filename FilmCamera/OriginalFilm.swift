@@ -9,3 +9,10 @@ struct OriginalFilm: Codable, Identifiable {
         return films
     }()
 }
+
+extension FilmPreset {
+    static let originals: [FilmPreset] = {
+        guard let url = Bundle.main.url(forResource:"original-presets",withExtension:"json"), let data = try? Data(contentsOf:url), let presets = try? JSONDecoder().decode([FilmPreset].self,from:data) else {return []}
+        return presets
+    }()
+}

@@ -11,5 +11,16 @@ final class FilmCameraUITests: XCTestCase {
         let attachment = XCTAttachment(screenshot:app.screenshot()); attachment.lifetime = .keepAlways; add(attachment)
         app.terminate(); app.launch(); app.tabBars.buttons["Presets"].tap(); XCTAssertTrue(app.buttons["CI Film"].waitForExistence(timeout:5))
     }
+    func testEditorPhotoExportToGallery() {
+        let app = XCUIApplication(); app.launchArguments = ["--ui-testing","--editor-fixture"]; app.launch()
+        app.tabBars.buttons["Editor"].tap()
+        let export = app.buttons["exportMedia"]
+        XCTAssertTrue(export.waitForExistence(timeout:15)); export.tap()
+        XCTAssertTrue(app.buttons["Share export"].waitForExistence(timeout:30))
+        app.tabBars.buttons["Gallery"].tap()
+        XCTAssertTrue(app.buttons.matching(NSPredicate(format:"label CONTAINS %@", ".jpg")).firstMatch.waitForExistence(timeout:10))
+        let attachment = XCTAttachment(screenshot:app.screenshot()); attachment.name = "Exported gallery media"; attachment.lifetime = .keepAlways; add(attachment)
+    }
+
 }
 

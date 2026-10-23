@@ -27,7 +27,7 @@ final class FilmRenderer {
         image = image.cropped(to:crop).transformed(by:CGAffineTransform(translationX:-crop.minX,y:-crop.minY))
         return image
     }
-    func photo(_ image: UIImage, settings: FilmSettings, lut: CubeLUT?) throws -> UIImage {
+    private func source(_ image: UIImage) throws -> CIImage {
         guard let pixels = image.ciImage ?? image.cgImage.map({CIImage(cgImage:$0)}) else {throw PortError.message("Cannot decode image.")}
         let orientation: Int32
         switch image.imageOrientation {
@@ -41,8 +41,18 @@ final class FilmRenderer {
         case .left: orientation = 8
         @unknown default: orientation = 1
         }
-        let source = pixels.oriented(forExifOrientation:orientation)
-        let result = try render(source,settings:settings,lut:lut)
+        return pixels.oriented(forExifOrientation:orientation)
+    }
+
+    func preview(_ image: UIImage, settings: FilmSettings, lut: CubeLUT?) throws -> UIImage {
+        let pixels = try source(image)
+        let scale = min(1,1024/max(pixels.extent.width,pixels.extent.height))
+        let result = try render(pixels.transformed(by:CGAffineTransform(scaleX:scale,y:scale)),settings:settings,lut:lut)
+        guard let cg = context.createCGImage(result,from:result.extent) else {throw PortError.message("Cannot render preview.")}
+        return UIImage(cgImage:cg)
+    }
+    func photo(_ image: UIImage, settings: FilmSettings, lut: CubeLUT?) throws -> UIImage {
+        let result = try render(try source(image),settings:settings,lut:lut)
         guard let cg = context.createCGImage(result,from:result.extent) else { throw PortError.message("Cannot render image.") }
         return UIImage(cgImage:cg)
     }

@@ -88,6 +88,7 @@ struct CameraScreen: View {
                         Button(action:capture) {Image(systemName:camera.recording ? "stop.circle.fill" : videoMode ? "record.circle" : "circle.inset.filled").font(.system(size:66)).foregroundStyle(videoMode ? .red : .white)}.accessibilityLabel(camera.recording ? "Stop recording" : videoMode ? "Record video" : "Take photo").disabled(!camera.ready || exporter.busy || camera.processing)
                         Button {tools.toggle()} label: {Image(systemName:"slider.horizontal.3").font(.title2)}.accessibilityLabel("Camera controls")
                     }
+                    if camera.processing {ProgressView("Developing photo")}
                     if exporter.busy {ProgressView("Processing film",value:exporter.progress); Button("Cancel export") {exporter.cancel()}}
                     if tools {cameraControls}
                     DisclosureGroup("Film adjustments") {AdjustmentsView().padding(.top)}.disabled(camera.recording)
@@ -161,6 +162,7 @@ struct EditorScreen: View {
     @State private var resolution = AVAssetExportPreset1920x1080
     @State private var saved: URL?
     @State private var importing = false
+    @State private var photoExporting = false
     var body: some View {
         NavigationStack {
             ScrollView {
@@ -172,7 +174,7 @@ struct EditorScreen: View {
                         PhotosPicker(selection:$selection,matching:.any(of:[.images,.videos])) {Label("Photos",systemImage:"photo")}
                         Button("Files") {importing = true}
                         if original != nil {Toggle("Original",isOn:$comparison)}
-                    }.disabled(exporter.busy)
+                    }.disabled(exporter.busy || photoExporting)
                     if video != nil {
                         Text("Trim: \(start, specifier:"%.1f") – \(end, specifier:"%.1f") s")
                         Slider(value:$start,in:0...max(0.01,duration-0.01)).onChange(of:start) {_,v in if end <= v {end = min(duration,v+0.01)}}.accessibilityLabel("Trim start")
@@ -180,15 +182,24 @@ struct EditorScreen: View {
                         Picker("Export resolution",selection:$resolution) {Text("720p").tag(AVAssetExportPreset1280x720); Text("1080p").tag(AVAssetExportPreset1920x1080); Text("4K").tag(AVAssetExportPreset3840x2160)}
                     }
                     if original != nil || video != nil {
-                        Button("Export to Gallery",action:export).buttonStyle(.borderedProminent).disabled(exporter.busy).accessibilityIdentifier("exportMedia")
+                        Button("Export to Gallery",action:export).buttonStyle(.borderedProminent).disabled(exporter.busy || photoExporting).accessibilityIdentifier("exportMedia")
                         if let saved {ShareLink(item:saved) {Label("Share export",systemImage:"square.and.arrow.up")}}
+                        if photoExporting {ProgressView("Exporting photo")}
                         if exporter.busy {ProgressView("Exporting",value:exporter.progress); Button("Cancel") {exporter.cancel()}}
                     }
-                    DisclosureGroup("Film adjustments",isExpanded:.constant(true)) {AdjustmentsView()}.disabled(exporter.busy)
+                    DisclosureGroup("Film adjustments",isExpanded:.constant(true)) {AdjustmentsView()}.disabled(exporter.busy || photoExporting)
                 }.padding()
             }.navigationTitle("Editor")
             .onChange(of:selection) {_,item in Task {await load(item)}}
-            .task(id:store.state.settings) { await updatePreview() }
+            .task(id:store.state.settings) {
+                try? await Task.sleep(nanoseconds:150_000_000)
+                if !Task.isCancelled {await updatePreview()}
+            }
+            .task {
+                if ProcessInfo.processInfo.arguments.contains("--editor-fixture"), let url = Bundle.main.url(forResource:"EditorFixture",withExtension:"jpg") {
+                    original = UIImage(contentsOfFile:url.path); await updatePreview()
+                }
+            }
             .fileImporter(isPresented:$importing,allowedContentTypes:[.image,.movie]) {result in
                 switch result {
                 case .success(let url): Task {await loadFile(url)}
@@ -225,13 +236,15 @@ struct EditorScreen: View {
         let settings = store.state.settings, lut = store.selectedLUT
         if let original {
             let renderer = FilmRenderer()
-            do {let result = try await Task.detached {try renderer.photo(original,settings:settings,lut:lut)}.value; if !Task.isCancelled {preview = result}} catch {store.error = error.localizedDescription}
+            do {let result = try await Task.detached {try renderer.preview(original,settings:settings,lut:lut)}.value; if !Task.isCancelled {preview = result}} catch {store.error = error.localizedDescription}
         }
         if let item = player?.currentItem {
             let renderer = FilmRenderer()
             item.videoComposition = AVVideoComposition(asset:item.asset) {request in
                 do {
-            let result = try renderer.render(request.sourceImage,settings:settings,lut:lut,time:request.compositionTime.seconds)
+            let source = request.sourceImage
+                let previewScale = min(1,1280/max(source.extent.width,source.extent.height))
+                let result = try renderer.render(source.transformed(by:CGAffineTransform(scaleX:previewScale,y:previewScale)),settings:settings,lut:lut,time:request.compositionTime.seconds)
                 let target = request.sourceImage.extent, scale = min(request.sourceImage.extent.width/result.extent.width,request.sourceImage.extent.height/result.extent.height)
                 let fit = result.transformed(by:CGAffineTransform(scaleX:scale,y:scale))
                 let centered = fit.transformed(by:CGAffineTransform(translationX:(target.width-fit.extent.width)/2,y:(target.height-fit.extent.height)/2))
@@ -241,8 +254,11 @@ struct EditorScreen: View {
         }
     }
     private func export() {
+        guard !exporter.busy, !photoExporting else {return}
+        photoExporting = original != nil
         let settings = store.state.settings, lut = store.selectedLUT
         Task { @MainActor in
+            defer {photoExporting = false}
             do {
                 if let video {let target = store.destination("mov"); try await exporter.exportVideo(source:video,destination:target,settings:settings,lut:lut,start:start,end:end,resolution:resolution); saved = target}
                 else if let original {let image = try await Task.detached {try FilmRenderer().photo(original,settings:settings,lut:lut)}.value; let target = store.destination("jpg"); guard let data = image.jpegData(compressionQuality:0.97) else {throw PortError.message("Image encoding failed.")}; try data.write(to:target,options:.atomic); saved = target}

@@ -51,6 +51,8 @@ public final class ReferenceMain {
       }
       byte[] source=pixels(0);int pattern=c.optInt("pattern",0);
       for(int y=0;y<H;y++)for(int x=0;x<W;x++){int n=(y*W+x)*4,k=y*W+x;if(pattern==1){source[n]=(byte)((k%23)*255/22);source[n+1]=(byte)(((k/23)%23)*255/22);source[n+2]=(byte)(((k/529)%23)*255/22);}else if(pattern==2){source[n]=source[n+1]=source[n+2]=(byte)(x*255/127);}}
+      if(pattern==3)source=asset("ReferenceScene.rgba");
+      if(c.has("inputCase")){try(FileInputStream in=new FileInputStream(new File(root,c.getString("inputCase")+".rgba"))){int offset=0,n;while(offset<source.length && (n=in.read(source,offset,source.length-offset))>0)offset+=n;if(offset!=source.length)throw new IOException("Short chain fixture");}}
       GLES30.glActiveTexture(GLES30.GL_TEXTURE0);GLES30.glBindTexture(GLES30.GL_TEXTURE_2D,ids[0]);GLES30.glTexSubImage2D(GLES30.GL_TEXTURE_2D,0,0,0,W,H,GLES30.GL_RGBA,GLES30.GL_UNSIGNED_BYTE,buffer(source));
       String shaderName=c.getString("shader");if(!programs.containsKey(shaderName))programs.put(shaderName,program(shaderName));int p=programs.get(shaderName);GLES30.glUseProgram(p);GLES30.glViewport(0,0,W,H);
       JSONObject fs=c.getJSONObject("floats");for(Iterator<String> keys=fs.keys();keys.hasNext();){String key=keys.next();GLES30.glUniform1f(GLES30.glGetUniformLocation(p,key),(float)fs.getDouble(key));}

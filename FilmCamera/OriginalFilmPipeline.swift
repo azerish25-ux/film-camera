@@ -296,6 +296,14 @@ final class OriginalFilmPipeline {
                 }
                 bytes[n+3] = kind == 2 ? 0 : 255
             }}
+            if kind == 0, config.pattern == 3 {
+                guard let url = Bundle.main.url(forResource:"ReferenceScene",withExtension:"rgba") else {throw PortError.message("Missing scene fixture")}
+                bytes = Array(try Data(contentsOf:url))
+            }
+            if kind == 0, let input = config.inputCase {
+                guard let url = Bundle.main.url(forResource:input,withExtension:"rgba") else {throw PortError.message("Missing chain fixture \(input)")}
+                bytes = Array(try Data(contentsOf:url))
+            }
             let texture = kind == 2 ? textures[7] : textures[kind]
             glActiveTexture(GLenum(GL_TEXTURE0)); glBindTexture(GLenum(GL_TEXTURE_2D),texture)
             bytes.withUnsafeBytes {glTexSubImage2D(GLenum(GL_TEXTURE_2D),0,0,0,128,96,GLenum(GL_RGBA),GLenum(GL_UNSIGNED_BYTE),$0.baseAddress)}

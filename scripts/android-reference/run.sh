@@ -9,6 +9,7 @@ JAR="$SDK/platforms/android-29/android.jar"
 WORK="$ROOT/scripts/android-reference/out"
 REMOTE=/data/local/tmp/film-reference
 mkdir -p "$WORK/classes" "$WORK/dex" "$WORK/assets" "$ROOT/android-reference"
+cp FilmCamera/Resources/ReferenceScene.rgba "$WORK/assets/"
 cp FilmCamera/Resources/Shaders/*.glsl "$WORK/assets/"
 cp FilmCamera/Resources/OriginalAssets/*.lut "$WORK/assets/"
 cp FilmCamera/Resources/reference-cases.json "$WORK/assets/"

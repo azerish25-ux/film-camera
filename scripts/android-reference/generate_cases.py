@@ -23,6 +23,7 @@ for index,film in enumerate(films):
             variant('film-lut-saturation',f'film-{index:02d}-p{pattern}-s{saturation}',
                     look=film['name'],lookAsset=film['asset'],pattern=pattern,
                     floats={'saturation':saturation})
+    variant('film-lut-saturation',f'film-{index:02d}-scene',look=film['name'],lookAsset=film['asset'],pattern=3,floats={'saturation':1})
     # Actual colored LUT + grain, not just the neutral lookup table.
     variant('grain',f'film-{index:02d}-grain',look=film['name'],lookAsset=film['asset'],pattern=1)
 # Branches and control endpoints, plus intermediate values where sampling matters.
@@ -54,6 +55,22 @@ for template in ('grain','film-lut-saturation'):
                 'scratch_v.x':[20+i for i in range(8)],'scratch_v.t':[0.5]*8})
 for v in (0,0.5,1):
     variant('tone-curve',f'tone-leaks-{v}',floats={'expiredFoggingAmp':v,'lightLeak.amp':v,'holes.amp':v})
+# Independent pass chain matching the production neutral pipeline, followed by
+# every original film. Integration tests render through FilmRenderer, not probe().
+variant('exposure-vignette','chain-exposure',pattern=1,
+        floats={'pseudoExposure':1,'contrast':1,'vignetteFalloff':0})
+variant('gate-super16','chain-gate',shader='frame_c_f25855h',inputCase='chain-exposure')
+import math
+white=[1,min(1,(99.4708025861*math.log(66)-161.1195681661)/255),1]
+curve=[]
+for i in range(66):
+    sample=0 if i==0 else 255 if i==65 else (i-1)*4
+    curve.extend(min(1,max(0,w))*sample/255 for w in white)
+variant('tone-curve','chain-tone',inputCase='chain-gate',
+        floats={'filmBreathR':0,'filmBreathG':0,'filmBreathB':0,'holes.amp':0},arrays={'curve':curve})
+for index,film in enumerate(films):
+    variant('film-lut-saturation',f'chain-film-{index:02d}',inputCase='chain-tone',
+        look=film['name'],lookAsset=film['asset'],floats={'saturation':1})
 assert len({c['name'] for c in cases}) == len(cases)
 (ROOT/'FilmCamera/Resources/reference-cases.json').write_text(json.dumps(cases,indent=2)+'\n')
 print(f'Generated {len(cases)} shader cases covering all {len(films)} films')

@@ -33,7 +33,8 @@ final class OriginalAssetTests: XCTestCase {
         XCTAssertEqual(rgb[0],0)
     }
     func testNeutralPipelinePreservesNonblackSourcePixels() throws {
-        let bytes = Array(repeating:[UInt8(76),128,179,255],count:128*96).flatMap {$0}
+        let pixel: [UInt8] = [76,128,179,255]
+        let bytes = Array(repeating:pixel,count:128*96).flatMap {$0}
         let source = CIImage(bitmapData:Data(bytes),bytesPerRow:128*4,size:CGSize(width:128,height:96),format:.RGBA8,colorSpace:CGColorSpaceCreateDeviceRGB())
         var settings = FilmSettings(); settings["blur"] = 0; settings["scratches"] = 0; settings["verticalScratch"] = 1
         settings.curveY = settings.curveX

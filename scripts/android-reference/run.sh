@@ -27,7 +27,7 @@ for i in $(seq 1 90); do
   sleep 2
 done
 adb shell run-as com.azerish.reference test -f files/done
-for name in exposure-vignette chromatic halation-high halation-blur halation-merge film-blur film-lut-saturation grain; do
+for name in $(python3 -c 'import json; print(" ".join(x["name"] for x in json.load(open("FilmCamera/Resources/reference-cases.json"))))'); do
   adb exec-out run-as com.azerish.reference cat "files/$name.rgba" > "android-reference/$name.rgba"
 done
 adb exec-out run-as com.azerish.reference cat files/renderer.txt > android-reference/renderer.txt

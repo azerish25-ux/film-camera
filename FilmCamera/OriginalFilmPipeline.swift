@@ -278,7 +278,10 @@ final class OriginalFilmPipeline {
             for (key,value) in config.floats {f(p,key,value)}
             for (key,value) in config.vectors {v(p,key,value[0],value[1])}
             for (key,value) in config.ints {i(p,key,value)}
-            for (key,value) in config.arrays {array(p,key,value)}
+            for (key,value) in config.arrays {
+                if key == "curve" {value.withUnsafeBufferPointer {glUniform3fv(glGetUniformLocation(p,key),GLsizei(value.count/3),$0.baseAddress)}}
+                else {array(p,key,value)}
+            }
             for (unit,key) in config.samplers.keys.sorted().enumerated() {
                 let name = config.samplers[key]!
                 bind(p,key,lookup[name]!,unit,name == "lut" ? GLenum(GL_TEXTURE_3D) : GLenum(GL_TEXTURE_2D))

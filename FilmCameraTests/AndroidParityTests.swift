@@ -10,6 +10,7 @@ final class AndroidParityTests: XCTestCase {
             let expectedURL = try XCTUnwrap(Bundle.main.url(forResource:config.name,withExtension:"rgba"))
             let expected = Array(try Data(contentsOf:expectedURL)), actual = Array(try pipeline.probe(config))
             XCTAssertEqual(actual.count,expected.count)
+            let pixels = XCTAttachment(data:Data(actual),uniformTypeIdentifier:"public.data"); pixels.name=config.name+".rgba"; pixels.lifetime = .keepAlways; add(pixels)
             let differences = zip(expected,actual).enumerated().filter {$0.offset%4 != 3}.map {abs(Int($0.element.0)-Int($0.element.1))}
             let mean = Double(differences.reduce(0,+))/Double(differences.count), maximum = differences.max() ?? 0
             XCTAssertLessThan(mean,2.5,config.name); XCTAssertLessThanOrEqual(maximum,16,config.name)

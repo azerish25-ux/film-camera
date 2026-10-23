@@ -19,7 +19,7 @@ jobs:
           DEVICE=$(xcrun simctl list devices available -j | python3 -c 'import json,sys; d=json.load(sys.stdin); print(next(x["udid"] for group in d["devices"].values() for x in group if "iPhone" in x["name"]))')
           xcrun simctl boot "$DEVICE" || true
           xcrun simctl bootstatus "$DEVICE" -b
-          xcodebuild -parallel-testing-enabled NO -project FilmCamera.xcodeproj -scheme FilmCamera -destination "platform=iOS Simulator,id=$DEVICE" -skip-testing:FilmCameraTests/AndroidParityTests -derivedDataPath build/simulator -resultBundlePath build/SwiftTests.xcresult CODE_SIGNING_ALLOWED=NO test 2>&1 | tee swift-validation.log
+          xcodebuild -parallel-testing-enabled NO -project FilmCamera.xcodeproj -scheme FilmCamera -destination "platform=iOS Simulator,id=$DEVICE" -derivedDataPath build/simulator -resultBundlePath build/SwiftTests.xcresult CODE_SIGNING_ALLOWED=NO test 2>&1 | tee swift-validation.log
       - name: Export visual test evidence
         if: always()
         run: |

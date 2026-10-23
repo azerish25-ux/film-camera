@@ -52,13 +52,14 @@ final class FilmRenderer {
         guard let cg = context.createCGImage(result,from:result.extent) else { throw PortError.message("Cannot render image.") }
         return UIImage(cgImage:cg)
     }
-    func videoComposition(asset: AVAsset, settings: FilmSettings, lut: CubeLUT?, preview: Bool = false) -> AVMutableVideoComposition {
+    func videoComposition(asset: AVAsset, settings: FilmSettings, lut: CubeLUT?, preview: Bool = false, histogram: (([Float]) -> Void)? = nil) -> AVMutableVideoComposition {
         let composition = AVMutableVideoComposition(asset:asset) {[self] request in
             do {
                 let raw = request.sourceImage
                 let scale = preview ? min(1,1280/max(raw.extent.width,raw.extent.height)) : 1
                 let input = raw.transformed(by:CGAffineTransform(scaleX:scale,y:scale))
                 let image = try render(input,settings:settings,lut:lut,time:request.compositionTime.seconds)
+                if let histogram {histogram(FilmHistogram.values(image))}
                 let target = CGRect(origin:.zero,size:request.renderSize)
                 let fitScale = min(target.width/image.extent.width,target.height/image.extent.height)
                 let fitted = image.transformed(by:CGAffineTransform(scaleX:fitScale,y:fitScale))

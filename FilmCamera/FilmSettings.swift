@@ -136,3 +136,13 @@ extension CubeLUT {
         return output
     }
 }
+extension FilmSettings {
+    mutating func validate() {
+        let saved = values; values = [:]
+        for (key,value) in saved {self[key] = value}
+        let validCurve = curveX.count == 6 && curveY.count == 6 && curveX.first == 0 && curveX.last == 255 && curveX.allSatisfy({$0.isFinite}) && curveY.allSatisfy({$0.isFinite}) && zip(curveX,curveX.dropFirst()).allSatisfy({$0 < $1})
+        if !validCurve {curveX = [0,50,100,150,200,255]; curveY = [30,50,100,150,200,255]}
+        curveY = curveY.map {min(255,max(0,$0))}
+        if !OriginalFilm.all.contains(where:{$0.name == look}) {look = "Normal Mode"}
+    }
+}

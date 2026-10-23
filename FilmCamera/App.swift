@@ -31,10 +31,15 @@ struct AdjustmentsView: View {
                 ForEach(store.state.luts) {Text($0.name).tag(Optional($0.id))}
             }
             DisclosureGroup("Characteristic curve") {
+                CurvePlot(x:store.state.settings.curveX,y:store.state.settings.curveY)
                 ForEach(0..<6,id:\.self) {index in
                     VStack(alignment:.leading) {
-                        Text("Input \(Int(store.state.settings.curveX[index]))")
-                        Slider(value:$store.state.settings.curveY[index],in:0...255).accessibilityLabel("Curve point \(index+1)")
+                        Text("Point \(index+1): input \(Int(store.state.settings.curveX[index])), output \(Int(store.state.settings.curveY[index]))")
+                        if index > 0 && index < 5 {
+                            let lower = store.state.settings.curveX[index-1]+1, upper = store.state.settings.curveX[index+1]-1
+                            if lower < upper {Slider(value:$store.state.settings.curveX[index],in:lower...upper,step:1).accessibilityLabel("Curve input point \(index+1)")}
+                        }
+                        Slider(value:$store.state.settings.curveY[index],in:0...255).accessibilityLabel("Curve output point \(index+1)")
                     }
                 }
             }
@@ -72,6 +77,7 @@ struct CameraScreen: View {
     @State private var fps = 24.0
     @State private var lens = "Wide"
     @State private var fourK = false
+    @State private var showHistogram = false
     var body: some View {
         NavigationStack {
             ScrollView {
@@ -84,7 +90,7 @@ struct CameraScreen: View {
                     }.frame(height:360).clipShape(RoundedRectangle(cornerRadius:8))
                     Picker("Capture mode",selection:$videoMode) {Text("Photo").tag(false); Text("Video").tag(true)}.pickerStyle(.segmented).disabled(camera.recording || exporter.busy)
                     HStack(spacing:44) {
-                        Button {camera.flip()} label: {Image(systemName:"arrow.triangle.2.circlepath.camera").font(.title2)}.accessibilityLabel("Switch camera").disabled(camera.recording)
+                        Button {camera.flip(); controls()} label: {Image(systemName:"arrow.triangle.2.circlepath.camera").font(.title2)}.accessibilityLabel("Switch camera").disabled(camera.recording)
                         Button(action:capture) {Image(systemName:camera.recording ? "stop.circle.fill" : videoMode ? "record.circle" : "circle.inset.filled").font(.system(size:66)).foregroundStyle(videoMode ? .red : .white)}.accessibilityLabel(camera.recording ? "Stop recording" : videoMode ? "Record video" : "Take photo").disabled(!camera.ready || exporter.busy || camera.processing)
                         Button {tools.toggle()} label: {Image(systemName:"slider.horizontal.3").font(.title2)}.accessibilityLabel("Camera controls")
                     }
@@ -114,8 +120,10 @@ struct CameraScreen: View {
     private var cameraControls: some View {
         VStack(alignment:.leading) {
             Text("Hardware controls").font(.headline)
-            Picker("Lens",selection:$lens) {ForEach(camera.availableLenses,id:\.self) {Text($0).tag($0)}}.onChange(of:lens) {_,value in camera.selectLens(value)}
-            Toggle("Record in 4K",isOn:$fourK).onChange(of:fourK) {_,value in camera.setResolution(value)}
+            Toggle("RGB histogram",isOn:$showHistogram).onChange(of:showHistogram) {_,value in camera.enableHistogram(value)}
+            if showHistogram {HistogramPlot(values:camera.histogram)}
+            Picker("Lens",selection:$lens) {ForEach(camera.availableLenses,id:\.self) {Text($0).tag($0)}}.onChange(of:lens) {_,value in camera.selectLens(value); controls()}
+            Toggle("Record in 4K",isOn:$fourK).onChange(of:fourK) {_,value in camera.setResolution(value); controls()}
             if camera.ready && !camera.audioEnabled {Label("Microphone access is disabled. Video will have no sound.",systemImage:"mic.slash").font(.caption)}
             Text("Available ranges depend on the selected camera.").font(.caption).foregroundStyle(.secondary)
             Text("Zoom"); Slider(value:$zoom,in:1...8,onEditingChanged:{_ in controls()})
@@ -163,6 +171,8 @@ struct EditorScreen: View {
     @State private var saved: URL?
     @State private var importing = false
     @State private var photoExporting = false
+    @State private var histogram: [Float] = []
+    @State private var showHistogram = false
     var body: some View {
         NavigationStack {
             ScrollView {
@@ -170,6 +180,8 @@ struct EditorScreen: View {
                     if let player {VideoPlayer(player:player).frame(height:280)}
                     else if let image = comparison ? original : preview {Image(uiImage:image).resizable().scaledToFit().frame(maxHeight:360)}
                     else {ContentUnavailableView("Import a photo or film",systemImage:"film",description:Text("Apply film effects and export a local copy."))}
+                    Toggle("RGB histogram",isOn:$showHistogram).onChange(of:showHistogram) {_,_ in Task {await updatePreview()}}
+                    if showHistogram {HistogramPlot(values:histogram)}
                     HStack {
                         PhotosPicker(selection:$selection,matching:.any(of:[.images,.videos])) {Label("Photos",systemImage:"photo")}
                         Button("Files") {importing = true}
@@ -236,11 +248,14 @@ struct EditorScreen: View {
         let settings = store.state.settings, lut = store.selectedLUT
         if let original {
             let renderer = FilmRenderer()
-            do {let result = try await Task.detached {try renderer.preview(original,settings:settings,lut:lut)}.value; if !Task.isCancelled {preview = result}} catch {store.error = error.localizedDescription}
+            do {let result = try await Task.detached {try renderer.preview(original,settings:settings,lut:lut)}.value; if !Task.isCancelled {
+                    preview = result
+                    if showHistogram, let cg = result.cgImage {histogram = FilmHistogram.values(CIImage(cgImage:cg))}
+                }} catch {store.error = error.localizedDescription}
         }
         if let item = player?.currentItem {
             let renderer = FilmRenderer()
-            item.videoComposition = renderer.videoComposition(asset:item.asset,settings:settings,lut:lut,preview:true)
+            item.videoComposition = renderer.videoComposition(asset:item.asset,settings:settings,lut:lut,preview:true,histogram:showHistogram ? {bins in DispatchQueue.main.async {histogram = bins}} : nil)
         }
     }
     private func export() {

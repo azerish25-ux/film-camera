@@ -42,7 +42,13 @@ final class OriginalFilmPipeline {
             return try shaderText("c_f25860m").replacingOccurrences(of:"//{frame_func}",with:shaderText(function))
         }
         guard let url = Bundle.main.url(forResource:name,withExtension:"glsl") else {throw PortError.message("Missing original shader \(name)")}
-        return try String(contentsOf:url,encoding:.utf8).components(separatedBy:.newlines).filter {!$0.contains("#extension GL_OES_EGL_image_external")}.joined(separator:"\n").replacingOccurrences(of:"samplerExternalOES",with:"sampler2D")
+        let source = try String(contentsOf:url,encoding:.utf8).components(separatedBy:.newlines).filter {!$0.contains("#extension GL_OES_EGL_image_external")}.joined(separator:"\n").replacingOccurrences(of:"samplerExternalOES",with:"sampler2D")
+        // Android's reference driver evaluates the recovered float math at 32 bits.
+        // Request that precision explicitly on iOS rather than accepting half precision.
+        let precise = source.replacingOccurrences(of:"\\b(lowp|mediump)\\b",with:"highp",options:.regularExpression)
+        // Spell nearest/repeat lookup as integer texel access. The original noise
+        // coordinates land on texel boundaries, whose hardware tie handling differs.
+        return precise.replacingOccurrences(of:"textureLod\\s*\\(\\s*noiseTexture\\s*,\\s*(\\w+)\\s*,\\s*0\\.0\\s*\\)",with:"texelFetch(noiseTexture, ivec2(mod(floor($1 * vec2(1024.0)), vec2(1024.0))), 0)",options:.regularExpression)
     }
     private func compile(_ source: String, type: GLenum) throws -> GLuint {
         let shader = glCreateShader(type)

@@ -16,6 +16,13 @@ struct LibraryState: Codable {
             try FileManager.default.createDirectory(at:self.root,withIntermediateDirectories:true)
             let file = self.root.appendingPathComponent("library.json")
             if FileManager.default.fileExists(atPath:file.path) { state = try JSONDecoder().decode(LibraryState.self,from:Data(contentsOf:file)) }
+            state.settings.validate()
+            for index in state.presets.indices {state.presets[index].settings.validate()}
+            let lutIDs = Set(state.luts.map(\.id))
+            if let id = state.settings.lutID, !lutIDs.contains(id) {state.settings.lutID = nil}
+            for index in state.presets.indices {
+                if let id = state.presets[index].settings.lutID, !lutIDs.contains(id) {state.presets[index].settings.lutID = nil}
+            }
             refresh()
         } catch { self.error = error.localizedDescription }
     }

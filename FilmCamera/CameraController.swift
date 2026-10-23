@@ -8,6 +8,8 @@ final class CameraController: NSObject, ObservableObject, AVCaptureVideoDataOutp
     @Published var recording = false
     @Published var processing = false
     @Published var audioEnabled = false
+    @Published var histogram: [Float] = []
+    private var histogramEnabled = false
     @Published var availableLenses: [String] = ["Wide"]
     private var selectedLens = "Wide"
     let session = AVCaptureSession()
@@ -53,6 +55,8 @@ final class CameraController: NSObject, ObservableObject, AVCaptureVideoDataOutp
         DispatchQueue.main.async {UIDevice.current.endGeneratingDeviceOrientationNotifications()}
     }
     func update(_ settings: FilmSettings, lut: CubeLUT?) { lock.lock(); film = settings; self.lut = lut; lock.unlock() }
+    func enableHistogram(_ enabled: Bool) {lock.lock(); histogramEnabled = enabled; lock.unlock()}
+    private func needsHistogram() -> Bool {lock.lock(); defer {lock.unlock()}; return histogramEnabled}
     private func current() -> (FilmSettings,CubeLUT?) { lock.lock(); defer { lock.unlock() }; return (film,lut) }
     func start() {
         if ProcessInfo.processInfo.arguments.contains("--ui-testing") || ProcessInfo.processInfo.environment["XCTestConfigurationFilePath"] != nil { return }
@@ -209,7 +213,8 @@ final class CameraController: NSObject, ObservableObject, AVCaptureVideoDataOutp
         let state = current(), image = try renderer.render(source,settings:state.0,lut:state.1,time:time.seconds)
         let scale = min(1,720/image.extent.width)
         let small = image.transformed(by:CGAffineTransform(scaleX:scale,y:scale))
-        if let cg = renderer.context.createCGImage(small,from:small.extent) { DispatchQueue.main.async { self.preview = UIImage(cgImage:cg) } }
+        let bins = needsHistogram() ? FilmHistogram.values(image) : []
+        if let cg = renderer.context.createCGImage(small,from:small.extent) { DispatchQueue.main.async { self.preview = UIImage(cgImage:cg); self.histogram = bins } }
         } catch {report(error)}
     }
     private func report(_ error: Error) { DispatchQueue.main.async { self.message = error.localizedDescription } }

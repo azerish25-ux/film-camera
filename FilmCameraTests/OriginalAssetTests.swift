@@ -65,6 +65,25 @@ final class OriginalAssetTests: XCTestCase {
         XCTAssertEqual(Double(output[(24*128+64)*4]),200,accuracy:15)
         XCTAssertEqual(Double(output[(72*128+64)*4]),40,accuracy:15)
     }
+    func testRGBHistogramMatchesSourceChannels() throws {
+        let pixel: [UInt8] = [76,128,179,255]
+        let bytes = Array(repeating:pixel,count:128*96).flatMap {$0}
+        let image = CIImage(bitmapData:Data(bytes),bytesPerRow:512,size:CGSize(width:128,height:96),format:.RGBA8,colorSpace:CGColorSpaceCreateDeviceRGB())
+        let bins = FilmHistogram.values(image)
+        guard bins.count == 1024 else {XCTFail("Histogram did not return 256 RGBA bins"); return}
+        for (channel,expected) in [76,128,179].enumerated() {
+            let peak = (0..<256).max {bins[$0*4+channel] < bins[$1*4+channel]} ?? -1
+            XCTAssertEqual(Double(peak),Double(expected),accuracy:1)
+            XCTAssertGreaterThan(bins[peak*4+channel],0)
+        }
+    }
+    func testSavedCurveValidationRepairsMalformedData() {
+        var settings = FilmSettings(); settings.curveX = [0,1]; settings.curveY = [1]
+        settings.values["exposure"] = 100; settings.values["grain"] = .nan
+        settings.validate()
+        XCTAssertEqual(settings.curveX.count,6); XCTAssertEqual(settings.curveY.count,6)
+        XCTAssertEqual(settings["exposure"],3); XCTAssertEqual(settings["grain"],0)
+    }
     func testEveryPresetRendersWithItsOriginalAssets() throws {
         let source = CIImage(color:CIColor(red:0.3,green:0.5,blue:0.7)).cropped(to:CGRect(x:0,y:0,width:192,height:144))
         let renderer = FilmRenderer()

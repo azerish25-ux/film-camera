@@ -1,6 +1,7 @@
 import XCTest
 import AVFoundation
 import CoreImage
+import UIKit
 @testable import FilmCamera
 
 final class MediaExportTests: XCTestCase {
@@ -56,8 +57,10 @@ final class MediaExportTests: XCTestCase {
         for index in 0..<count {u16(UInt16(bitPattern:Int16(sin(Double(index)*2*Double.pi*440/44100)*8000)))}
         try wave.write(to:wav)
         let videoAsset=AVURLAsset(url:raw), audioAsset=AVURLAsset(url:wav), composition=AVMutableComposition()
-        let vt = try XCTUnwrap(try await videoAsset.loadTracks(withMediaType:.video).first)
-        let at = try XCTUnwrap(try await audioAsset.loadTracks(withMediaType:.audio).first)
+        let videoTracks = try await videoAsset.loadTracks(withMediaType:.video)
+        let audioTracks = try await audioAsset.loadTracks(withMediaType:.audio)
+        let vt = try XCTUnwrap(videoTracks.first)
+        let at = try XCTUnwrap(audioTracks.first)
         let range = CMTimeRange(start:.zero,duration:CMTime(value:12,timescale:24))
         try composition.addMutableTrack(withMediaType:.video,preferredTrackID:kCMPersistentTrackID_Invalid)?.insertTimeRange(range,of:vt,at:.zero)
         try composition.addMutableTrack(withMediaType:.audio,preferredTrackID:kCMPersistentTrackID_Invalid)?.insertTimeRange(range,of:at,at:.zero)

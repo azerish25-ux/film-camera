@@ -1,4 +1,12 @@
-# Port status and validation plan
-The Swift camera/editor is implemented. GitHub macOS device builds pass. Simulator processing, LUT parsing and local persistence tests pass; a preset-keyboard UI navigation failure is being repaired.
-Recovered original GLSL is executed with external sampler declarations adapted to 2D iOS textures. All 88 original film choices and 10 original camera presets are recovered. Original frame masks and video overlays are recovered. Functional parity and cross-platform pixel comparisons remain in progress; this is not a completion claim.
-Remaining: validate frame and temporal processing against Android, add media export integration coverage and UI flow evidence, audit all feature controls, sync the verified project to D:/IOS APPS/IOS APP 1/IOS Port and delete temporary C: development files after verification.
+# Port implementation and delivery
+
+Completed:
+
+1. Inventoried the active fully local Android build and recovered its film-processing source/data.
+2. Implemented native Swift camera, editor, local gallery, presets, LUT imports and color-analysis controls.
+3. Ported the recovered shaders, original RGB tables/noise, animated gates/burns, curves and temporal state.
+4. Validated original frame-container dimensions, display row order, source color values, photos, audio-preserving video trim/export, persistence and UI workflows.
+5. Built the iPhone app and ran iPhone/Android emulator comparisons through GitHub Actions macOS. Both final workflows passed; see VALIDATION.md.
+6. Delivered the ready-to-open Xcode project and verified source/build/evidence files in the requested IOS Port directory on D:.
+
+The port preserves the Android build's local, unrestricted operation. Platform camera/codec behavior and exact GPU color-key ties are documented in PROCESSING-PROVENANCE.md and FEATURE-PARITY.md.

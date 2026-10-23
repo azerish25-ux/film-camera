@@ -10,4 +10,4 @@ The iOS renderer executes the recovered film algorithms with the original 88 col
 
 CI uses no signing secrets. The unsigned IPA requires your Apple development team/provisioning before installation on a physical iPhone. All application media and presets stay local.
 
-Final verification evidence is recorded in `docs/VALIDATION.md`.
+[Final verification](docs/VALIDATION.md): both macOS workflows passed, with 20 tests and 17 Android/iOS shader fixtures. See the [feature map](docs/FEATURE-PARITY.md) and [delivery inventory](docs/DELIVERY.md).

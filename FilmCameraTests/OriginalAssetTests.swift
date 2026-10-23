@@ -1,5 +1,6 @@
 import XCTest
 import CoreImage
+import UIKit
 @testable import FilmCamera
 final class OriginalAssetTests: XCTestCase {
     func testCompleteOriginalCatalogAndPresets() throws {

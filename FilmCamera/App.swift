@@ -38,7 +38,13 @@ struct AdjustmentsView: View {
                     }
                 }
             }
-            ForEach(Adjustment.all) { item in
+            Toggle("Film burn",isOn:Binding(get:{store.state.settings["burn"] > 0.5},set:{store.state.settings["burn"] = $0 ? 1 : 0}))
+            if store.state.settings["burn"] > 0.5 {
+                Picker("Film burn roll",selection:Binding(get:{Int(store.state.settings["burnClip"])},set:{store.state.settings["burnClip"] = Double($0)})) {
+                    ForEach(0..<7,id:\.self) {Text("Roll \($0+1)").tag($0)}
+                }
+            }
+            ForEach(Adjustment.all.filter {!["burn","burnClip"].contains($0.id)}) { item in
                 VStack(alignment:.leading) {
                     HStack { Text(item.label); Spacer(); Text(store.state.settings[item.id],format:.number.precision(.fractionLength(2))).foregroundStyle(.secondary).monospacedDigit() }
                     Slider(value:Binding(get:{store.state.settings[item.id]},set:{store.state.settings[item.id] = $0}),in:item.range).accessibilityLabel(item.label)

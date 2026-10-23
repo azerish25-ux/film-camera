@@ -218,9 +218,10 @@ final class OriginalFilmPipeline {
                 try draw("c_f25856i",to:target) {p in bind(p,"blurTempTexture",current); v(p,"blurResInv",1/Double(w),1/Double(h)); f(p,"blurOffset",Double(offset)+0.5); f(p,"blurFramePadding",s.frame.blurPadding-dynamics.shiftX)}; current = target
             }
         }
+        let burn = s["burn"] > 0.5 ? try imageTexture(FilmBurn.clips[min(6,max(0,Int(s["burnClip"])))],time:time) : textures[7]
         glActiveTexture(GLenum(GL_TEXTURE15)); glBindTexture(GLenum(GL_TEXTURE_2D),textures[1]); glGenerateMipmap(GLenum(GL_TEXTURE_2D))
         try draw("c_f25861n",to:textures[5]) {p in
-            bind(p,"textureInPass3",current); bind(p,"textureLuminance",textures[1],2); f(p,"luminanceMipmapLevel",min(8,floor(log2(Double(max(w,h))))+1)); bind(p,"framePerforationsTexture",mask,3); bind(p,"lightLeakTexture",textures[7],4)
+            bind(p,"textureInPass3",current); bind(p,"textureLuminance",textures[1],2); f(p,"luminanceMipmapLevel",min(8,floor(log2(Double(max(w,h))))+1)); bind(p,"framePerforationsTexture",mask,3); bind(p,"lightLeakTexture",burn,4); i(p,"usingLightLeak",s["burn"] > 0.5 ? 1 : 0)
             var curve = Self.curve(temperature:s["temperature"],tint:s["tint"],samples:FilmCurve.samples(x:s.curveX,y:s.curveY))
             curve.withUnsafeMutableBufferPointer {glUniform3fv(glGetUniformLocation(p,"curve"),66,$0.baseAddress)}
             for (index,channel) in ["R","G","B"].enumerated() {f(p,"filmBreath"+channel,dynamics.breathRGB[index])}

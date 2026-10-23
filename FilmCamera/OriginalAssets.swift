@@ -5,10 +5,10 @@ import CoreImage
 final class OriginalAssetSampler {
     private var generators: [String: AVAssetImageGenerator] = [:]
     private var frames: [String: (Int,CGImage)] = [:]
+    private var durations: [String:Double] = [:]
+    private var rates: [String:Double] = [:]
     func frame(_ name: String, time: Double) throws -> CGImage {
         guard let url = Bundle.main.url(forResource:name,withExtension:"mp4") else {throw PortError.message("Missing original frame film \(name)")}
-        let index = Int(max(0,time)*24)
-        if let cached = frames[name], cached.0 == index {return cached.1}
         let generator: AVAssetImageGenerator
         if let cached = generators[name] {generator = cached}
         else {
@@ -16,10 +16,14 @@ final class OriginalAssetSampler {
             generator = AVAssetImageGenerator(asset:asset)
             generator.requestedTimeToleranceBefore = .zero; generator.requestedTimeToleranceAfter = .zero
             generator.appliesPreferredTrackTransform = true; generators[name] = generator
+            durations[name] = asset.duration.seconds
+            rates[name] = Double(asset.tracks(withMediaType:.video).first?.nominalFrameRate ?? 24)
         }
-        let duration = generator.asset.duration.seconds
+        let duration = durations[name] ?? 0, rate = max(1,rates[name] ?? 24)
         let seconds = duration.isFinite && duration > 0 ? max(0,time).truncatingRemainder(dividingBy:duration) : 0
-        let image = try generator.copyCGImage(at:CMTime(seconds:seconds,preferredTimescale:600),actualTime:nil)
+        let index = Int(seconds*rate)
+        if let cached = frames[name], cached.0 == index {return cached.1}
+        let image = try generator.copyCGImage(at:CMTime(seconds:Double(index)/rate,preferredTimescale:60000),actualTime:nil)
         frames[name] = (index,image); return image
     }
 }
@@ -77,4 +81,8 @@ extension FilmFrame {
         default:return (1,1,0)
         }
     }
+}
+
+enum FilmBurn {
+    static let clips = ["fb6de461e7725ac8c6adc93ce40d9be33058f87b","7279f61845c546ea5a98521a24361e0fd7f1dab8","ebf7742d8724b91d81f26c099a7b84aafced9c9c","219d4a1d9955023fb00ee040507bfba392157e26","a071faf6bfb388993c6db6ead6942ffd89da9334","917d6d8b0e4a29253b6f0bcd1626c5f7483b1a78","0a4c51f6cc776d9a4c73e2eb83acf7e777e2b0e5"]
 }

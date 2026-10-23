@@ -47,7 +47,9 @@ struct Adjustment: Identifiable {
         .init(id:"leakRed",label:"Red light leak",range:0...1,initial:0),
         .init(id:"leakBlue",label:"Blue light leak",range:0...1,initial:0),
         .init(id:"leakHoles",label:"Perforation light leak",range:0...1,initial:0),
-        .init(id:"perfColor",label:"Perforation color",range:0...1,initial:0.85)
+        .init(id:"perfColor",label:"Perforation color",range:0...1,initial:0.85),
+        .init(id:"burn",label:"Film burn",range:0...1,initial:0),
+        .init(id:"burnClip",label:"Film burn clip",range:0...6,initial:1)
     ]
 }
 struct FilmSettings: Codable, Equatable {

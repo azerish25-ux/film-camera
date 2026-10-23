@@ -61,6 +61,7 @@ jobs:
         if: always()
         run: |
           mkdir -p build/deliverables
+          if [ -d build/Tests.xcresult ]; then xcrun xcresulttool export attachments --path build/Tests.xcresult --output-path build/deliverables/attachments; fi
           cp -R FilmCamera.xcodeproj build/deliverables/
           if [ -f FilmCamera/Assets.xcassets/AppIcon.appiconset/AppIcon.png ]; then cp FilmCamera/Assets.xcassets/AppIcon.appiconset/AppIcon.png build/deliverables/AppIcon.png; fi
           if [ -d FilmCamera/Resources/AndroidReference ]; then cp -R FilmCamera/Resources/AndroidReference build/deliverables/AndroidReference; fi

@@ -1,7 +1,7 @@
 import SwiftUI
 
 struct LibraryState: Codable {
-    var settings = FilmSettings()
+    var settings = FilmPreset.originals.first(where:{$0.name.contains("(default preset)")})?.settings ?? FilmSettings()
     var presets: [FilmPreset] = []
     var luts: [CubeLUT] = []
 }

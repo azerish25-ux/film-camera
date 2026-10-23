@@ -242,7 +242,7 @@ final class OriginalFilmPipeline {
             bind(p,"grainInputTexture",textures[5]); bind(p,"mLutID",lutTexture,1,GLenum(GL_TEXTURE_3D)); bind(p,"framePerforationsTexture",mask,2)
             f(p,"saturation",s["saturation"]); f(p,"perfColor",s["perfColor"]); v(p,"noiseRes",Double(w),Double(h))
             f(p,"grainSize",s["grainSize"]); f(p,"grainStrength",s["grain"]); f(p,"grainSmoohtness",s["grainSmoothness"]); f(p,"grainChroma",s["grainChroma"]); f(p,"grainDarkLevel",s["grainShadows"])
-            i(p,"seed",(Int(time*24)*71)%500)
+            i(p,"seed",(dynamics.frame*71)%500)
             f(p,"srandomX",dynamics.shiftX); f(p,"srandomY",dynamics.shiftY-dynamics.fastShake)
             i(p,"stain.x",dynamics.stainX); i(p,"stain.y",dynamics.stainY); i(p,"stain.w",dynamics.stainW); i(p,"stain.h",dynamics.stainH); i(p,"stain.time",dynamics.stainTime); array(p,"stain.mask",dynamics.stainMask)
             f(p,"scratch.x",dynamics.scratchX); f(p,"scratch.y",dynamics.scratchY); f(p,"scratch.vx",dynamics.scratchVX); f(p,"scratch.vy",dynamics.scratchVY); f(p,"scratch.len",dynamics.scratchLength); i(p,"scratch.time",dynamics.scratchTime); array(p,"scratch.D",dynamics.scratchD)
@@ -300,3 +300,4 @@ final class OriginalFilmPipeline {
         }
     }
 }
+

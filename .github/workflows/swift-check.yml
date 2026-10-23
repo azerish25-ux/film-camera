@@ -17,11 +17,18 @@ jobs:
           xcrun simctl boot "$DEVICE" || true
           xcrun simctl bootstatus "$DEVICE" -b
           xcodebuild -parallel-testing-enabled NO -project FilmCamera.xcodeproj -scheme FilmCamera -destination "platform=iOS Simulator,id=$DEVICE" -skip-testing:FilmCameraTests/AndroidParityTests -derivedDataPath build/simulator -resultBundlePath build/SwiftTests.xcresult CODE_SIGNING_ALLOWED=NO test 2>&1 | tee swift-validation.log
+      - name: Export visual test evidence
+        if: always()
+        run: |
+          if [ -d build/SwiftTests.xcresult ]; then
+            xcrun xcresulttool export attachments --path build/SwiftTests.xcresult --output-path build/attachments
+          fi
       - uses: actions/upload-artifact@v4
         if: always()
         with:
           name: swift-validation
           path: |
+            build/attachments
             build/SwiftTests.xcresult
             swift-validation.log
           retention-days: 7

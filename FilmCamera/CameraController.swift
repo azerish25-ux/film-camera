@@ -27,6 +27,31 @@ final class CameraController: NSObject, ObservableObject, AVCaptureVideoDataOutp
     var onMovie: ((URL,FilmSettings,CubeLUT?) -> Void)?
     private var lastFrame = CMTime.zero
     private var photoInFlight = false
+    private var rotationAngle = 90.0
+    private var orientationObserver: NSObjectProtocol?
+    override init() {
+        super.init()
+        UIDevice.current.beginGeneratingDeviceOrientationNotifications()
+        orientationObserver = NotificationCenter.default.addObserver(forName:UIDevice.orientationDidChangeNotification,object:nil,queue:.main) {[weak self] _ in
+            let orientation = UIDevice.current.orientation
+            let angle: Double
+            switch orientation {
+            case .portrait: angle = 90
+            case .portraitUpsideDown: angle = 270
+            case .landscapeLeft: angle = 0
+            case .landscapeRight: angle = 180
+            default: return
+            }
+            self?.queue.async {[weak self] in
+                guard let self, !self.movie.isRecording else {return}
+                self.rotationAngle = angle; self.orient()
+            }
+        }
+    }
+    deinit {
+        if let orientationObserver {NotificationCenter.default.removeObserver(orientationObserver)}
+        DispatchQueue.main.async {UIDevice.current.endGeneratingDeviceOrientationNotifications()}
+    }
     func update(_ settings: FilmSettings, lut: CubeLUT?) { lock.lock(); film = settings; self.lut = lut; lock.unlock() }
     private func current() -> (FilmSettings,CubeLUT?) { lock.lock(); defer { lock.unlock() }; return (film,lut) }
     func start() {
@@ -45,7 +70,7 @@ final class CameraController: NSObject, ObservableObject, AVCaptureVideoDataOutp
             }
         }
     }
-    func stop() { queue.async { if self.movie.isRecording { self.movie.stopRecording() }; self.session.stopRunning() } }
+    func stop() { queue.async { if self.movie.isRecording { self.movie.stopRecording() }; self.session.stopRunning(); DispatchQueue.main.async {self.ready = false} } }
     private func configure(audio: Bool) throws {
         session.beginConfiguration(); defer { session.commitConfiguration() }
         session.sessionPreset = .hd1920x1080
@@ -74,7 +99,7 @@ final class CameraController: NSObject, ObservableObject, AVCaptureVideoDataOutp
     }
     private func orient() {
         for connection in [video.connection(with:.video),photo.connection(with:.video),movie.connection(with:.video)].compactMap({$0}) {
-            if connection.isVideoRotationAngleSupported(90) { connection.videoRotationAngle = 90 }
+            if connection.isVideoRotationAngleSupported(rotationAngle) { connection.videoRotationAngle = rotationAngle }
             if connection.isVideoMirroringSupported { connection.automaticallyAdjustsVideoMirroring = false; connection.isVideoMirrored = position == .front }
         }
     }
@@ -122,7 +147,7 @@ final class CameraController: NSObject, ObservableObject, AVCaptureVideoDataOutp
                 if let focus, d.isFocusModeSupported(.locked) { d.setFocusModeLocked(lensPosition:Float(focus)) }
                 else if d.isFocusModeSupported(.continuousAutoFocus) { d.focusMode = .continuousAutoFocus }
                 if let iso, let shutter, d.isExposureModeSupported(.custom) {
-                    let duration = CMTime(seconds:min(max(shutter,d.activeFormat.minExposureDuration.seconds),d.activeFormat.maxExposureDuration.seconds),preferredTimescale:1_000_000)
+                    let duration = CMTime(seconds:min(max(shutter,d.activeFormat.minExposureDuration.seconds),min(1/fps,d.activeFormat.maxExposureDuration.seconds)),preferredTimescale:1_000_000)
                     d.setExposureModeCustom(duration:duration,iso:Float(min(Double(d.activeFormat.maxISO),max(Double(d.activeFormat.minISO),iso))))
                 } else if d.isExposureModeSupported(.continuousAutoExposure) { d.exposureMode = .continuousAutoExposure }
                 if d.hasTorch, d.isTorchModeSupported(torch ? .on : .off) { d.torchMode = torch ? .on : .off }

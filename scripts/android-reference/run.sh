@@ -15,9 +15,12 @@ javac -source 8 -target 8 -classpath "$JAR" -d "$WORK/classes" scripts/android-r
 "$TOOLS/aapt" package -f -M scripts/android-reference/AndroidManifest.xml -I "$JAR" -A "$WORK/assets" -F "$WORK/reference.apk"
 (cd "$WORK/dex" && zip -q -j "$WORK/reference.apk" classes.dex)
 keytool -genkeypair -keystore "$WORK/debug.jks" -storepass android -keypass android -alias androiddebugkey -dname 'CN=CI Reference' -keyalg RSA -validity 30
-"$TOOLS/apksigner" sign --ks "$WORK/debug.jks" --ks-pass pass:android "$WORK/reference.apk"
-adb install -r "$WORK/reference.apk"
-adb shell am start -n com.azerish.reference/.ReferenceActivity
+"$TOOLS/apksigner" sign --v4-signing-enabled false --ks "$WORK/debug.jks" --ks-pass pass:android "$WORK/reference.apk"
+# Android 29 can stall in the newest adb incremental/streaming installer.
+# Push the APK and invoke the device package manager directly, with bounded calls.
+python3 -c 'import subprocess,sys; subprocess.run(sys.argv[1:],check=True,timeout=120)' adb push "$WORK/reference.apk" /data/local/tmp/film-reference.apk
+python3 -c 'import subprocess,sys; subprocess.run(sys.argv[1:],check=True,timeout=120)' adb shell pm install -r /data/local/tmp/film-reference.apk
+python3 -c 'import subprocess,sys; subprocess.run(sys.argv[1:],check=True,timeout=90)' adb shell am start -W -n com.azerish.reference/.ReferenceActivity
 for i in $(seq 1 90); do
   if adb shell run-as com.azerish.reference test -f files/done; then break; fi
   if adb shell run-as com.azerish.reference test -f files/error; then adb shell run-as com.azerish.reference cat files/error; exit 1; fi

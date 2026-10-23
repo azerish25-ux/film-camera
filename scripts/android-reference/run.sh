@@ -9,6 +9,8 @@ JAR="$SDK/platforms/android-29/android.jar"
 WORK="$ROOT/scripts/android-reference/out"
 REMOTE=/data/local/tmp/film-reference
 mkdir -p "$WORK/classes" "$WORK/dex" "$WORK/assets" "$ROOT/android-reference"
+cp Reference/ETC1/*.etc1 "$WORK/assets/"
+cp FilmCamera/Resources/OriginalAssets/*.png "$WORK/assets/"
 cp Reference/AndroidNoise.etc1 "$WORK/assets/"
 cp FilmCameraTests/Resources/ReferenceScene.rgba "$WORK/assets/"
 cp FilmCamera/Resources/Shaders/*.glsl "$WORK/assets/"
@@ -27,6 +29,7 @@ python3 -c 'import subprocess,sys; subprocess.run(sys.argv[1:],check=True,timeou
 for name in $(python3 -c 'import json; print(" ".join(x["name"] for x in json.load(open("FilmCameraTests/Resources/reference-cases.json"))))'); do
   adb exec-out cat "$REMOTE/$name.rgba" > "android-reference/$name.rgba"
 done
+adb exec-out cat "$REMOTE/static-frame-decoding.txt" > android-reference/static-frame-decoding.txt
 adb exec-out cat "$REMOTE/noise-decoding.txt" > android-reference/noise-decoding.txt
 adb exec-out cat "$REMOTE/renderer.txt" > android-reference/renderer.txt
 cp FilmCameraTests/Resources/reference-cases.json android-reference/

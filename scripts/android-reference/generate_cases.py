@@ -58,6 +58,24 @@ for template in ('grain','film-lut-saturation'):
                 'scratch_v.x':[20+i for i in range(8)],'scratch_v.t':[0.5]*8})
 for v in (0,0.5,1):
     variant('tone-curve',f'tone-leaks-{v}',floats={'expiredFoggingAmp':v,'lightLeak.amp':v,'holes.amp':v})
+# Compare actual restored frame assets as well as the synthetic compositor inputs.
+masks={'super16':'2259c520d9189575d3aaf0917020e5169b061b31',
+       'sixteen':'5d449fd4eccf157610c7424886f669ecb801c570',
+       'super8':'ab3e7a3b1f83b9c9cb22906a99c963af9e367d34',
+       'raw2':'533ddf7a2e5735a50bbd989c6dd492b83340edbd',
+       'bolex':'0c2f3fcd78b56ff4abf74fe1ec57517c917ce454',
+       'beaulieu':'70e656d91d96d2a87ef1a5e5cad996670cc29a93',
+       'kiev':'25917224e2d0b1d8495cea0ee4ea650980bc86ad'}
+for label,asset in masks.items():
+    for shift in (0,0.023):
+        variant('film-lut-saturation',f'actual-mask-{label}-{shift}',
+                samplers={'framePerforationsTexture':'asset:'+asset},
+                floats={'srandomX':shift,'srandomY':-shift})
+for label,asset in [('kiev','b8650c3c26a4b77d6b9899dffb91e5e5876edbd8'),
+                    ('arri-frame','bab945a9d56dcb9e116bd018c81fecc093e5b5b2')]:
+    for shift in (0,0.023):
+        variant('gate-'+label,f'actual-static-{label}-{shift}',
+                samplers={'frameSuper16mm':'asset:'+asset},floats={'randomX':shift,'randomY':-shift})
 # Independent pass chain matching the production neutral pipeline, followed by
 # every original film. Integration tests render through FilmRenderer, not probe().
 variant('exposure-vignette','chain-exposure',pattern=1,

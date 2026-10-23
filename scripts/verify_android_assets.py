@@ -29,7 +29,26 @@ noiseCompressed=(root/'Reference/AndroidNoise.etc1').read_bytes()
 assert noiseOriginal[16:]==noiseCompressed
 noiseDecoded=(root/'FilmCamera/Resources/OriginalAssets/e4e45cae0068917f80a90a1a8380ee5ac1176e88.noise').read_bytes()
 assert len(noiseDecoded)==1024*1024*4
-result=dict(noiseOriginalSHA256=hashlib.sha256(noiseOriginal).hexdigest(),
+masks=[]
+for shipped in (root/'FilmCamera/Resources/OriginalAssets').glob('*.png'):
+    original=(assets/shipped.stem).read_bytes()
+    if original[8:16]==b'\0\0\0\rIHDR':
+        decoded=Image.open(io.BytesIO(b'\x89PNG\r\n\x1a\n'+original[8:])).convert('RGBA')
+        restored=Image.open(shipped).convert('RGBA')
+        assert decoded.size==restored.size and decoded.tobytes()==restored.tobytes(),shipped.name
+        masks.append(shipped.stem)
+for compressed in (root/'Reference/ETC1').glob('*.etc1'):
+    assert compressed.read_bytes()==(assets/compressed.stem).read_bytes()[16:]
+clips=[]
+for shipped in (root/'FilmCamera/Resources/OriginalAssets').glob('*.mp4'):
+    # Only the recovered eight-byte file header is transformed. Preserve all
+    # encoded samples and container metadata exactly; simulator tests decode them.
+    original=next(assets.rglob(shipped.stem)).read_bytes()
+    restored=shipped.read_bytes()
+    assert original[8:]==restored[8:],shipped.name
+    clips.append(dict(asset=shipped.stem,SHA256=hashlib.sha256(restored).hexdigest()))
+result=dict(pngMasksVerified=masks,encodedVideoPayloadsVerified=clips,
+            noiseOriginalSHA256=hashlib.sha256(noiseOriginal).hexdigest(),
             noiseCompressedSHA256=hashlib.sha256(noiseCompressed).hexdigest(),
             noiseDecodedSHA256=hashlib.sha256(noiseDecoded).hexdigest(),
             filmTablesVerified=len(report),shaderFilesVerified=len(shaders),tables=report)

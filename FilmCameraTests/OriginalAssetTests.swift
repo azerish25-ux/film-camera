@@ -265,4 +265,17 @@ final class OriginalAssetTests: XCTestCase {
         }
     }
 
+    func testAnimatedFramesChangeAndSeekBackToOriginalPixels() throws {
+        let url = try XCTUnwrap(Bundle.main.url(forResource:"EditorFixture",withExtension:"jpg"))
+        let cg = try XCTUnwrap(UIImage(contentsOfFile:url.path)?.cgImage)
+        let source = CIImage(cgImage:cg), renderer = FilmRenderer()
+        var settings = FilmSettings(); settings.frame = .super16
+        settings["grain"] = 0; settings["blur"] = 0; settings["scratches"] = 0; settings["verticalScratch"] = 1
+        let first = readPixels(try renderer.render(source,settings:settings,time:0))
+        XCTAssertEqual(first,readPixels(try renderer.render(source,settings:settings,time:0)))
+        let later = readPixels(try renderer.render(source,settings:settings,time:0.5))
+        XCTAssertNotEqual(first,later,"The film gate clip must animate")
+        XCTAssertEqual(first,readPixels(try renderer.render(source,settings:settings,time:0)))
+    }
+
 }

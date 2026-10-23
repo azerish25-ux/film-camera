@@ -27,10 +27,24 @@ final class MediaExportTests: XCTestCase {
     @MainActor func testPhotoExportWritesReadablePixels() throws {
         let image = UIImage(ciImage:CIImage(color:CIColor(red:0.3,green:0.5,blue:0.7)).cropped(to:CGRect(x:0,y:0,width:128,height:96)))
         var settings = FilmSettings(); settings.look = OriginalFilm.all[1].name
-        let result = try FilmRenderer().photo(image,settings:settings,lut:nil)
+        settings["grain"] = 0; settings["scratches"] = 0; settings["verticalScratch"] = 1
+        let renderer = FilmRenderer()
+        let result = try renderer.photo(image,settings:settings,lut:nil)
         XCTAssertEqual(result.size.width,128)
         let data = try XCTUnwrap(result.jpegData(compressionQuality:0.97))
-        XCTAssertNotNil(UIImage(data:data)); XCTAssertGreaterThan(data.count,100)
+        let decoded = try XCTUnwrap(UIImage(data:data)?.cgImage)
+        XCTAssertGreaterThan(data.count,100)
+        let rawSource = CIImage(color:CIColor(red:0.3,green:0.5,blue:0.7)).cropped(to:CGRect(x:0,y:0,width:128,height:96))
+        let expected = try renderer.render(rawSource,settings:settings,time:0)
+        let context = CIContext(options:[.workingColorSpace:NSNull(),.outputColorSpace:NSNull()])
+        func center(_ input: CIImage) -> [UInt8] {
+            var bytes = [UInt8](repeating:0,count:128*96*4)
+            bytes.withUnsafeMutableBytes {context.render(input,toBitmap:$0.baseAddress!,rowBytes:512,bounds:input.extent,format:.RGBA8,colorSpace:CGColorSpaceCreateDeviceRGB())}
+            return Array(bytes[(48*128+64)*4..<(48*128+64)*4+3])
+        }
+        for (actual,target) in zip(center(CIImage(cgImage:decoded)),center(expected)) {
+            XCTAssertEqual(Double(actual),Double(target),accuracy:4,"JPEG export changed the graded color")
+        }
     }
     static func movie(in folder: URL) async throws -> URL {
         let raw = folder.appendingPathComponent("video.mp4")

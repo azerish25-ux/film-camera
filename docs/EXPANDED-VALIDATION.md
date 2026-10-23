@@ -39,3 +39,12 @@ Candidate fixes are prepared for the grain activation threshold, independent fog
 Numeric GPU bounds are explicit per operation: 2/255 normally, 3/255 for grain followed by LUT interpolation, and 4/255 for halation with cutoff >= 0.99. Mean absolute RGB error remains below 0.25/255 for every fixture. The controlled Arri chroma-key gradient identifies only input values within 1/65536 of its threshold; all-pixel error and boundary counts remain in the report, with at most eight such pixels permitted per fixture. The expanded evidence showed a single shifted key tie and a single 3/255 steep-LUT sample. These are separate from the 66/255 grain cell error, which requires an implementation correction.
 
 Expected image fixtures have moved to the test target. They are not shipped inside the application bundle. Final verification and updated pinned references are still pending.
+
+Current execution record (2026-10-23):
+- 1d54803, run 40028371153: initial 1222-case run failed exactly four pixel bounds (film-64-grain max3 one pixel; grainSize0.27 max66 39 pixels on row62; halationCutoff0.995 max4 178 samples; shifted Arri max14 one near-key pixel). All other earlier tests passed.
+- 0ba37b8 on validation/exhaustive-parity, run 40029498461: unfixed regression suite still running. Android native ETC1 matched all 1048576 noise pixels. Expected references downloaded to artifacts/expanded-reference-1401.
+- dd25b4a on main, run 40032128615: candidate dynamics/grain fixes with1502 cases; Android stage still running at last observation.
+- Local uncommitted work: animated-frame upload cache plus seek test; native ETC1 checks for two static frame scans; actual mask/border probes (matrix now1520); JPEG color assertion; expanded original asset audit.
+- Pinned references contain1401 cases, so must be refreshed and hash-verified against the final Android artifact, with updated provenance.
+- The committed Xcode project needs replacement from the final CI-generated project after moving fixtures to the test target; final HEAD must be verified.
+- Outstanding: inspect regression/core runs, fix failures, run final1520-case/full integration suite including cache/JPEG assertions, inspect film contact sheets, pin final references/project/evidence, update documentation, commit/push, verify clean worktree/remote SHA/final macOS run. Only then complete goal.

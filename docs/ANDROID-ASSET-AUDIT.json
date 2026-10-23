@@ -1,4 +1,71 @@
 {
+  "pngMasksVerified": [
+    "0c2f3fcd78b56ff4abf74fe1ec57517c917ce454",
+    "2259c520d9189575d3aaf0917020e5169b061b31",
+    "25917224e2d0b1d8495cea0ee4ea650980bc86ad",
+    "533ddf7a2e5735a50bbd989c6dd492b83340edbd",
+    "5d449fd4eccf157610c7424886f669ecb801c570",
+    "70e656d91d96d2a87ef1a5e5cad996670cc29a93",
+    "ab3e7a3b1f83b9c9cb22906a99c963af9e367d34"
+  ],
+  "encodedVideoPayloadsVerified": [
+    {
+      "asset": "0a4c51f6cc776d9a4c73e2eb83acf7e777e2b0e5",
+      "SHA256": "1e65ba14b65a9a2289005e50d425f6898062ff9e6865d11dc564b26f270c8d1a"
+    },
+    {
+      "asset": "122f2e1a898866409d09098fdf387269a3d13481",
+      "SHA256": "faa7573b0d0ce55a7d23cf4a1bd997e3f4b6e8270c9c296da4624ef8efcbc78d"
+    },
+    {
+      "asset": "14937b4f0eb590ddd915af2f55d17ab2a254cc0b",
+      "SHA256": "088db771f8c0f0d9a56343852b1da36a0b9cf321f734bf54c6cf8dbc2b794e6b"
+    },
+    {
+      "asset": "219d4a1d9955023fb00ee040507bfba392157e26",
+      "SHA256": "7972f2f652b5cc591fc2e577462189dc2a469d884e5b31e1be0433bb19eafd42"
+    },
+    {
+      "asset": "7279f61845c546ea5a98521a24361e0fd7f1dab8",
+      "SHA256": "f8ac551b3a1e8774c45526a615061d19ee61755bd4df922645aa67b810fbbbb8"
+    },
+    {
+      "asset": "749ced71a03805d69d45f2288576b067dea10364",
+      "SHA256": "b213abe401d24deb3d0691c3bdb554647f72b501ee84606361c1bd9fe387755f"
+    },
+    {
+      "asset": "8429d111b29661ad2eeed91378cb8e3bb325c5e2",
+      "SHA256": "a8442f0330ef6de5b41672384a44520d636396c1bb9d72c1399a30aa01044be0"
+    },
+    {
+      "asset": "917d6d8b0e4a29253b6f0bcd1626c5f7483b1a78",
+      "SHA256": "cdf6e51213d3328c624e57bad4ff56522cc600441de868962195238ca14c8eaf"
+    },
+    {
+      "asset": "a071faf6bfb388993c6db6ead6942ffd89da9334",
+      "SHA256": "e7a5b18f4b6428c4bbd1bb405c050c22efde789ed8437fecb848eb7330761dae"
+    },
+    {
+      "asset": "af13dd8934d9a4dd2120747371e1f69240484845",
+      "SHA256": "54c683e4e2a45a5bfe3b031f2f84798d3d3d83eaa9a091f94d2b230aa71df5e5"
+    },
+    {
+      "asset": "cc444fda578d964236bd148cf2fde485d52e3cc2",
+      "SHA256": "19d7d2dad6e83976acd61c93909ea6c6fcf6036c6c7dabd535c29af83bf519d3"
+    },
+    {
+      "asset": "e4e611d54153de5ceeeb349ad8b90e9f9fa268c7",
+      "SHA256": "459fd8a6a39eaa40a2d5283fee7938d6128c37b92140773f516236574fdb8b16"
+    },
+    {
+      "asset": "ebf7742d8724b91d81f26c099a7b84aafced9c9c",
+      "SHA256": "b23caf3e453f893d0c8402a5356e5cbf644849d6e82dbc46f59649b08b5d01c6"
+    },
+    {
+      "asset": "fb6de461e7725ac8c6adc93ce40d9be33058f87b",
+      "SHA256": "720d0d9de43c1efa7cc927300a9f71a49f6a1cdd4d6deda18d070c0435dd27f1"
+    }
+  ],
   "noiseOriginalSHA256": "0ac52a50ebfa65c7c0eba3d0ac30c641c708296311df28ba8de94f0894389f54",
   "noiseCompressedSHA256": "7a8f7cf35457c14ffb31dfb6f2607bbb17ce1962e11730affc8094741b8032d1",
   "noiseDecodedSHA256": "61f6070ccda2b84ac71efb195221ac14fdf79c1f1cc091f178c0f20bf4cb411c",

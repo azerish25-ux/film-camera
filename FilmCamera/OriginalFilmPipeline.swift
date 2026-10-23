@@ -10,6 +10,7 @@ final class OriginalFilmPipeline {
     private let assets = OriginalAssetSampler()
     private var dynamics = FilmDynamics()
     private var auxiliary: [String: GLuint] = [:]
+    private var uploadedFrames: [String: CGImage] = [:]
     private var lastTime: Double = -1
     private let gl: EAGLContext
     private let ci = CIContext(options:[.workingColorSpace:NSNull(),.outputColorSpace:NSNull()])
@@ -131,7 +132,10 @@ final class OriginalFilmPipeline {
             return texture
         }
         let image: CGImage
-        if let time {image = try assets.frame(name,time:time)}
+        if let time {
+            image = try assets.frame(name,time:time)
+            if let previous = uploadedFrames[name], CFEqual(previous,image), let texture = auxiliary[name] {return texture}
+        }
         else {
             guard let url = Bundle.main.url(forResource:name,withExtension:"png"), let cg = UIImage(contentsOfFile:url.path)?.cgImage else {throw PortError.message("Missing original mask \(name)")}
             image = cg
@@ -144,6 +148,7 @@ final class OriginalFilmPipeline {
         var bytes = [UInt8](repeating:0,count:image.width*image.height*4)
         bytes.withUnsafeMutableBytes {ci.render(CIImage(cgImage:image),toBitmap:$0.baseAddress!,rowBytes:image.width*4,bounds:CGRect(x:0,y:0,width:image.width,height:image.height),format:.RGBA8,colorSpace:CGColorSpaceCreateDeviceRGB())}
         bytes.withUnsafeBytes {glTexImage2D(GLenum(GL_TEXTURE_2D),0,GL_RGBA8,GLsizei(image.width),GLsizei(image.height),0,GLenum(GL_RGBA),GLenum(GL_UNSIGNED_BYTE),$0.baseAddress)}
+        if time != nil {uploadedFrames[name] = image}
         return texture
     }
     private func uploadLUT(_ lut: CubeLUT?, look: String) throws {
@@ -308,7 +313,10 @@ final class OriginalFilmPipeline {
             bytes.withUnsafeBytes {glTexSubImage2D(GLenum(GL_TEXTURE_2D),0,0,0,128,96,GLenum(GL_RGBA),GLenum(GL_UNSIGNED_BYTE),$0.baseAddress)}
         }
         try uploadLUT(nil,look:config.look ?? "Normal Mode")
-        let lookup: [String:GLuint] = ["source":textures[0],"background":textures[1],"clear":textures[7],"lut":lutTexture,"noise":try imageTexture("e4e45cae0068917f80a90a1a8380ee5ac1176e88")]
+        var lookup: [String:GLuint] = ["source":textures[0],"background":textures[1],"clear":textures[7],"lut":lutTexture,"noise":try imageTexture("e4e45cae0068917f80a90a1a8380ee5ac1176e88")]
+        for name in config.samplers.values where name.hasPrefix("asset:") {
+            lookup[name] = try imageTexture(String(name.dropFirst(6)))
+        }
         try draw(config.shader,to:textures[6]) {p in
             for (key,value) in config.floats {f(p,key,value)}
             for (key,value) in config.vectors {v(p,key,value[0],value[1])}

@@ -42539,6 +42539,456 @@
     }
   },
   {
+    "name": "actual-mask-super16-0",
+    "shader": "c_f25866s",
+    "floats": {
+      "saturation": 0.7,
+      "perfColor": 0,
+      "srandomX": 0,
+      "srandomY": 0
+    },
+    "vectors": {
+      "noiseRes": [
+        128,
+        96
+      ]
+    },
+    "samplers": {
+      "grainInputTexture": "source",
+      "framePerforationsTexture": "asset:2259c520d9189575d3aaf0917020e5169b061b31",
+      "mLutID": "lut"
+    },
+    "ints": {
+      "stain.time": 0,
+      "scratch.time": 0,
+      "scratch_v.time": 0
+    },
+    "arrays": {}
+  },
+  {
+    "name": "actual-mask-super16-0.023",
+    "shader": "c_f25866s",
+    "floats": {
+      "saturation": 0.7,
+      "perfColor": 0,
+      "srandomX": 0.023,
+      "srandomY": -0.023
+    },
+    "vectors": {
+      "noiseRes": [
+        128,
+        96
+      ]
+    },
+    "samplers": {
+      "grainInputTexture": "source",
+      "framePerforationsTexture": "asset:2259c520d9189575d3aaf0917020e5169b061b31",
+      "mLutID": "lut"
+    },
+    "ints": {
+      "stain.time": 0,
+      "scratch.time": 0,
+      "scratch_v.time": 0
+    },
+    "arrays": {}
+  },
+  {
+    "name": "actual-mask-sixteen-0",
+    "shader": "c_f25866s",
+    "floats": {
+      "saturation": 0.7,
+      "perfColor": 0,
+      "srandomX": 0,
+      "srandomY": 0
+    },
+    "vectors": {
+      "noiseRes": [
+        128,
+        96
+      ]
+    },
+    "samplers": {
+      "grainInputTexture": "source",
+      "framePerforationsTexture": "asset:5d449fd4eccf157610c7424886f669ecb801c570",
+      "mLutID": "lut"
+    },
+    "ints": {
+      "stain.time": 0,
+      "scratch.time": 0,
+      "scratch_v.time": 0
+    },
+    "arrays": {}
+  },
+  {
+    "name": "actual-mask-sixteen-0.023",
+    "shader": "c_f25866s",
+    "floats": {
+      "saturation": 0.7,
+      "perfColor": 0,
+      "srandomX": 0.023,
+      "srandomY": -0.023
+    },
+    "vectors": {
+      "noiseRes": [
+        128,
+        96
+      ]
+    },
+    "samplers": {
+      "grainInputTexture": "source",
+      "framePerforationsTexture": "asset:5d449fd4eccf157610c7424886f669ecb801c570",
+      "mLutID": "lut"
+    },
+    "ints": {
+      "stain.time": 0,
+      "scratch.time": 0,
+      "scratch_v.time": 0
+    },
+    "arrays": {}
+  },
+  {
+    "name": "actual-mask-super8-0",
+    "shader": "c_f25866s",
+    "floats": {
+      "saturation": 0.7,
+      "perfColor": 0,
+      "srandomX": 0,
+      "srandomY": 0
+    },
+    "vectors": {
+      "noiseRes": [
+        128,
+        96
+      ]
+    },
+    "samplers": {
+      "grainInputTexture": "source",
+      "framePerforationsTexture": "asset:ab3e7a3b1f83b9c9cb22906a99c963af9e367d34",
+      "mLutID": "lut"
+    },
+    "ints": {
+      "stain.time": 0,
+      "scratch.time": 0,
+      "scratch_v.time": 0
+    },
+    "arrays": {}
+  },
+  {
+    "name": "actual-mask-super8-0.023",
+    "shader": "c_f25866s",
+    "floats": {
+      "saturation": 0.7,
+      "perfColor": 0,
+      "srandomX": 0.023,
+      "srandomY": -0.023
+    },
+    "vectors": {
+      "noiseRes": [
+        128,
+        96
+      ]
+    },
+    "samplers": {
+      "grainInputTexture": "source",
+      "framePerforationsTexture": "asset:ab3e7a3b1f83b9c9cb22906a99c963af9e367d34",
+      "mLutID": "lut"
+    },
+    "ints": {
+      "stain.time": 0,
+      "scratch.time": 0,
+      "scratch_v.time": 0
+    },
+    "arrays": {}
+  },
+  {
+    "name": "actual-mask-raw2-0",
+    "shader": "c_f25866s",
+    "floats": {
+      "saturation": 0.7,
+      "perfColor": 0,
+      "srandomX": 0,
+      "srandomY": 0
+    },
+    "vectors": {
+      "noiseRes": [
+        128,
+        96
+      ]
+    },
+    "samplers": {
+      "grainInputTexture": "source",
+      "framePerforationsTexture": "asset:533ddf7a2e5735a50bbd989c6dd492b83340edbd",
+      "mLutID": "lut"
+    },
+    "ints": {
+      "stain.time": 0,
+      "scratch.time": 0,
+      "scratch_v.time": 0
+    },
+    "arrays": {}
+  },
+  {
+    "name": "actual-mask-raw2-0.023",
+    "shader": "c_f25866s",
+    "floats": {
+      "saturation": 0.7,
+      "perfColor": 0,
+      "srandomX": 0.023,
+      "srandomY": -0.023
+    },
+    "vectors": {
+      "noiseRes": [
+        128,
+        96
+      ]
+    },
+    "samplers": {
+      "grainInputTexture": "source",
+      "framePerforationsTexture": "asset:533ddf7a2e5735a50bbd989c6dd492b83340edbd",
+      "mLutID": "lut"
+    },
+    "ints": {
+      "stain.time": 0,
+      "scratch.time": 0,
+      "scratch_v.time": 0
+    },
+    "arrays": {}
+  },
+  {
+    "name": "actual-mask-bolex-0",
+    "shader": "c_f25866s",
+    "floats": {
+      "saturation": 0.7,
+      "perfColor": 0,
+      "srandomX": 0,
+      "srandomY": 0
+    },
+    "vectors": {
+      "noiseRes": [
+        128,
+        96
+      ]
+    },
+    "samplers": {
+      "grainInputTexture": "source",
+      "framePerforationsTexture": "asset:0c2f3fcd78b56ff4abf74fe1ec57517c917ce454",
+      "mLutID": "lut"
+    },
+    "ints": {
+      "stain.time": 0,
+      "scratch.time": 0,
+      "scratch_v.time": 0
+    },
+    "arrays": {}
+  },
+  {
+    "name": "actual-mask-bolex-0.023",
+    "shader": "c_f25866s",
+    "floats": {
+      "saturation": 0.7,
+      "perfColor": 0,
+      "srandomX": 0.023,
+      "srandomY": -0.023
+    },
+    "vectors": {
+      "noiseRes": [
+        128,
+        96
+      ]
+    },
+    "samplers": {
+      "grainInputTexture": "source",
+      "framePerforationsTexture": "asset:0c2f3fcd78b56ff4abf74fe1ec57517c917ce454",
+      "mLutID": "lut"
+    },
+    "ints": {
+      "stain.time": 0,
+      "scratch.time": 0,
+      "scratch_v.time": 0
+    },
+    "arrays": {}
+  },
+  {
+    "name": "actual-mask-beaulieu-0",
+    "shader": "c_f25866s",
+    "floats": {
+      "saturation": 0.7,
+      "perfColor": 0,
+      "srandomX": 0,
+      "srandomY": 0
+    },
+    "vectors": {
+      "noiseRes": [
+        128,
+        96
+      ]
+    },
+    "samplers": {
+      "grainInputTexture": "source",
+      "framePerforationsTexture": "asset:70e656d91d96d2a87ef1a5e5cad996670cc29a93",
+      "mLutID": "lut"
+    },
+    "ints": {
+      "stain.time": 0,
+      "scratch.time": 0,
+      "scratch_v.time": 0
+    },
+    "arrays": {}
+  },
+  {
+    "name": "actual-mask-beaulieu-0.023",
+    "shader": "c_f25866s",
+    "floats": {
+      "saturation": 0.7,
+      "perfColor": 0,
+      "srandomX": 0.023,
+      "srandomY": -0.023
+    },
+    "vectors": {
+      "noiseRes": [
+        128,
+        96
+      ]
+    },
+    "samplers": {
+      "grainInputTexture": "source",
+      "framePerforationsTexture": "asset:70e656d91d96d2a87ef1a5e5cad996670cc29a93",
+      "mLutID": "lut"
+    },
+    "ints": {
+      "stain.time": 0,
+      "scratch.time": 0,
+      "scratch_v.time": 0
+    },
+    "arrays": {}
+  },
+  {
+    "name": "actual-mask-kiev-0",
+    "shader": "c_f25866s",
+    "floats": {
+      "saturation": 0.7,
+      "perfColor": 0,
+      "srandomX": 0,
+      "srandomY": 0
+    },
+    "vectors": {
+      "noiseRes": [
+        128,
+        96
+      ]
+    },
+    "samplers": {
+      "grainInputTexture": "source",
+      "framePerforationsTexture": "asset:25917224e2d0b1d8495cea0ee4ea650980bc86ad",
+      "mLutID": "lut"
+    },
+    "ints": {
+      "stain.time": 0,
+      "scratch.time": 0,
+      "scratch_v.time": 0
+    },
+    "arrays": {}
+  },
+  {
+    "name": "actual-mask-kiev-0.023",
+    "shader": "c_f25866s",
+    "floats": {
+      "saturation": 0.7,
+      "perfColor": 0,
+      "srandomX": 0.023,
+      "srandomY": -0.023
+    },
+    "vectors": {
+      "noiseRes": [
+        128,
+        96
+      ]
+    },
+    "samplers": {
+      "grainInputTexture": "source",
+      "framePerforationsTexture": "asset:25917224e2d0b1d8495cea0ee4ea650980bc86ad",
+      "mLutID": "lut"
+    },
+    "ints": {
+      "stain.time": 0,
+      "scratch.time": 0,
+      "scratch_v.time": 0
+    },
+    "arrays": {}
+  },
+  {
+    "name": "actual-static-kiev-0",
+    "shader": "frame_c_f25864q",
+    "floats": {
+      "randomX": 0,
+      "randomY": 0
+    },
+    "vectors": {},
+    "samplers": {
+      "mTextureID": "source",
+      "mTextureID1": "background",
+      "mTextureID2": "source",
+      "frameTexture": "background",
+      "frameSuper16mm": "asset:b8650c3c26a4b77d6b9899dffb91e5e5876edbd8"
+    },
+    "ints": {},
+    "arrays": {}
+  },
+  {
+    "name": "actual-static-kiev-0.023",
+    "shader": "frame_c_f25864q",
+    "floats": {
+      "randomX": 0.023,
+      "randomY": -0.023
+    },
+    "vectors": {},
+    "samplers": {
+      "mTextureID": "source",
+      "mTextureID1": "background",
+      "mTextureID2": "source",
+      "frameTexture": "background",
+      "frameSuper16mm": "asset:b8650c3c26a4b77d6b9899dffb91e5e5876edbd8"
+    },
+    "ints": {},
+    "arrays": {}
+  },
+  {
+    "name": "actual-static-arri-frame-0",
+    "shader": "frame_c_f25852e",
+    "floats": {
+      "randomX": 0,
+      "randomY": 0
+    },
+    "vectors": {},
+    "samplers": {
+      "mTextureID": "source",
+      "mTextureID1": "background",
+      "mTextureID2": "source",
+      "frameTexture": "background",
+      "frameSuper16mm": "asset:bab945a9d56dcb9e116bd018c81fecc093e5b5b2"
+    },
+    "ints": {},
+    "arrays": {}
+  },
+  {
+    "name": "actual-static-arri-frame-0.023",
+    "shader": "frame_c_f25852e",
+    "floats": {
+      "randomX": 0.023,
+      "randomY": -0.023
+    },
+    "vectors": {},
+    "samplers": {
+      "mTextureID": "source",
+      "mTextureID1": "background",
+      "mTextureID2": "source",
+      "frameTexture": "background",
+      "frameSuper16mm": "asset:bab945a9d56dcb9e116bd018c81fecc093e5b5b2"
+    },
+    "ints": {},
+    "arrays": {}
+  },
+  {
     "name": "chain-exposure",
     "shader": "b_f25847e",
     "floats": {

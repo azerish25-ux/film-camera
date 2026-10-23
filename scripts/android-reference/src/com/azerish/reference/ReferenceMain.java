@@ -37,6 +37,16 @@ public final class ReferenceMain {
     ByteBuffer decoded=ByteBuffer.allocateDirect(1024*1024*3);
     ETC1.decodeImage(buffer(asset("AndroidNoise.etc1")),decoded,1024,1024,3,1024*3);
     for(int pixel=0;pixel<1024*1024;pixel++)for(int channel=0;channel<3;channel++)if(decoded.get(pixel*3+channel)!=noise[pixel*4+channel])throw new RuntimeException("Original ETC1 noise mismatch at "+pixel+":"+channel);
+    String[] staticNames={"b8650c3c26a4b77d6b9899dffb91e5e5876edbd8","bab945a9d56dcb9e116bd018c81fecc093e5b5b2"};
+    for(String name:staticNames){
+      byte[] png=asset(name+".png");android.graphics.Bitmap bitmap=android.graphics.BitmapFactory.decodeByteArray(png,0,png.length);
+      int width=bitmap.getWidth(),height=bitmap.getHeight();ByteBuffer rgb=ByteBuffer.allocateDirect(width*height*3);
+      ETC1.decodeImage(buffer(asset(name+".etc1")),rgb,width,height,3,width*3);
+      int[] colors=new int[width*height];bitmap.getPixels(colors,0,width,0,0,width,height);
+      for(int pixel=0;pixel<colors.length;pixel++)for(int channel=0;channel<3;channel++)if((rgb.get(pixel*3+channel)&255)!=((colors[pixel]>>(16-channel*8))&255))throw new RuntimeException("Static frame ETC1 mismatch "+name+":"+pixel+":"+channel);
+      bitmap.recycle();
+    }
+    write("static-frame-decoding.txt","Both static frame scans match Android native ETC1 decoding pixel for pixel\n".getBytes("UTF-8"));
     write("noise-decoding.txt","Android ETC1 decoded all 1048576 noise pixels identically to the iOS table\n".getBytes("UTF-8"));
     GLES30.glBindTexture(GLES30.GL_TEXTURE_2D,ids[5]);GLES30.glTexParameteri(GLES30.GL_TEXTURE_2D,GLES30.GL_TEXTURE_MIN_FILTER,GLES30.GL_NEAREST);GLES30.glTexParameteri(GLES30.GL_TEXTURE_2D,GLES30.GL_TEXTURE_MAG_FILTER,GLES30.GL_NEAREST);GLES30.glTexParameteri(GLES30.GL_TEXTURE_2D,GLES30.GL_TEXTURE_WRAP_S,GLES30.GL_REPEAT);GLES30.glTexParameteri(GLES30.GL_TEXTURE_2D,GLES30.GL_TEXTURE_WRAP_T,GLES30.GL_REPEAT);GLES30.glTexImage2D(GLES30.GL_TEXTURE_2D,0,GLES30.GL_RGBA8,1024,1024,0,GLES30.GL_RGBA,GLES30.GL_UNSIGNED_BYTE,buffer(noise));textures.put("noise",ids[5]);
     GLES30.glBindTexture(GLES30.GL_TEXTURE_2D,ids[4]);params(GLES30.GL_TEXTURE_2D);GLES30.glTexImage2D(GLES30.GL_TEXTURE_2D,0,GLES30.GL_RGBA8,W,H,0,GLES30.GL_RGBA,GLES30.GL_UNSIGNED_BYTE,null);
@@ -63,7 +73,12 @@ public final class ReferenceMain {
       JSONObject vs=c.getJSONObject("vectors");for(Iterator<String> keys=vs.keys();keys.hasNext();){String key=keys.next();JSONArray v=vs.getJSONArray(key);GLES30.glUniform2f(GLES30.glGetUniformLocation(p,key),(float)v.getDouble(0),(float)v.getDouble(1));}
       JSONObject is=c.getJSONObject("ints");for(Iterator<String> keys=is.keys();keys.hasNext();){String key=keys.next();GLES30.glUniform1i(GLES30.glGetUniformLocation(p,key),is.getInt(key));}
       JSONObject arrays=c.getJSONObject("arrays");for(Iterator<String> keys=arrays.keys();keys.hasNext();){String key=keys.next();JSONArray a=arrays.getJSONArray(key);float[] values=new float[a.length()];for(int n=0;n<values.length;n++)values[n]=(float)a.getDouble(n);if(key.equals("curve"))GLES30.glUniform3fv(GLES30.glGetUniformLocation(p,key),values.length/3,values,0);else GLES30.glUniform1fv(GLES30.glGetUniformLocation(p,key),values.length,values,0);}
-      JSONObject samplers=c.getJSONObject("samplers");int unit=0;for(Iterator<String> keys=samplers.keys();keys.hasNext();){String key=keys.next(),name=samplers.getString(key);GLES30.glActiveTexture(GLES30.GL_TEXTURE0+unit);GLES30.glBindTexture(name.equals("lut")?GLES30.GL_TEXTURE_3D:GLES30.GL_TEXTURE_2D,textures.get(name));GLES30.glUniform1i(GLES30.glGetUniformLocation(p,key),unit++);}
+      JSONObject samplers=c.getJSONObject("samplers");
+      for(Iterator<String> keys=samplers.keys();keys.hasNext();){String name=samplers.getString(keys.next());if(name.startsWith("asset:") && !textures.containsKey(name)){
+        byte[] png=asset(name.substring(6)+".png");android.graphics.Bitmap bitmap=android.graphics.BitmapFactory.decodeByteArray(png,0,png.length);
+        int[] texture={0};GLES30.glGenTextures(1,texture,0);GLES30.glActiveTexture(GLES30.GL_TEXTURE15);GLES30.glBindTexture(GLES30.GL_TEXTURE_2D,texture[0]);params(GLES30.GL_TEXTURE_2D);GLUtils.texImage2D(GLES30.GL_TEXTURE_2D,0,bitmap,0);bitmap.recycle();textures.put(name,texture[0]);
+      }}
+      int unit=0;for(Iterator<String> keys=samplers.keys();keys.hasNext();){String key=keys.next(),name=samplers.getString(key);GLES30.glActiveTexture(GLES30.GL_TEXTURE0+unit);GLES30.glBindTexture(name.equals("lut")?GLES30.GL_TEXTURE_3D:GLES30.GL_TEXTURE_2D,textures.get(name));GLES30.glUniform1i(GLES30.glGetUniformLocation(p,key),unit++);}
       GLES30.glDrawArrays(GLES30.GL_TRIANGLE_STRIP,0,4);int error=GLES30.glGetError();if(error!=0)throw new RuntimeException(c.getString("name")+": GLES "+error);
       ByteBuffer output=ByteBuffer.allocateDirect(W*H*4);GLES30.glReadPixels(0,0,W,H,GLES30.GL_RGBA,GLES30.GL_UNSIGNED_BYTE,output);byte[] data=new byte[W*H*4];output.get(data);write(c.getString("name")+".rgba",data);
     }

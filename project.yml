@@ -1,0 +1,46 @@
+name: FilmCamera
+options:
+  bundleIdPrefix: com.azerish
+  deploymentTarget:
+    iOS: '17.0'
+settings:
+  base:
+    SWIFT_VERSION: '5.0'
+    TARGETED_DEVICE_FAMILY: '1,2'
+    CODE_SIGNING_ALLOWED: NO
+targets:
+  FilmCamera:
+    type: application
+    platform: iOS
+    sources: [FilmCamera]
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.azerish.filmcamera
+        GENERATE_INFOPLIST_FILE: YES
+        INFOPLIST_KEY_CFBundleDisplayName: Super 16
+        INFOPLIST_KEY_NSCameraUsageDescription: Capture photos and videos with film effects.
+        INFOPLIST_KEY_NSMicrophoneUsageDescription: Record sound with your videos.
+        INFOPLIST_KEY_NSPhotoLibraryAddUsageDescription: Save your finished photos and films.
+        INFOPLIST_KEY_UILaunchScreen_Generation: YES
+        INFOPLIST_KEY_UIApplicationSceneManifest_Generation: YES
+        MARKETING_VERSION: '1.0'
+        CURRENT_PROJECT_VERSION: '1'
+  FilmCameraTests:
+    type: bundle.unit-test
+    platform: iOS
+    sources: [FilmCameraTests]
+    dependencies:
+      - target: FilmCamera
+  FilmCameraUITests:
+    type: bundle.ui-testing
+    platform: iOS
+    sources: [FilmCameraUITests]
+    dependencies:
+      - target: FilmCamera
+schemes:
+  FilmCamera:
+    build:
+      targets:
+        FilmCamera: all
+    test:
+      targets: [FilmCameraTests, FilmCameraUITests]

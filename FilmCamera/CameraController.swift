@@ -26,10 +26,11 @@ final class CameraController: NSObject, ObservableObject, AVCaptureVideoDataOutp
     private var onPhoto: ((UIImage) -> Void)?
     var onMovie: ((URL,FilmSettings,CubeLUT?) -> Void)?
     private var lastFrame = CMTime.zero
+    private var photoInFlight = false
     func update(_ settings: FilmSettings, lut: CubeLUT?) { lock.lock(); film = settings; self.lut = lut; lock.unlock() }
     private func current() -> (FilmSettings,CubeLUT?) { lock.lock(); defer { lock.unlock() }; return (film,lut) }
     func start() {
-        if ProcessInfo.processInfo.arguments.contains("--ui-testing") { return }
+        if ProcessInfo.processInfo.arguments.contains("--ui-testing") || ProcessInfo.processInfo.environment["XCTestConfigurationFilePath"] != nil { return }
         Task {
             let granted = await AVCaptureDevice.requestAccess(for:.video)
             guard granted else { DispatchQueue.main.async { self.message = "Camera access is disabled. Enable it in Settings, or import media in Editor." }; return }
@@ -133,14 +134,16 @@ final class CameraController: NSObject, ObservableObject, AVCaptureVideoDataOutp
     }
     func capture(_ completion: @escaping (UIImage) -> Void) {
         queue.async {
-            guard self.session.isRunning, !self.movie.isRecording else { return }
+            guard self.session.isRunning, !self.movie.isRecording, !self.photoInFlight else { return }
+            self.photoInFlight = true
+            DispatchQueue.main.async {self.processing = true}
             self.snapshot = self.current(); self.onPhoto = completion
             self.photo.capturePhoto(with:AVCapturePhotoSettings(),delegate:self)
         }
     }
     func toggleRecording() {
         queue.async {
-            guard self.session.isRunning else { return }
+            guard self.session.isRunning, !self.photoInFlight else { return }
             if self.movie.isRecording { self.movie.stopRecording() }
             else {
                 self.snapshot = self.current()
@@ -151,12 +154,16 @@ final class CameraController: NSObject, ObservableObject, AVCaptureVideoDataOutp
         }
     }
     func photoOutput(_ output: AVCapturePhotoOutput, didFinishProcessingPhoto photo: AVCapturePhoto, error: Error?) {
-        if let error { report(error); return }
-        guard let data = photo.fileDataRepresentation(), let image = UIImage(data:data) else { report(PortError.message("Photo decoding failed.")); return }
-        do {
-            let result = try renderer.photo(image,settings:snapshot.0,lut:snapshot.1)
-            DispatchQueue.main.async { self.onPhoto?(result); self.onPhoto = nil }
-        } catch { report(error) }
+        queue.async {
+            defer {self.photoInFlight = false; DispatchQueue.main.async {self.processing = false}}
+            if let error {self.report(error); return}
+            guard let data = photo.fileDataRepresentation(), let image = UIImage(data:data) else {self.report(PortError.message("Photo decoding failed.")); return}
+            do {
+                let result = try self.renderer.photo(image,settings:self.snapshot.0,lut:self.snapshot.1)
+                let completion = self.onPhoto; self.onPhoto = nil
+                DispatchQueue.main.async {completion?(result)}
+            } catch {self.onPhoto = nil; self.report(error)}
+        }
     }
     func fileOutput(_ output: AVCaptureFileOutput, didFinishRecordingTo outputFileURL: URL, from connections: [AVCaptureConnection], error: Error?) {
         let saved = snapshot
@@ -171,7 +178,10 @@ final class CameraController: NSObject, ObservableObject, AVCaptureVideoDataOutp
         guard time.seconds-lastFrame.seconds > 1/24.0, let buffer = CMSampleBufferGetImageBuffer(sampleBuffer) else { return }
         lastFrame = time
         do {
-        let state = current(), image = try renderer.render(CIImage(cvPixelBuffer:buffer),settings:state.0,lut:state.1,time:time.seconds)
+        let raw = CIImage(cvPixelBuffer:buffer)
+        let previewScale = min(1,1280/max(raw.extent.width,raw.extent.height))
+        let source = raw.transformed(by:CGAffineTransform(scaleX:previewScale,y:previewScale))
+        let state = current(), image = try renderer.render(source,settings:state.0,lut:state.1,time:time.seconds)
         let scale = min(1,720/image.extent.width)
         let small = image.transformed(by:CGAffineTransform(scaleX:scale,y:scale))
         if let cg = renderer.context.createCGImage(small,from:small.extent) { DispatchQueue.main.async { self.preview = UIImage(cgImage:cg) } }

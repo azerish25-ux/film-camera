@@ -79,7 +79,7 @@ struct CameraScreen: View {
                     Picker("Capture mode",selection:$videoMode) {Text("Photo").tag(false); Text("Video").tag(true)}.pickerStyle(.segmented).disabled(camera.recording || exporter.busy)
                     HStack(spacing:44) {
                         Button {camera.flip()} label: {Image(systemName:"arrow.triangle.2.circlepath.camera").font(.title2)}.accessibilityLabel("Switch camera").disabled(camera.recording)
-                        Button(action:capture) {Image(systemName:camera.recording ? "stop.circle.fill" : videoMode ? "record.circle" : "circle.inset.filled").font(.system(size:66)).foregroundStyle(videoMode ? .red : .white)}.accessibilityLabel(camera.recording ? "Stop recording" : videoMode ? "Record video" : "Take photo").disabled(!camera.ready || exporter.busy)
+                        Button(action:capture) {Image(systemName:camera.recording ? "stop.circle.fill" : videoMode ? "record.circle" : "circle.inset.filled").font(.system(size:66)).foregroundStyle(videoMode ? .red : .white)}.accessibilityLabel(camera.recording ? "Stop recording" : videoMode ? "Record video" : "Take photo").disabled(!camera.ready || exporter.busy || camera.processing)
                         Button {tools.toggle()} label: {Image(systemName:"slider.horizontal.3").font(.title2)}.accessibilityLabel("Camera controls")
                     }
                     if exporter.busy {ProgressView("Processing film",value:exporter.progress); Button("Cancel export") {exporter.cancel()}}

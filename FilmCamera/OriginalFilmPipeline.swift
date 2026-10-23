@@ -130,6 +130,11 @@ final class OriginalFilmPipeline {
         let key = lut?.id.uuidString ?? look
         guard lutKey != key else {return}
         lutKey = key
+        if let lut {
+            guard (2...64).contains(lut.dimension), lut.rgba.count == lut.dimension*lut.dimension*lut.dimension*4,
+                  lut.rgba.allSatisfy({$0.isFinite}), lut.domainMin.count == 3, lut.domainMax.count == 3,
+                  zip(lut.domainMin,lut.domainMax).allSatisfy({$0.isFinite && $1.isFinite && $0 < $1}) else {throw PortError.message("Invalid lookup table data.")}
+        }
         let dimension = lut?.dimension ?? 64
         var colors: [UInt8] = []
         if let lut {colors = lut.textureRGB()}
@@ -151,7 +156,7 @@ final class OriginalFilmPipeline {
         EAGLContext.setCurrent(gl)
         while glGetError() != GL_NO_ERROR {}
         let w = Int(source.extent.width), h = Int(source.extent.height)
-        guard w > 0, h > 0 else {throw PortError.message("Empty film input.")}
+        guard w > 0, h > 0, w <= 8192, h <= 8192, w*h <= 16_777_216 else {throw PortError.message("Image dimensions exceed the supported 16-megapixel processing limit, or the image is empty.")}
         allocate(w,h)
         var bytes = [UInt8](repeating:0,count:w*h*4)
         bytes.withUnsafeMutableBytes {ci.render(source,toBitmap:$0.baseAddress!,rowBytes:w*4,bounds:source.extent,format:.RGBA8,colorSpace:CGColorSpaceCreateDeviceRGB())}

@@ -239,6 +239,40 @@ final class OriginalFilmPipeline {
         output.withUnsafeMutableBytes {glReadPixels(0,0,GLsizei(w),GLsizei(h),GLenum(GL_RGBA),GLenum(GL_UNSIGNED_BYTE),$0.baseAddress)}
         return CIImage(bitmapData:Data(output),bytesPerRow:w*4,size:CGSize(width:w,height:h),format:.RGBA8,colorSpace:CGColorSpaceCreateDeviceRGB())
     }
+    /// Isolated shader probe used to compare the same recovered pass on Android and iOS.
+    func probe(_ config: ReferenceCase) throws -> Data {
+        lock.lock(); defer {EAGLContext.setCurrent(nil); lock.unlock()}
+        EAGLContext.setCurrent(gl); while glGetError() != GL_NO_ERROR {}
+        allocate(128,96)
+        for kind in 0..<3 {
+            var bytes = [UInt8](repeating:0,count:128*96*4)
+            for y in 0..<96 {for x in 0..<128 {
+                let n = (y*128+x)*4
+                bytes[n] = UInt8(kind == 0 ? 1+x*253/127 : kind == 1 ? 60 : 0)
+                bytes[n+1] = UInt8(kind == 0 ? 1+y*253/95 : kind == 1 ? 90 : 0)
+                bytes[n+2] = UInt8(kind == 0 ? 1+(x+y)*253/222 : kind == 1 ? 120 : 0)
+                bytes[n+3] = kind == 2 ? 0 : 255
+            }}
+            let texture = kind == 2 ? textures[7] : textures[kind]
+            glActiveTexture(GLenum(GL_TEXTURE0)); glBindTexture(GLenum(GL_TEXTURE_2D),texture)
+            bytes.withUnsafeBytes {glTexSubImage2D(GLenum(GL_TEXTURE_2D),0,0,0,128,96,GLenum(GL_RGBA),GLenum(GL_UNSIGNED_BYTE),$0.baseAddress)}
+        }
+        try uploadLUT(nil,look:"Normal Mode")
+        let lookup: [String:GLuint] = ["source":textures[0],"background":textures[1],"clear":textures[7],"lut":lutTexture]
+        try draw(config.shader,to:textures[6]) {p in
+            for (key,value) in config.floats {f(p,key,value)}
+            for (key,value) in config.vectors {v(p,key,value[0],value[1])}
+            for (key,value) in config.ints {i(p,key,value)}
+            for (key,value) in config.arrays {array(p,key,value)}
+            for (unit,key) in config.samplers.keys.sorted().enumerated() {
+                let name = config.samplers[key]!
+                bind(p,key,lookup[name]!,unit,name == "lut" ? GLenum(GL_TEXTURE_3D) : GLenum(GL_TEXTURE_2D))
+            }
+        }
+        var output = [UInt8](repeating:0,count:128*96*4)
+        output.withUnsafeMutableBytes {glReadPixels(0,0,128,96,GLenum(GL_RGBA),GLenum(GL_UNSIGNED_BYTE),$0.baseAddress)}
+        return Data(output)
+    }
     static let blurSchedule: [[Int]] = [[],[0],[0,0],[0,1],[0,1,1],[0,1,2],[0,1,1,2],[0,1,2,3],[0,1,2,2,3],[0,1,2,3,4],[0,1,2,3,3,4],[0,1,2,3,4,5],[0,1,2,3,4,4,5],[0,1,2,3,4,5,6],[0,1,2,3,4,5,5,6],[0,1,2,3,4,5,6,7],[0,1,2,3,4,5,7,8],[0,1,2,3,4,5,7,8,9],[0,1,2,3,4,5,7,8,8,9],[0,1,2,3,4,5,7,8,9,10]]
     static func curve(temperature: Double,tint: Double,samples: [Double] = (0...255).map(Double.init)) -> [Float] {
         let t = floor(temperature/100), halfTint = floor(tint/2)

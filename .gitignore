@@ -7,3 +7,5 @@ xcuserdata/
 .tools/
 *.pyc
 __pycache__/
+scripts/android-reference/out/
+android-reference/

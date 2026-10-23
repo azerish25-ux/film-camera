@@ -1,0 +1,168 @@
+[
+  {
+    "name": "exposure-vignette",
+    "shader": "b_f25847e",
+    "floats": {
+      "vignetteFalloff": 0.25,
+      "pseudoExposure": 1.2,
+      "contrast": 1.15
+    },
+    "vectors": {
+      "iResolution": [
+        128,
+        96
+      ]
+    },
+    "samplers": {
+      "simpleTexId": "source"
+    },
+    "ints": {},
+    "arrays": {}
+  },
+  {
+    "name": "chromatic",
+    "shader": "b_f25846d",
+    "floats": {
+      "chroma_value": 0.17,
+      "chroma_vignetteFalloff": 0.1,
+      "chroma_pseudoExposure": 1.1,
+      "chroma_contrast": 0.95
+    },
+    "vectors": {
+      "chroma_iResolution": [
+        128,
+        96
+      ]
+    },
+    "samplers": {
+      "chromaTexId": "source"
+    },
+    "ints": {},
+    "arrays": {}
+  },
+  {
+    "name": "halation-high",
+    "shader": "c_f25858k",
+    "floats": {
+      "halationIntensity": 0.4,
+      "halationCuttoff": 0.35
+    },
+    "vectors": {},
+    "samplers": {
+      "halationHighSourceTexture": "source"
+    },
+    "ints": {},
+    "arrays": {}
+  },
+  {
+    "name": "halation-blur",
+    "shader": "c_f25857j",
+    "floats": {
+      "redHalationOffset": 3.5,
+      "halationBlurHueGreen": 0.3,
+      "halationBlurHueBlue": 0.04
+    },
+    "vectors": {
+      "halationBlurResInv": [
+        0.0078125,
+        0.010416666666666666
+      ]
+    },
+    "samplers": {
+      "halationBlurTempTexture": "source"
+    },
+    "ints": {},
+    "arrays": {}
+  },
+  {
+    "name": "halation-merge",
+    "shader": "c_f25859l",
+    "floats": {
+      "halationMergeIntensity": 0.3,
+      "halationMergeHueGreen": 0.3,
+      "halationMergeHueBlue": 0.04
+    },
+    "vectors": {},
+    "samplers": {
+      "textureHalationMergeSource": "source",
+      "textureHalationMergeBlur": "background"
+    },
+    "ints": {},
+    "arrays": {}
+  },
+  {
+    "name": "film-blur",
+    "shader": "c_f25856i",
+    "floats": {
+      "blurOffset": 2.5,
+      "blurFramePadding": 0.11
+    },
+    "vectors": {
+      "blurResInv": [
+        0.0078125,
+        0.010416666666666666
+      ]
+    },
+    "samplers": {
+      "blurTempTexture": "source"
+    },
+    "ints": {},
+    "arrays": {}
+  },
+  {
+    "name": "film-lut-saturation",
+    "shader": "c_f25866s",
+    "floats": {
+      "saturation": 0.7,
+      "perfColor": 0
+    },
+    "vectors": {
+      "noiseRes": [
+        128,
+        96
+      ]
+    },
+    "samplers": {
+      "grainInputTexture": "source",
+      "framePerforationsTexture": "clear",
+      "mLutID": "lut"
+    },
+    "ints": {
+      "stain.time": 0,
+      "scratch.time": 0,
+      "scratch_v.time": 0
+    },
+    "arrays": {}
+  },
+  {
+    "name": "grain",
+    "shader": "c_f25865r",
+    "floats": {
+      "saturation": 1,
+      "perfColor": 0,
+      "grainStrength": 0.15,
+      "grainSize": 0.4,
+      "grainSmoohtness": 0.3,
+      "grainChroma": 0.7,
+      "grainDarkLevel": 0.2
+    },
+    "vectors": {
+      "noiseRes": [
+        128,
+        96
+      ]
+    },
+    "samplers": {
+      "grainInputTexture": "source",
+      "framePerforationsTexture": "clear",
+      "mLutID": "lut"
+    },
+    "ints": {
+      "seed": 71,
+      "stain.time": 0,
+      "scratch.time": 0,
+      "scratch_v.time": 0
+    },
+    "arrays": {}
+  }
+]

@@ -22,11 +22,11 @@ python3 -c 'import subprocess,sys; subprocess.run(sys.argv[1:],check=True,timeou
 python3 -c 'import subprocess,sys; subprocess.run(sys.argv[1:],check=True,timeout=120)' adb shell pm install -r /data/local/tmp/film-reference.apk
 python3 -c 'import subprocess,sys; subprocess.run(sys.argv[1:],check=True,timeout=90)' adb shell am start -W -n com.azerish.reference/.ReferenceActivity
 for i in $(seq 1 90); do
-  if adb shell run-as com.azerish.reference test -f files/done; then break; fi
-  if adb shell run-as com.azerish.reference test -f files/error; then adb shell run-as com.azerish.reference cat files/error; exit 1; fi
+  if adb shell "run-as com.azerish.reference sh -c 'test -f files/done'"; then break; fi
+  if adb shell "run-as com.azerish.reference sh -c 'test -f files/error'"; then adb shell run-as com.azerish.reference cat files/error; exit 1; fi
   sleep 2
 done
-adb shell run-as com.azerish.reference test -f files/done
+adb shell "run-as com.azerish.reference sh -c 'test -f files/done'"
 for name in $(python3 -c 'import json; print(" ".join(x["name"] for x in json.load(open("FilmCamera/Resources/reference-cases.json"))))'); do
   adb exec-out run-as com.azerish.reference cat "files/$name.rgba" > "android-reference/$name.rgba"
 done

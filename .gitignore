@@ -8,4 +8,5 @@ xcuserdata/
 *.pyc
 __pycache__/
 scripts/android-reference/out/
-android-reference/
+/android-reference/
+

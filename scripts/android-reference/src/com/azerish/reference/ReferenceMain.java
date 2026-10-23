@@ -1,17 +1,20 @@
 package com.azerish.reference;
-import android.app.Activity;
-import android.os.Bundle;
 import android.opengl.*;
 import java.nio.*;
 import java.io.*;
 import java.util.*;
 import org.json.*;
 
-public final class ReferenceActivity extends Activity {
+public final class ReferenceMain {
   static final int W=128,H=96;
-  @Override public void onCreate(Bundle b) {super.onCreate(b); new Thread(() -> {try {run(); write("done",new byte[]{1});}catch(Throwable e){try{write("error",e.toString().getBytes("UTF-8"));}catch(Exception ignored){}}}).start();}
-  void write(String name,byte[] bytes) throws Exception {try(FileOutputStream s=openFileOutput(name,0)){s.write(bytes);}}
-  String read(String name) throws Exception {try(InputStream s=getAssets().open(name);ByteArrayOutputStream o=new ByteArrayOutputStream()){byte[] b=new byte[8192];int n;while((n=s.read(b))>0)o.write(b,0,n);return new String(o.toByteArray(),"UTF-8");}}
+  final File root;
+  ReferenceMain(File root){this.root=root;}
+  public static void main(String[] args){
+    try {ReferenceMain runner=new ReferenceMain(new File(args[0]));runner.run();runner.write("done",new byte[]{1});System.exit(0);}
+    catch(Throwable error){error.printStackTrace();System.exit(1);}
+  }
+  void write(String name,byte[] bytes) throws Exception {try(FileOutputStream s=new FileOutputStream(new File(root,name))){s.write(bytes);}}
+  String read(String name) throws Exception {try(java.util.zip.ZipFile zip=new java.util.zip.ZipFile(new File(root,"reference.jar"));InputStream s=zip.getInputStream(zip.getEntry("assets/"+name));ByteArrayOutputStream o=new ByteArrayOutputStream()){byte[] b=new byte[8192];int n;while((n=s.read(b))>0)o.write(b,0,n);return new String(o.toByteArray(),"UTF-8");}}
   String shader(String name) throws Exception {if(name.startsWith("frame_")) return shader("c_f25860m").replace("//{frame_func}",shader(name.substring(6)));return read(name+".glsl").replaceAll("(?m)^#extension GL_OES_EGL_image_external.*$","").replace("samplerExternalOES","sampler2D");}
   int compile(String text,int type) {int s=GLES30.glCreateShader(type);GLES30.glShaderSource(s,text);GLES30.glCompileShader(s);int[] ok={0};GLES30.glGetShaderiv(s,GLES30.GL_COMPILE_STATUS,ok,0);if(ok[0]==0)throw new RuntimeException(GLES30.glGetShaderInfoLog(s));return s;}
   int program(String fragment) throws Exception {int v=compile(shader("a_f25836b"),GLES30.GL_VERTEX_SHADER),f=compile(shader(fragment),GLES30.GL_FRAGMENT_SHADER);int p=GLES30.glCreateProgram();GLES30.glAttachShader(p,v);GLES30.glAttachShader(p,f);GLES30.glLinkProgram(p);int[] ok={0};GLES30.glGetProgramiv(p,GLES30.GL_LINK_STATUS,ok,0);if(ok[0]==0)throw new RuntimeException(GLES30.glGetProgramInfoLog(p));GLES30.glDeleteShader(v);GLES30.glDeleteShader(f);return p;}

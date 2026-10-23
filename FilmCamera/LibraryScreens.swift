@@ -38,12 +38,13 @@ struct PresetsScreen: View {
     @EnvironmentObject var store: FilmStore
     @State private var name = ""
     @State private var importing = false
+    @FocusState private var editingName: Bool
     var body: some View {
         NavigationStack {
             List {
                 Section("Save current film settings") {
-                    TextField("Preset name",text:$name).accessibilityIdentifier("presetName")
-                    Button("Save preset") {do {try store.savePreset(name); name = ""} catch {store.error = error.localizedDescription}}.accessibilityIdentifier("savePreset")
+                    TextField("Preset name",text:$name).focused($editingName).submitLabel(.done).onSubmit {editingName = false}.accessibilityIdentifier("presetName")
+                    Button("Save preset") {do {try store.savePreset(name); name = ""; editingName = false} catch {store.error = error.localizedDescription}}.accessibilityIdentifier("savePreset")
                 }
                 Section("My presets") {
                     ForEach(store.state.presets) {preset in

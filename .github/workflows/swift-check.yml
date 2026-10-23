@@ -1,0 +1,27 @@
+name: Swift validation
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  swift:
+    runs-on: macos-15
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - run: brew install xcodegen && xcodegen generate
+      - name: Compile and exercise iPhone app
+        run: |
+          set -o pipefail
+          DEVICE=$(xcrun simctl list devices available -j | python3 -c 'import json,sys; d=json.load(sys.stdin); print(next(x["udid"] for group in d["devices"].values() for x in group if "iPhone" in x["name"]))')
+          xcrun simctl boot "$DEVICE" || true
+          xcrun simctl bootstatus "$DEVICE" -b
+          xcodebuild -parallel-testing-enabled NO -project FilmCamera.xcodeproj -scheme FilmCamera -destination "platform=iOS Simulator,id=$DEVICE" -skip-testing:FilmCameraTests/AndroidParityTests -derivedDataPath build/simulator -resultBundlePath build/SwiftTests.xcresult CODE_SIGNING_ALLOWED=NO test 2>&1 | tee swift-validation.log
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: swift-validation
+          path: |
+            build/SwiftTests.xcresult
+            swift-validation.log
+          retention-days: 7

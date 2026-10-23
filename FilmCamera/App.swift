@@ -64,6 +64,8 @@ struct CameraScreen: View {
     @State private var shutter = 1.0/48
     @State private var torch = false
     @State private var fps = 24.0
+    @State private var lens = "Wide"
+    @State private var fourK = false
     var body: some View {
         NavigationStack {
             ScrollView {
@@ -90,7 +92,7 @@ struct CameraScreen: View {
                 camera.onMovie = { url,settings,lut in
                     Task { @MainActor in
                         defer {try? FileManager.default.removeItem(at:url)}
-                        do {try await exporter.exportVideo(source:url,destination:store.destination("mov"),settings:settings,lut:lut); store.refresh()} catch {store.error = error.localizedDescription}
+                        do {try await exporter.exportVideo(source:url,destination:store.destination("mov"),settings:settings,lut:lut,resolution:fourK ? AVAssetExportPreset3840x2160 : AVAssetExportPreset1920x1080); store.refresh()} catch {store.error = error.localizedDescription}
                     }
                 }
                 camera.start()
@@ -103,6 +105,9 @@ struct CameraScreen: View {
     private var cameraControls: some View {
         VStack(alignment:.leading) {
             Text("Hardware controls").font(.headline)
+            Picker("Lens",selection:$lens) {ForEach(camera.availableLenses,id:\.self) {Text($0).tag($0)}}.onChange(of:lens) {_,value in camera.selectLens(value)}
+            Toggle("Record in 4K",isOn:$fourK).onChange(of:fourK) {_,value in camera.setResolution(value)}
+            if camera.ready && !camera.audioEnabled {Label("Microphone access is disabled. Video will have no sound.",systemImage:"mic.slash").font(.caption)}
             Text("Available ranges depend on the selected camera.").font(.caption).foregroundStyle(.secondary)
             Text("Zoom"); Slider(value:$zoom,in:1...8,onEditingChanged:{_ in controls()})
             Text("Exposure compensation"); Slider(value:$bias,in:-3...3,onEditingChanged:{_ in controls()})

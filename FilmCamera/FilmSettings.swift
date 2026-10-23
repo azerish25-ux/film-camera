@@ -106,3 +106,30 @@ enum PortError: LocalizedError {
     case message(String)
     var errorDescription: String? { if case .message(let message) = self { return message }; return nil }
 }
+extension CubeLUT {
+    /// Resample non-unit CUBE domains to the texture's normalized input domain.
+    func textureRGB() -> [UInt8] {
+        let needsDomain = domainMin != [0,0,0] || domainMax != [1,1,1]
+        func byte(_ value: Float) -> UInt8 {UInt8(min(255,max(0,Int((value*255).rounded()))))}
+        if !needsDomain {return rgba.enumerated().filter {$0.offset%4 != 3}.map {byte($0.element)}}
+        var output = [UInt8](); output.reserveCapacity(dimension*dimension*dimension*3)
+        for b in 0..<dimension {for g in 0..<dimension {for r in 0..<dimension {
+            let input = [r,g,b].enumerated().map {axis,value in
+                min(Float(dimension-1),max(0,(Float(value)/Float(dimension-1)-domainMin[axis])/(domainMax[axis]-domainMin[axis])*Float(dimension-1)))
+            }
+            let lower = input.map {Int(floor($0))}, upper = lower.map {min(dimension-1,$0+1)}, fraction = zip(input,lower).map {$0-Float($1)}
+            for channel in 0..<3 {
+                var color: Float = 0
+                for z in 0...1 {for y in 0...1 {for x in 0...1 {
+                    let axes = [x,y,z]
+                    let coordinates = (0..<3).map {axes[$0] == 0 ? lower[$0] : upper[$0]}
+                    let weight = (0..<3).reduce(Float(1)) {$0*(axes[$1] == 0 ? 1-fraction[$1] : fraction[$1])}
+                    let index = ((coordinates[2]*dimension+coordinates[1])*dimension+coordinates[0])*4+channel
+                    color += rgba[index]*weight
+                }}}
+                output.append(byte(color))
+            }
+        }}}
+        return output
+    }
+}

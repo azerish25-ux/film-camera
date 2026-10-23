@@ -8,6 +8,8 @@ final class CameraController: NSObject, ObservableObject, AVCaptureVideoDataOutp
     @Published var recording = false
     @Published var processing = false
     @Published var audioEnabled = false
+    @Published var availableLenses: [String] = ["Wide"]
+    private var selectedLens = "Wide"
     let session = AVCaptureSession()
     private let queue = DispatchQueue(label:"film.camera")
     private let frames = DispatchQueue(label:"film.frames")
@@ -61,10 +63,13 @@ final class CameraController: NSObject, ObservableObject, AVCaptureVideoDataOutp
         orient()
     }
     private func addCamera() throws {
-        guard let found = AVCaptureDevice.default(.builtInWideAngleCamera,for:.video,position:position) else { throw PortError.message("No camera on this device. Use Editor to import media.") }
+        let types: [String:AVCaptureDevice.DeviceType] = ["Wide":.builtInWideAngleCamera,"Ultra wide":.builtInUltraWideCamera,"Telephoto":.builtInTelephotoCamera]
+        guard let found = AVCaptureDevice.default(types[selectedLens] ?? .builtInWideAngleCamera,for:.video,position:position) else { throw PortError.message("No camera on this device. Use Editor to import media.") }
         let input = try AVCaptureDeviceInput(device:found)
         guard session.canAddInput(input) else { throw PortError.message("Cannot open camera.") }
         session.addInput(input); device = found
+        let available = types.keys.sorted().filter {AVCaptureDevice.default(types[$0]!,for:.video,position:position) != nil}
+        DispatchQueue.main.async {self.availableLenses = available}
     }
     private func orient() {
         for connection in [video.connection(with:.video),photo.connection(with:.video),movie.connection(with:.video)].compactMap({$0}) {
@@ -78,9 +83,32 @@ final class CameraController: NSObject, ObservableObject, AVCaptureVideoDataOutp
             self.session.beginConfiguration()
             let old = self.session.inputs.compactMap { $0 as? AVCaptureDeviceInput }.first { $0.device.hasMediaType(.video) }
             if let old { self.session.removeInput(old) }
-            self.position = self.position == .back ? .front : .back
+            self.position = self.position == .back ? .front : .back; self.selectedLens = "Wide"
             do { try self.addCamera() } catch { if let old, self.session.canAddInput(old) { self.session.addInput(old); self.device = old.device }; self.report(error) }
             self.orient(); self.session.commitConfiguration()
+        }
+    }
+    func selectLens(_ name: String) {
+        queue.async {
+            guard !self.movie.isRecording else {return}
+            self.session.beginConfiguration(); defer {self.session.commitConfiguration()}
+            let old = self.session.inputs.compactMap {$0 as? AVCaptureDeviceInput}.first {$0.device.hasMediaType(.video)}
+            if let old {self.session.removeInput(old)}
+            let previous = self.selectedLens; self.selectedLens = name
+            do {try self.addCamera(); self.orient()} catch {
+                self.selectedLens = previous
+                if let old, self.session.canAddInput(old) {self.session.addInput(old); self.device = old.device}
+                self.report(error)
+            }
+        }
+    }
+    func setResolution(_ fourK: Bool) {
+        queue.async {
+            guard !self.movie.isRecording else {return}
+            let preset: AVCaptureSession.Preset = fourK ? .hd4K3840x2160 : .hd1920x1080
+            self.session.beginConfiguration(); defer {self.session.commitConfiguration()}
+            if self.session.canSetSessionPreset(preset) {self.session.sessionPreset = preset}
+            else {self.report(PortError.message("This camera does not support the selected resolution."))}
         }
     }
     func controls(zoom: Double, bias: Double, focus: Double?, iso: Double?, shutter: Double?, torch: Bool, fps: Double) {

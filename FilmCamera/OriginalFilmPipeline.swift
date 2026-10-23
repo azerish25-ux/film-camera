@@ -18,6 +18,7 @@ final class OriginalFilmPipeline {
     private var vao: GLuint = 0
     private var vbo: GLuint = 0
     private var textures: [GLuint] = []
+    private var textureSizes: [GLuint:(Int,Int)] = [:]
     private var width = 0, height = 0
     private var lutTexture: GLuint = 0
     private var lutKey = ""
@@ -71,14 +72,19 @@ final class OriginalFilmPipeline {
     private func allocate(_ w: Int,_ h: Int) {
         guard width != w || height != h else {return}
         if !textures.isEmpty {glDeleteTextures(GLsizei(textures.count),&textures)}
-        width = w; height = h; lastTime = -1; textures = [GLuint](repeating:0,count:11); glGenTextures(11,&textures)
-        for t in textures {
+        width = w; height = h; lastTime = -1; textures = [GLuint](repeating:0,count:13); glGenTextures(13,&textures)
+        textureSizes = [:]
+        for (index,t) in textures.enumerated() {
+            let halationDivisor = h == 1080 ? 2 : h == 2160 ? 3 : h == 4320 ? 4 : 1
+            let divisor = [2,3].contains(index) ? halationDivisor : [11,12].contains(index) ? 2 : 1
+            let tw = max(1,w/divisor), th = max(1,h/divisor)
+            textureSizes[t] = (tw,th)
             glBindTexture(GLenum(GL_TEXTURE_2D),t)
             glTexParameteri(GLenum(GL_TEXTURE_2D),GLenum(GL_TEXTURE_MIN_FILTER),GL_LINEAR)
             glTexParameteri(GLenum(GL_TEXTURE_2D),GLenum(GL_TEXTURE_MAG_FILTER),GL_LINEAR)
             glTexParameteri(GLenum(GL_TEXTURE_2D),GLenum(GL_TEXTURE_WRAP_S),GL_CLAMP_TO_EDGE)
             glTexParameteri(GLenum(GL_TEXTURE_2D),GLenum(GL_TEXTURE_WRAP_T),GL_CLAMP_TO_EDGE)
-            glTexImage2D(GLenum(GL_TEXTURE_2D),0,GL_RGBA8,GLsizei(w),GLsizei(h),0,GLenum(GL_RGBA),GLenum(GL_UNSIGNED_BYTE),nil)
+            glTexImage2D(GLenum(GL_TEXTURE_2D),0,GL_RGBA8,GLsizei(tw),GLsizei(th),0,GLenum(GL_RGBA),GLenum(GL_UNSIGNED_BYTE),nil)
         }
     }
     private func draw(_ name: String, to: GLuint, setup: (GLuint) -> Void) throws {
@@ -86,7 +92,8 @@ final class OriginalFilmPipeline {
         glBindFramebuffer(GLenum(GL_FRAMEBUFFER),frameBuffer)
         glFramebufferTexture2D(GLenum(GL_FRAMEBUFFER),GLenum(GL_COLOR_ATTACHMENT0),GLenum(GL_TEXTURE_2D),to,0)
         guard glCheckFramebufferStatus(GLenum(GL_FRAMEBUFFER)) == GL_FRAMEBUFFER_COMPLETE else {throw PortError.message("Film framebuffer is incomplete.")}
-        glViewport(0,0,GLsizei(width),GLsizei(height)); glBindVertexArray(vao)
+        let size = textureSizes[to] ?? (width,height)
+        glViewport(0,0,GLsizei(size.0),GLsizei(size.1)); glBindVertexArray(vao)
         setup(p); glDrawArrays(GLenum(GL_TRIANGLE_STRIP),0,4)
         let error = glGetError(); guard error == GL_NO_ERROR else {throw PortError.message("Film GPU error \(error)")}
     }
@@ -125,7 +132,7 @@ final class OriginalFilmPipeline {
         lutKey = key
         let dimension = lut?.dimension ?? 64
         var colors: [UInt8] = []
-        if let lut {colors = lut.rgba.enumerated().filter {$0.offset%4 != 3}.map {UInt8(min(255,max(0,Int(($0.element*255).rounded()))))}}
+        if let lut {colors = lut.textureRGB()}
         else if let film = OriginalFilm.all.first(where:{$0.name == look}), !film.asset.isEmpty {
             guard let url = Bundle.main.url(forResource:film.asset,withExtension:"lut") else {throw PortError.message("Missing original film table.")}
             colors = Array(try Data(contentsOf:url))
@@ -201,12 +208,13 @@ final class OriginalFilmPipeline {
         }
         if s["blur"] > 0 {
             for offset in Self.blurSchedule[min(19,max(0,Int(s["blur"])))] {
-                let target = current == textures[2] ? textures[3] : textures[2]
+                let target = current == textures[11] ? textures[12] : textures[11]
                 try draw("c_f25856i",to:target) {p in bind(p,"blurTempTexture",current); v(p,"blurResInv",1/Double(w),1/Double(h)); f(p,"blurOffset",Double(offset)+0.5); f(p,"blurFramePadding",s.frame.blurPadding-dynamics.shiftX)}; current = target
             }
         }
+        glActiveTexture(GLenum(GL_TEXTURE15)); glBindTexture(GLenum(GL_TEXTURE_2D),textures[1]); glGenerateMipmap(GLenum(GL_TEXTURE_2D))
         try draw("c_f25861n",to:textures[5]) {p in
-            bind(p,"textureInPass3",current); bind(p,"textureLuminance",current,2); bind(p,"framePerforationsTexture",mask,3); bind(p,"lightLeakTexture",textures[7],4)
+            bind(p,"textureInPass3",current); bind(p,"textureLuminance",textures[1],2); f(p,"luminanceMipmapLevel",min(8,floor(log2(Double(max(w,h))))+1)); bind(p,"framePerforationsTexture",mask,3); bind(p,"lightLeakTexture",textures[7],4)
             var curve = Self.curve(temperature:s["temperature"],tint:s["tint"],samples:FilmCurve.samples(x:s.curveX,y:s.curveY))
             curve.withUnsafeMutableBufferPointer {glUniform3fv(glGetUniformLocation(p,"curve"),66,$0.baseAddress)}
             for (index,channel) in ["R","G","B"].enumerated() {f(p,"filmBreath"+channel,dynamics.breathRGB[index])}

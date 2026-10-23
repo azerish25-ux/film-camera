@@ -106,6 +106,43 @@ final class OriginalAssetTests: XCTestCase {
         bytes.withUnsafeMutableBytes {context.render(image,toBitmap:$0.baseAddress!,rowBytes:width*4,bounds:image.extent,format:.RGBA8,colorSpace:CGColorSpaceCreateDeviceRGB())}
         return bytes
     }
+    // Independent CPU oracle for the original 64^3 RGB tables. The production
+    // renderer uses GPU texture sampling, so this checks the final lookup without
+    // sharing its implementation or hiding amplification of earlier quantization.
+    private func sampleOriginalLUT(_ film: OriginalFilm, pixels: [UInt8]) throws -> [UInt8] {
+        let table: [UInt8]
+        if film.asset.isEmpty {
+            var identity = [UInt8](repeating:0,count:64*64*64*3)
+            for index in 0..<(64*64*64) {
+                identity[index*3] = UInt8((index%64)*255/64)
+                identity[index*3+1] = UInt8(((index/64)%64)*255/64)
+                identity[index*3+2] = UInt8((index/4096)*255/64)
+            }
+            table = identity
+        } else {
+            let url = try XCTUnwrap(Bundle.main.url(forResource:film.asset,withExtension:"lut"))
+            table = Array(try Data(contentsOf:url))
+        }
+        var output = [UInt8](repeating:255,count:pixels.count)
+        for pixel in 0..<(pixels.count/4) {
+            let q = (0..<3).map {min(63,max(0,Double(pixels[pixel*4+$0])*64/255-0.5))}
+            let low = q.map {Int(floor($0))}, high = low.map {min(63,$0+1)}
+            let fraction = (0..<3).map {q[$0]-Double(low[$0])}
+            var red = 0.0, green = 0.0, blue = 0.0
+            for corner in 0..<8 {
+                let r = corner&1 == 0 ? low[0] : high[0]
+                let g = corner&2 == 0 ? low[1] : high[1]
+                let b = corner&4 == 0 ? low[2] : high[2]
+                let weight = (corner&1 == 0 ? 1-fraction[0] : fraction[0]) * (corner&2 == 0 ? 1-fraction[1] : fraction[1]) * (corner&4 == 0 ? 1-fraction[2] : fraction[2])
+                let at = ((b*64+g)*64+r)*3
+                red += Double(table[at])*weight; green += Double(table[at+1])*weight; blue += Double(table[at+2])*weight
+            }
+            output[pixel*4] = UInt8(clamping:Int(red.rounded()))
+            output[pixel*4+1] = UInt8(clamping:Int(green.rounded()))
+            output[pixel*4+2] = UInt8(clamping:Int(blue.rounded()))
+        }
+        return output
+    }
     func testEveryFilmThroughProductionPipelineAgainstAndroidChain() throws {
         var bytes = [UInt8](repeating:255,count:128*96*4)
         for k in 0..<(128*96) {
@@ -135,8 +172,31 @@ final class OriginalAssetTests: XCTestCase {
                 maximum = max(maximum,delta); sum += delta
             }}}
             let mean = Double(sum)/Double(128*96*3)
-            XCTAssertLessThanOrEqual(maximum,3,film.name); XCTAssertLessThan(mean,0.5,film.name)
-            report.append(["film":film.name,"maximumByteError":maximum,"meanByteError":mean,"stageMaximumErrors":stageErrors])
+            let native = Array(try XCTUnwrap(stages["output"]))
+            let producedTone = Array(try XCTUnwrap(stages["tone"]))
+            let referenceTone = Array(try AndroidFixtures.data("chain-tone"))
+            let predicted = try sampleOriginalLUT(film,pixels:producedTone)
+            let referencePrediction = try sampleOriginalLUT(film,pixels:referenceTone)
+            var oracleMaximum = 0, referenceOracleMaximum = 0, bridgeMaximum = 0, envelopeViolations = 0
+            for index in 0..<native.count where index%4 != 3 {
+                let pixel = index/4
+                let flipped = ((95-pixel/128)*128+pixel%128)*4+index%4
+                let bridge = abs(Int(actual[flipped])-Int(native[index]))
+                bridgeMaximum = max(bridgeMaximum,bridge)
+                oracleMaximum = max(oracleMaximum,abs(Int(native[index])-Int(predicted[index])))
+                referenceOracleMaximum = max(referenceOracleMaximum,abs(Int(expected[index])-Int(referencePrediction[index])))
+                let propagated = abs(Int(predicted[index])-Int(referencePrediction[index]))
+                if abs(Int(actual[flipped])-Int(expected[index])) > propagated+3+bridge {envelopeViolations += 1}
+            }
+            XCTAssertEqual(stageErrors["exposure"],0,film.name)
+            XCTAssertLessThanOrEqual(stageErrors["gate"] ?? Int.max,1,film.name)
+            XCTAssertLessThanOrEqual(stageErrors["tone"] ?? Int.max,1,film.name)
+            XCTAssertLessThanOrEqual(referenceOracleMaximum,1,film.name)
+            XCTAssertLessThanOrEqual(oracleMaximum,2,film.name)
+            XCTAssertLessThanOrEqual(bridgeMaximum,1,film.name)
+            XCTAssertEqual(envelopeViolations,0,film.name)
+            XCTAssertLessThan(mean,0.25,film.name)
+            report.append(["film":film.name,"maximumByteError":maximum,"meanByteError":mean,"stageMaximumErrors":stageErrors,"cpuOracleMaximumByteError":oracleMaximum,"referenceOracleMaximumByteError":referenceOracleMaximum,"imageBridgeMaximumByteError":bridgeMaximum,"localLUTEnvelopeViolations":envelopeViolations])
         }
         let attachment = XCTAttachment(data:try JSONSerialization.data(withJSONObject:report,options:.prettyPrinted),uniformTypeIdentifier:"public.json")
         attachment.name = "Production pipeline Android comparison"; attachment.lifetime = .keepAlways; add(attachment)
@@ -281,13 +341,37 @@ final class OriginalAssetTests: XCTestCase {
         let url = try XCTUnwrap(Bundle.main.url(forResource:"EditorFixture",withExtension:"jpg"))
         let cg = try XCTUnwrap(UIImage(contentsOfFile:url.path)?.cgImage)
         let source = CIImage(cgImage:cg), renderer = FilmRenderer()
-        var settings = FilmSettings(); settings.frame = .super16
+        var settings = FilmSettings(); settings["burn"] = 1; settings["burnClip"] = 0
         settings["grain"] = 0; settings["blur"] = 0; settings["scratches"] = 0; settings["verticalScratch"] = 1
-        let first = readPixels(try renderer.render(source,settings:settings,time:0))
-        XCTAssertTrue(first == readPixels(try renderer.render(source,settings:settings,time:0)),"Seeking/repeating the same burn frame changed its pixels")
-        let later = readPixels(try renderer.render(source,settings:settings,time:0.5))
-        XCTAssertTrue(first != later,"The film gate clip must animate")
-        XCTAssertTrue(first == readPixels(try renderer.render(source,settings:settings,time:0)),"Seeking/repeating the same burn frame changed its pixels")
+        let clip = try XCTUnwrap(Bundle.main.url(forResource:FilmBurn.clips[0],withExtension:"mp4"))
+        let midpoint = AVURLAsset(url:clip).duration.seconds/2
+        var snapshots: [String:[String:Data]] = [:]
+        func pixels(_ time: Double, label: String) throws -> [UInt8] {
+            var stages: [String:Data] = [:]
+            let image = try renderer.render(source,settings:settings,time:time,diagnostics:{stages[$0] = $1})
+            snapshots[label] = stages
+            return readPixels(image)
+        }
+        let first = try pixels(0,label:"first")
+        let repeated = try pixels(0,label:"repeat")
+        let later = try pixels(midpoint,label:"later")
+        let sought = try pixels(0,label:"seek")
+        var evidence: [String:[String:Int]] = [:]
+        for label in ["repeat","later","seek"] {
+            var errors: [String:Int] = [:]
+            for stage in ["exposure","gate","tone","output"] {
+                let a = Array(try XCTUnwrap(snapshots["first"]?[stage])), b = Array(try XCTUnwrap(snapshots[label]?[stage]))
+                var maximum = 0, changed = 0
+                for index in 0..<a.count where index%4 != 3 {let delta=abs(Int(a[index])-Int(b[index]));maximum=max(maximum,delta);if delta>0 {changed += 1}}
+                errors[stage+"Maximum"] = maximum; errors[stage+"ChangedChannels"] = changed
+            }
+            evidence[label] = errors
+        }
+        let attachment = XCTAttachment(data:try JSONSerialization.data(withJSONObject:evidence,options:.prettyPrinted),uniformTypeIdentifier:"public.json")
+        attachment.name = "Animated frame repeat and seek diagnostics"; attachment.lifetime = .keepAlways; add(attachment)
+        XCTAssertTrue(first == repeated,"Repeating the same burn frame changed its pixels")
+        XCTAssertTrue(first != later,"The film burn clip must animate")
+        XCTAssertTrue(first == sought,"Seeking to the first burn frame changed its pixels")
     }
 
 }

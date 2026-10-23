@@ -48,3 +48,10 @@ Current execution record (2026-10-23):
 - Pinned references contain1401 cases, so must be refreshed and hash-verified against the final Android artifact, with updated provenance.
 - The committed Xcode project needs replacement from the final CI-generated project after moving fixtures to the test target; final HEAD must be verified.
 - Outstanding: inspect regression/core runs, fix failures, run final1520-case/full integration suite including cache/JPEG assertions, inspect film contact sheets, pin final references/project/evidence, update documentation, commit/push, verify clean worktree/remote SHA/final macOS run. Only then complete goal.
+
+
+Diagnostic46184e5/run40035469293 measured: exposure exact; gate and tone maximum errors1/255; largest whole-image mean0.097141/255; isolated raw output maximum14/255 after steep LUT amplification. Independent CPU trilinear sampling matched Android's lookup within1/255 for all88 films. The new test checks intermediate stages and both GPU lookups against that independent oracle, retaining a tighter full-image mean bound and a per-pixel envelope derived from each original LUT's sensitivity.
+
+All three behavior regressions were confirmed red in40029498461. Its2112 film/frame renders passed in1405.524s; animated-asset loops, temporal seeking/burn rolls and720p/1080p/4K processing passed. Two animation repeat/seek assertions and video color-space normalization remain under targeted investigation.
+
+Temporary artifact staging folder to remove after verified evidence transfer: C:/Users/shahr/film-camera-ci-evidence-20261023-1947. Source remains on D. All1520 references from40034074197 are pinned/hash-verified, and both scanned frame borders passed native Android ETC1 verification.

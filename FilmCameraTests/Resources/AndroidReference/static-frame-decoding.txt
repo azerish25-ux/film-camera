@@ -1,0 +1,1 @@
+Both static frame scans match Android native ETC1 decoding pixel for pixel

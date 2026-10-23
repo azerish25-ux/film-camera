@@ -30,14 +30,15 @@ final class MediaExportTests: XCTestCase {
         let expected = try XCTUnwrap(FilmRenderer().photo(UIImage(cgImage:original),settings:settings,lut:nil).cgImage)
         func mean(_ cg: CGImage) -> [Double] {
             let image = CIImage(cgImage:cg).transformed(by:CGAffineTransform(scaleX:128/Double(cg.width),y:72/Double(cg.height)))
-            let context = CIContext(options:[.workingColorSpace:NSNull(),.outputColorSpace:NSNull()])
+            let display = CGColorSpace(name:CGColorSpace.sRGB)!
+            let context = CIContext(options:[.workingColorSpace:CGColorSpace(name:CGColorSpace.linearSRGB)!, .outputColorSpace:display])
             var bytes = [UInt8](repeating:0,count:32*32*4)
-            bytes.withUnsafeMutableBytes {context.render(image,toBitmap:$0.baseAddress!,rowBytes:128,bounds:CGRect(x:48,y:20,width:32,height:32),format:.RGBA8,colorSpace:CGColorSpaceCreateDeviceRGB())}
+            bytes.withUnsafeMutableBytes {context.render(image,toBitmap:$0.baseAddress!,rowBytes:128,bounds:CGRect(x:48,y:20,width:32,height:32),format:.RGBA8,colorSpace:display)}
             return (0..<3).map {channel in Double((0..<1024).reduce(0) {$0+Int(bytes[$1*4+channel])})/1024}
         }
         let actualMean = mean(graded), expectedMean = mean(expected)
         for (actual,target) in zip(actualMean,expectedMean) {XCTAssertEqual(actual,target,accuracy:12,"Video export did not preserve the film grade")}
-        let colorEvidence = XCTAttachment(data:try JSONSerialization.data(withJSONObject:["actual":actualMean,"expected":expectedMean]),uniformTypeIdentifier:"public.json")
+        let colorEvidence = XCTAttachment(data:try JSONSerialization.data(withJSONObject:["actual":actualMean,"expected":expectedMean,"videoColorSpace":String(describing:graded.colorSpace?.name),"photoColorSpace":String(describing:expected.colorSpace?.name)]),uniformTypeIdentifier:"public.json")
         colorEvidence.name = "Video export grade comparison"; colorEvidence.lifetime = .keepAlways; add(colorEvidence)
         XCTAssertFalse(exporter.busy); XCTAssertEqual(exporter.progress,1)
     }

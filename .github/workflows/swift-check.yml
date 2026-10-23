@@ -6,7 +6,7 @@ on:
         description: Verification scope
         type: choice
         default: all
-        options: [all, integration]
+        options: [all, integration, processing]
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
@@ -28,15 +28,17 @@ jobs:
           xcrun simctl boot "$DEVICE" || true
           xcrun simctl bootstatus "$DEVICE" -b
           ONLY=()
-          if [ "$TEST_SUITE" = integration ]; then
+          if [ "$TEST_SUITE" = integration ] || [ "$TEST_SUITE" = processing ]; then
             ONLY=(-only-testing:FilmCameraTests/OriginalAssetTests/testEveryFilmThroughProductionPipelineAgainstAndroidChain -only-testing:FilmCameraTests/OriginalAssetTests/testFogVariesIndependentlyOfFilmBreath -only-testing:FilmCameraTests/OriginalAssetTests/testFastShakeUsesOriginalThreeSampleBuffer -only-testing:FilmCameraTests/OriginalAssetTests/testSubthresholdGrainUsesAndroidBypass -only-testing:FilmCameraTests/OriginalAssetTests/testAnimatedFramesChangeAndSeekBackToOriginalPixels -only-testing:FilmCameraTests/MediaExportTests)
           fi
+          if [ "$TEST_SUITE" = processing ]; then ONLY+=(-only-testing:FilmCameraTests/AndroidParityTests); fi
           xcodebuild -quiet "${ONLY[@]}" -parallel-testing-enabled NO -project FilmCamera.xcodeproj -scheme FilmCamera -destination "platform=iOS Simulator,id=$DEVICE" -derivedDataPath build/simulator -resultBundlePath build/SwiftTests.xcresult CODE_SIGNING_ALLOWED=NO test 2>&1 | tee swift-validation.log
       - name: Export visual test evidence
         if: always()
         run: |
           if [ -d build/SwiftTests.xcresult ]; then
             xcrun xcresulttool export attachments --path build/SwiftTests.xcresult --output-path build/attachments
+            xcrun xcresulttool get --legacy --format json --path build/SwiftTests.xcresult > build/failure-summary.json
           fi
       - uses: actions/upload-artifact@v4
         if: always()
@@ -44,6 +46,7 @@ jobs:
           name: swift-validation
           path: |
             build/attachments
+            build/failure-summary.json
             build/SwiftTests.xcresult
             swift-validation.log
           retention-days: 7

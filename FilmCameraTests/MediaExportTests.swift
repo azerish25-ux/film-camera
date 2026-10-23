@@ -37,7 +37,7 @@ final class MediaExportTests: XCTestCase {
             return (0..<3).map {channel in Double((0..<1024).reduce(0) {$0+Int(bytes[$1*4+channel])})/1024}
         }
         let actualMean = mean(graded), expectedMean = mean(expected)
-        for (actual,target) in zip(actualMean,expectedMean) {XCTAssertEqual(actual,target,accuracy:12,"Video export did not preserve the film grade")}
+        for (actual,target) in zip(actualMean,expectedMean) {XCTAssertEqual(actual,target,accuracy:3,"Video export did not preserve the film grade")}
         let colorEvidence = XCTAttachment(data:try JSONSerialization.data(withJSONObject:["actual":actualMean,"expected":expectedMean,"videoColorSpace":String(describing:graded.colorSpace?.name),"photoColorSpace":String(describing:expected.colorSpace?.name)]),uniformTypeIdentifier:"public.json")
         colorEvidence.name = "Video export grade comparison"; colorEvidence.lifetime = .keepAlways; add(colorEvidence)
         XCTAssertFalse(exporter.busy); XCTAssertEqual(exporter.progress,1)

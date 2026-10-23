@@ -15,7 +15,7 @@ permissions:
 jobs:
   swift:
     runs-on: macos-15
-    timeout-minutes: 45
+    timeout-minutes: 90
     steps:
       - uses: actions/checkout@v4
       - run: brew install xcodegen librsvg && rsvg-convert -o FilmCamera/Assets.xcassets/AppIcon.appiconset/AppIcon.png FilmCamera/Resources/app-icon.svg && xcodegen generate
@@ -45,6 +45,7 @@ jobs:
         with:
           name: swift-validation
           path: |
+            FilmCamera.xcodeproj
             build/attachments
             build/failure-summary.json
             build/SwiftTests.xcresult

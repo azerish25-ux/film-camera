@@ -51,7 +51,14 @@ final class OriginalFilmPipeline {
         // coordinates land on texel boundaries, whose hardware tie handling differs.
         // Grain cells use fragment pixels; interpolated UV rounding can
         // otherwise select an adjacent random-noise cell at exact boundaries.
-        let pixelAligned = name == "c_f25865r" ? precise.replacingOccurrences(of:"tmpvar_5 = (vTextureCoord * noiseRes);",with:"tmpvar_5 = gl_FragCoord.xy;") : precise
+        var pixelAligned = precise
+        if name == "c_f25865r" {
+            // Integer reconstruction prevents a backend's viewport-Y inversion
+            // being fused into grain scaling across an exact cell boundary.
+            pixelAligned = pixelAligned.replacingOccurrences(of:"tmpvar_5 = (vTextureCoord * noiseRes);",with:"tmpvar_5 = vec2(ivec2(gl_FragCoord.xy)) + vec2(0.5);")
+                .replacingOccurrences(of:"tmpvar_3 = ((0.5 - (0.4 * grainSize)) * 2.0);",with:"tmpvar_3 = portableGrainScale;")
+                .replacingOccurrences(of:"void main ()",with:"uniform highp float portableGrainScale;\nvoid main ()")
+        }
         return pixelAligned.replacingOccurrences(of:"textureLod\\s*\\(\\s*noiseTexture\\s*,\\s*(\\w+)\\s*,\\s*0\\.0\\s*\\)",with:"texelFetch(noiseTexture, ivec2(mod(floor($1 * vec2(1024.0)), vec2(1024.0))), 0)",options:.regularExpression)
     }
     private func compile(_ source: String, type: GLenum) throws -> GLuint {
@@ -277,7 +284,7 @@ final class OriginalFilmPipeline {
         try draw(s["grain"] >= 0.01 ? "c_f25865r" : "c_f25866s",to:textures[6]) {p in
             bind(p,"grainInputTexture",textures[5]); bind(p,"mLutID",lutTexture,1,GLenum(GL_TEXTURE_3D)); bind(p,"framePerforationsTexture",mask,2); bind(p,"noiseTexture",noise,10)
             f(p,"saturation",s["saturation"]); f(p,"perfColor",s["perfColor"]); v(p,"noiseRes",Double(w),Double(h))
-            f(p,"grainSize",s["grainSize"]); f(p,"grainStrength",s["grain"]); f(p,"grainSmoohtness",s["grainSmoothness"]); f(p,"grainChroma",s["grainChroma"]); f(p,"grainDarkLevel",s["grainShadows"])
+            f(p,"portableGrainScale",Self.grainScale(s["grainSize"])); f(p,"grainSize",s["grainSize"]); f(p,"grainStrength",s["grain"]); f(p,"grainSmoohtness",s["grainSmoothness"]); f(p,"grainChroma",s["grainChroma"]); f(p,"grainDarkLevel",s["grainShadows"])
             i(p,"seed",(dynamics.frame*71)%500)
             f(p,"srandomX",dynamics.shiftX); f(p,"srandomY",dynamics.shiftY+dynamics.fastShake)
             i(p,"stain.x",dynamics.stainX); i(p,"stain.y",dynamics.stainY); i(p,"stain.w",dynamics.stainW); i(p,"stain.h",dynamics.stainH); i(p,"stain.time",dynamics.stainTime); array(p,"stain.mask",dynamics.stainMask)
@@ -328,6 +335,7 @@ final class OriginalFilmPipeline {
             lookup[name] = try imageTexture(String(name.dropFirst(6)))
         }
         try draw(config.shader,to:textures[6]) {p in
+            f(p,"portableGrainScale",Self.grainScale(config.floats["grainSize"] ?? 0))
             for (key,value) in config.floats {f(p,key,value)}
             for (key,value) in config.vectors {v(p,key,value[0],value[1])}
             for (key,value) in config.ints {i(p,key,value)}
@@ -343,6 +351,11 @@ final class OriginalFilmPipeline {
         var output = [UInt8](repeating:0,count:128*96*4)
         output.withUnsafeMutableBytes {glReadPixels(0,0,128,96,GLenum(GL_RGBA),GLenum(GL_UNSIGNED_BYTE),$0.baseAddress)}
         return Data(output)
+    }
+    static func grainScale(_ size: Double) -> Double {
+        let product = Float(0.4)*Float(size)
+        let difference = Float(0.5)-product
+        return Double(difference*2)
     }
     static let blurSchedule: [[Int]] = [[],[0],[0,0],[0,1],[0,1,1],[0,1,2],[0,1,1,2],[0,1,2,3],[0,1,2,2,3],[0,1,2,3,4],[0,1,2,3,3,4],[0,1,2,3,4,5],[0,1,2,3,4,4,5],[0,1,2,3,4,5,6],[0,1,2,3,4,5,5,6],[0,1,2,3,4,5,6,7],[0,1,2,3,4,5,7,8],[0,1,2,3,4,5,7,8,9],[0,1,2,3,4,5,7,8,8,9],[0,1,2,3,4,5,7,8,9,10]]
     static func curve(temperature: Double,tint: Double,samples: [Double] = (0...255).map(Double.init)) -> [Float] {

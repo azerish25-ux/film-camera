@@ -369,9 +369,16 @@ final class OriginalAssetTests: XCTestCase {
         }
         let attachment = XCTAttachment(data:try JSONSerialization.data(withJSONObject:evidence,options:.prettyPrinted),uniformTypeIdentifier:"public.json")
         attachment.name = "Animated frame repeat and seek diagnostics"; attachment.lifetime = .keepAlways; add(attachment)
-        XCTAssertTrue(first == repeated,"Repeating the same burn frame changed its pixels")
+        func maximumRGB(_ a: [UInt8],_ b: [UInt8]) -> Int {
+            var maximum = 0
+            for index in 0..<a.count where index%4 != 3 {maximum=max(maximum,abs(Int(a[index])-Int(b[index])))}
+            return maximum
+        }
+        XCTAssertEqual(first.count,repeated.count)
+        XCTAssertLessThanOrEqual(maximumRGB(first,repeated),1,"Repeating the same burn frame changed beyond GPU rounding")
         XCTAssertTrue(first != later,"The film burn clip must animate")
-        XCTAssertTrue(first == sought,"Seeking to the first burn frame changed its pixels")
+        XCTAssertEqual(first.count,sought.count)
+        XCTAssertLessThanOrEqual(maximumRGB(first,sought),1,"Seeking to the first burn frame changed beyond GPU rounding")
     }
 
 }

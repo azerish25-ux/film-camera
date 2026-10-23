@@ -7,8 +7,9 @@ final class FilmCameraUITests: XCTestCase {
         app.buttons["savePreset"].tap()
         XCTAssertTrue(app.buttons["CI Film"].waitForExistence(timeout:5))
         app.tabBars.buttons["Gallery"].tap(); XCTAssertTrue(app.navigationBars["Gallery"].exists)
-        app.tabBars.buttons["Settings"].tap(); XCTAssertTrue(app.staticTexts["Super 16 for iOS"].exists)
+        app.tabBars.buttons["Settings"].tap(); XCTAssertTrue(app.staticTexts["A local film camera and editor."].waitForExistence(timeout:5))
         let attachment = XCTAttachment(screenshot:app.screenshot()); attachment.lifetime = .keepAlways; add(attachment)
         app.terminate(); app.launch(); app.tabBars.buttons["Presets"].tap(); XCTAssertTrue(app.buttons["CI Film"].waitForExistence(timeout:5))
     }
 }
+

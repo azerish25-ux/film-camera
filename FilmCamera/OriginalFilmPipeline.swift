@@ -81,14 +81,18 @@ final class OriginalFilmPipeline {
         setup(p); glDrawArrays(GLenum(GL_TRIANGLE_STRIP),0,4)
         let error = glGetError(); guard error == GL_NO_ERROR else {throw PortError.message("Film GPU error \(error)")}
     }
-    private func uploadLUT(_ lut: CubeLUT?) {
-        let key = lut?.id.uuidString ?? "identity"
+    private func uploadLUT(_ lut: CubeLUT?, look: String) throws {
+        let key = lut?.id.uuidString ?? look
         guard lutKey != key else {return}
         lutKey = key
         let dimension = lut?.dimension ?? 64
         var colors: [UInt8] = []
         if let lut {colors = lut.rgba.enumerated().filter {$0.offset%4 != 3}.map {UInt8(min(255,max(0,Int(($0.element*255).rounded()))))}}
-        else {
+        else if let film = OriginalFilm.all.first(where:{$0.name == look}), !film.asset.isEmpty {
+            guard let url = Bundle.main.url(forResource:film.asset,withExtension:"lut") else {throw PortError.message("Missing original film table.")}
+            colors = Array(try Data(contentsOf:url))
+            guard colors.count == 64*64*64*3 else {throw PortError.message("Invalid original film table.")}
+        } else {
             colors.reserveCapacity(dimension*dimension*dimension*3)
             for b in 0..<dimension {for g in 0..<dimension {for r in 0..<dimension {colors += [UInt8(r*255/(dimension-1)),UInt8(g*255/(dimension-1)),UInt8(b*255/(dimension-1))]}}}
         }
@@ -152,7 +156,7 @@ final class OriginalFilmPipeline {
             f(p,"holes.internalOffset",0.125); f(p,"holes.externalOffset",1); f(p,"holes.amp",s["leakHoles"])
             v(p,"holes.amountY",0.1,0.1); v(p,"holes.amountX",0.1,0.1); v(p,"holes.xMultiplier",1,1)
         }
-        uploadLUT(lut)
+        try uploadLUT(lut,look:s.look)
         try draw(s["grain"] > 0 ? "c_f25865r" : "c_f25866s",to:textures[6]) {p in
             bind(p,"grainInputTexture",textures[5]); bind(p,"mLutID",lutTexture,1,GLenum(GL_TEXTURE_3D)); bind(p,"framePerforationsTexture",textures[7],2)
             f(p,"saturation",s["saturation"]); f(p,"perfColor",s["perfColor"]); v(p,"noiseRes",Double(w),Double(h))

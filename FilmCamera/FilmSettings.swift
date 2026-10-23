@@ -23,21 +23,21 @@ struct Adjustment: Identifiable {
         .init(id:"exposure",label:"Exposure",range:-3...3,initial:0),
         .init(id:"contrast",label:"Contrast",range:0...2,initial:1),
         .init(id:"saturation",label:"Saturation",range:0...2,initial:1),
-        .init(id:"temperature",label:"Temperature",range:2000...10000,initial:6500),
+        .init(id:"temperature",label:"Temperature",range:2000...10000,initial:6600),
         .init(id:"tint",label:"Tint",range:-100...100,initial:0),
-        .init(id:"grain",label:"Grain amount",range:0...1,initial:0.12),
-        .init(id:"grainSize",label:"Grain size",range:0.5...4,initial:1),
+        .init(id:"grain",label:"Grain amount",range:0...1,initial:0),
+        .init(id:"grainSize",label:"Grain size",range:0...1,initial:0.5),
         .init(id:"grainChroma",label:"Grain chroma",range:0...1,initial:0),
         .init(id:"grainShadows",label:"Grain shadows",range:0...1,initial:0.5),
         .init(id:"grainSmoothness",label:"Grain smoothness",range:0...1,initial:0),
-        .init(id:"vignette",label:"Vignette",range:0...2,initial:0.25),
+        .init(id:"vignette",label:"Vignette",range:0...1,initial:0),
         .init(id:"halation",label:"Halation",range:0...1,initial:0),
-        .init(id:"halationRadius",label:"Halation radius",range:0...40,initial:10),
-        .init(id:"halationCutoff",label:"Halation cutoff",range:0...1,initial:0.7),
-        .init(id:"halationGreen",label:"Halation green",range:0...1,initial:0.2),
-        .init(id:"halationBlue",label:"Halation blue",range:0...1,initial:0.05),
-        .init(id:"blur",label:"Blur",range:0...10,initial:0),
-        .init(id:"chroma",label:"Chromatic aberration",range:0...10,initial:0),
+        .init(id:"halationRadius",label:"Halation radius",range:0...19,initial:0),
+        .init(id:"halationCutoff",label:"Halation cutoff",range:0...0.995,initial:0.35),
+        .init(id:"halationGreen",label:"Halation green",range:0...1,initial:0.3),
+        .init(id:"halationBlue",label:"Halation blue",range:0...1,initial:0.04),
+        .init(id:"blur",label:"Blur",range:0...19,initial:0),
+        .init(id:"chroma",label:"Chromatic aberration",range:0...19,initial:0),
         .init(id:"flicker",label:"Film breath",range:0...1,initial:0),
         .init(id:"jitter",label:"Slow shift",range:0...1,initial:0),
         .init(id:"shake",label:"Fast shake",range:0...1,initial:0),
@@ -53,7 +53,7 @@ struct Adjustment: Identifiable {
 struct FilmSettings: Codable, Equatable {
     var values: [String: Double] = [:]
     var frame: FilmFrame = .original
-    var look = "Neutral"
+    var look = "Normal Mode"
     var lutID: UUID?
     subscript(_ key: String) -> Double {
         get { values[key] ?? Adjustment.all.first(where: { $0.id == key })?.initial ?? 0 }
@@ -62,7 +62,7 @@ struct FilmSettings: Codable, Equatable {
             values[key] = min(spec.range.upperBound, max(spec.range.lowerBound, newValue))
         }
     }
-    static let looks = ["Neutral","Warm negative","Cool negative","Faded print","Chrome","Black & white","Sepia"]
+    static var looks: [String] {OriginalFilm.all.map(\.name)}
 }
 struct FilmPreset: Codable, Identifiable {
     var id = UUID()

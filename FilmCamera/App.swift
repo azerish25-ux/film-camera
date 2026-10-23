@@ -209,11 +209,13 @@ struct EditorScreen: View {
         if let item = player?.currentItem {
             let renderer = FilmRenderer()
             item.videoComposition = AVVideoComposition(asset:item.asset) {request in
-                let result = renderer.render(request.sourceImage,settings:settings,lut:lut,time:request.compositionTime.seconds)
+                do {
+            let result = try renderer.render(request.sourceImage,settings:settings,lut:lut,time:request.compositionTime.seconds)
                 let target = request.sourceImage.extent, scale = min(request.sourceImage.extent.width/result.extent.width,request.sourceImage.extent.height/result.extent.height)
                 let fit = result.transformed(by:CGAffineTransform(scaleX:scale,y:scale))
                 let centered = fit.transformed(by:CGAffineTransform(translationX:(target.width-fit.extent.width)/2,y:(target.height-fit.extent.height)/2))
                 request.finish(with:centered.composited(over:CIImage(color:.black).cropped(to:target)),context:renderer.context)
+            } catch {request.finish(with:error)}
             }
         }
     }

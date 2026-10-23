@@ -18,12 +18,12 @@ final class FilmCameraTests: XCTestCase {
         let renderer = FilmRenderer(), source = CIImage(color:CIColor(red:0.4,green:0.6,blue:0.8)).cropped(to:CGRect(x:0,y:0,width:128,height:96))
         for spec in Adjustment.all {
             var settings = FilmSettings(); settings[spec.id] = spec.range.upperBound
-            let result = renderer.render(source,settings:settings,time:0.5)
+            let result = try renderer.render(source,settings:settings,time:0.5)
             XCTAssertNotNil(renderer.context.createCGImage(result,from:result.extent),spec.id)
         }
         for frame in FilmFrame.allCases {
             var settings = FilmSettings(); settings.frame = frame
-            let result = renderer.render(source,settings:settings)
+            let result = try renderer.render(source,settings:settings)
             XCTAssertGreaterThan(result.extent.width,0); XCTAssertNotNil(renderer.context.createCGImage(result,from:result.extent))
         }
     }

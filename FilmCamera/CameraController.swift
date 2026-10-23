@@ -142,10 +142,12 @@ final class CameraController: NSObject, ObservableObject, AVCaptureVideoDataOutp
         let time = CMSampleBufferGetPresentationTimeStamp(sampleBuffer)
         guard time.seconds-lastFrame.seconds > 1/24.0, let buffer = CMSampleBufferGetImageBuffer(sampleBuffer) else { return }
         lastFrame = time
-        let state = current(), image = renderer.render(CIImage(cvPixelBuffer:buffer),settings:state.0,lut:state.1,time:time.seconds)
+        do {
+        let state = current(), image = try renderer.render(CIImage(cvPixelBuffer:buffer),settings:state.0,lut:state.1,time:time.seconds)
         let scale = min(1,720/image.extent.width)
         let small = image.transformed(by:CGAffineTransform(scaleX:scale,y:scale))
         if let cg = renderer.context.createCGImage(small,from:small.extent) { DispatchQueue.main.async { self.preview = UIImage(cgImage:cg) } }
+        } catch {report(error)}
     }
     private func report(_ error: Error) { DispatchQueue.main.async { self.message = error.localizedDescription } }
 }

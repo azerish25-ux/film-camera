@@ -95,6 +95,7 @@ final class FilmDynamics {
 }
 struct JavaRandom {
     private var state: UInt64
+    private var cachedGaussian: Double?
     init(seed: UInt64) {state = (seed ^ 0x5DEECE66D) & ((1<<48)-1)}
     mutating func bits(_ count: Int) -> UInt64 {state = (state &* 0x5DEECE66D &+ 11) & ((1<<48)-1); return state >> (48-count)}
     mutating func unit() -> Double {Double(bits(24))/Double(1<<24)}
@@ -103,5 +104,14 @@ struct JavaRandom {
         if bound & (bound-1) == 0 {return Int((UInt64(bound)*bits(31))>>31)}
         while true {let b = Int(bits(31)), v = b%bound; if b-v+(bound-1) < Int(Int32.max) {return v}}
     }
-    mutating func gaussian() -> Double {let a = max(1e-12,unit()); return sqrt(-2*log(a))*cos(2*Double.pi*unit())}
+    private mutating func double() -> Double {Double((bits(26)<<27)+bits(27))/Double(UInt64(1)<<53)}
+    mutating func gaussian() -> Double {
+        if let cachedGaussian {self.cachedGaussian = nil; return cachedGaussian}
+        while true {
+            let x = 2*double()-1, y = 2*double()-1, s = x*x+y*y
+            if s >= 1 || s == 0 {continue}
+            let factor = sqrt(-2*log(s)/s)
+            cachedGaussian = y*factor; return x*factor
+        }
+    }
 }

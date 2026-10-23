@@ -129,13 +129,12 @@ final class OriginalFilmPipeline {
     private func uploadLUT(_ lut: CubeLUT?, look: String) throws {
         let key = lut?.id.uuidString ?? look
         guard lutKey != key else {return}
-        lutKey = key
         if let lut {
             guard (2...64).contains(lut.dimension), lut.rgba.count == lut.dimension*lut.dimension*lut.dimension*4,
                   lut.rgba.allSatisfy({$0.isFinite}), lut.domainMin.count == 3, lut.domainMax.count == 3,
                   zip(lut.domainMin,lut.domainMax).allSatisfy({$0.isFinite && $1.isFinite && $0 < $1}) else {throw PortError.message("Invalid lookup table data.")}
         }
-        let dimension = lut?.dimension ?? 64
+        let dimension = 64
         var colors: [UInt8] = []
         if let lut {colors = lut.textureRGB()}
         else if let film = OriginalFilm.all.first(where:{$0.name == look}), !film.asset.isEmpty {
@@ -149,7 +148,9 @@ final class OriginalFilmPipeline {
         glActiveTexture(GLenum(GL_TEXTURE1)); glBindTexture(GLenum(GL_TEXTURE_3D),lutTexture)
         for axis in [GL_TEXTURE_WRAP_S,GL_TEXTURE_WRAP_T,GL_TEXTURE_WRAP_R] {glTexParameteri(GLenum(GL_TEXTURE_3D),GLenum(axis),GL_CLAMP_TO_EDGE)}
         glTexParameteri(GLenum(GL_TEXTURE_3D),GLenum(GL_TEXTURE_MIN_FILTER),GL_LINEAR); glTexParameteri(GLenum(GL_TEXTURE_3D),GLenum(GL_TEXTURE_MAG_FILTER),GL_LINEAR)
+        glPixelStorei(GLenum(GL_UNPACK_ALIGNMENT),1)
         colors.withUnsafeBytes {glTexImage3D(GLenum(GL_TEXTURE_3D),0,GL_RGB8,GLsizei(dimension),GLsizei(dimension),GLsizei(dimension),0,GLenum(GL_RGB),GLenum(GL_UNSIGNED_BYTE),$0.baseAddress)}
+        lutKey = key
     }
     func render(_ source: CIImage, settings s: FilmSettings, lut: CubeLUT?, time: Double) throws -> CIImage {
         lock.lock(); defer {EAGLContext.setCurrent(nil); lock.unlock()}

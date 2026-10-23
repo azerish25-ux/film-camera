@@ -111,11 +111,11 @@ extension CubeLUT {
     func textureRGB() -> [UInt8] {
         let needsDomain = domainMin != [0,0,0] || domainMax != [1,1,1]
         func byte(_ value: Float) -> UInt8 {UInt8(min(255,max(0,Int((value*255).rounded()))))}
-        if !needsDomain {return rgba.enumerated().filter {$0.offset%4 != 3}.map {byte($0.element)}}
-        var output = [UInt8](); output.reserveCapacity(dimension*dimension*dimension*3)
-        for b in 0..<dimension {for g in 0..<dimension {for r in 0..<dimension {
+        if !needsDomain && dimension == 64 {return rgba.enumerated().filter {$0.offset%4 != 3}.map {byte($0.element)}}
+        var output = [UInt8](); output.reserveCapacity(64*64*64*3)
+        for b in 0..<64 {for g in 0..<64 {for r in 0..<64 {
             let input = [r,g,b].enumerated().map {axis,value in
-                min(Float(dimension-1),max(0,(Float(value)/Float(dimension-1)-domainMin[axis])/(domainMax[axis]-domainMin[axis])*Float(dimension-1)))
+                min(Float(dimension-1),max(0,(Float(value)/63-domainMin[axis])/(domainMax[axis]-domainMin[axis])*Float(dimension-1)))
             }
             let lower = input.map {Int(floor($0))}, upper = lower.map {min(dimension-1,$0+1)}, fraction = zip(input,lower).map {$0-Float($1)}
             for channel in 0..<3 {

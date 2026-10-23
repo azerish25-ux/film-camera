@@ -24,6 +24,14 @@ final class OriginalAssetTests: XCTestCase {
         XCTAssertEqual(random.int(100),48)
         XCTAssertEqual(random.int(100),29)
     }
+    func testSmallCubeIsResampledToOriginal64CubedLayout() throws {
+        let text = "LUT_3D_SIZE 2\nDOMAIN_MIN 0 0 0\nDOMAIN_MAX 2 2 2\n0 0 0\n1 0 0\n0 1 0\n1 1 0\n0 0 1\n1 0 1\n0 1 1\n1 1 1"
+        let cube = try CubeLUT.parse(text,name:"Domain")
+        let rgb = cube.textureRGB()
+        XCTAssertEqual(rgb.count,64*64*64*3)
+        XCTAssertEqual(rgb[63*3],128)
+        XCTAssertEqual(rgb[0],0)
+    }
     func testEveryPresetRendersWithItsOriginalAssets() throws {
         let source = CIImage(color:CIColor(red:0.3,green:0.5,blue:0.7)).cropped(to:CGRect(x:0,y:0,width:192,height:144))
         let renderer = FilmRenderer()

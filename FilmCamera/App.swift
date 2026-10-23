@@ -98,6 +98,8 @@ struct CameraScreen: View {
                 camera.start()
             }.onDisappear {camera.stop()}
             .onChange(of:store.state.settings) {_,value in camera.update(value,lut:store.selectedLUT)}
+            .onChange(of:camera.ready) {_,ready in if ready {controls()} }
+            .onChange(of:camera.availableLenses) {_,lenses in if !lenses.contains(lens) {lens = "Wide"} }
             .onChange(of:scenePhase) {_,phase in if phase == .active {camera.start()} else {camera.stop()} }
             .onChange(of:camera.message) {_,value in if camera.ready {store.error = value} }
         }

@@ -28,7 +28,20 @@ final class FilmRenderer {
         return image
     }
     func photo(_ image: UIImage, settings: FilmSettings, lut: CubeLUT?) throws -> UIImage {
-        guard let source = CIImage(image:image,options:[.applyOrientationProperty:true]) else { throw PortError.message("Cannot decode image.") }
+        guard let pixels = image.ciImage ?? image.cgImage.map({CIImage(cgImage:$0)}) else {throw PortError.message("Cannot decode image.")}
+        let orientation: Int32
+        switch image.imageOrientation {
+        case .up: orientation = 1
+        case .upMirrored: orientation = 2
+        case .down: orientation = 3
+        case .downMirrored: orientation = 4
+        case .leftMirrored: orientation = 5
+        case .right: orientation = 6
+        case .rightMirrored: orientation = 7
+        case .left: orientation = 8
+        @unknown default: orientation = 1
+        }
+        let source = pixels.oriented(forExifOrientation:orientation)
         let result = try render(source,settings:settings,lut:lut)
         guard let cg = context.createCGImage(result,from:result.extent) else { throw PortError.message("Cannot render image.") }
         return UIImage(cgImage:cg)

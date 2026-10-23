@@ -13,3 +13,5 @@ The supplied Android source is the active fully local build described in its REA
 - Normal Mode follows Android's integer `channel*255/64` table generation rather than substituting a mathematically ideal identity table.
 
 The Swift application implements local camera, editor, gallery and preset workflows with Apple APIs. Rendering uses the recovered shader calculations, film tables and frame assets. OS camera capture, codec behavior and GPU floating-point behavior differ by platform. Tests report pixel error for every shader fixture, including grain with the original noise table; a test pass must not be described as universal bit-for-bit physical-device equivalence.
+
+The cross-GPU gradient fixture for the Arri gate includes exact `green = 1.3 * red` values. Vulkan and Metal can normalize the underlying UNORM8 values and round the comparison differently; three fixture pixels selected opposite branches. The conformance test identifies only mathematically exact key ties from the input, records all-pixel error and those tie decisions, and applies a tighter two-byte maximum to every other pixel. The recovered keying formula is not changed to fit one GPU's rounding.

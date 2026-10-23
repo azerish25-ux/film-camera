@@ -84,6 +84,11 @@ final class OriginalAssetTests: XCTestCase {
         XCTAssertEqual(settings.curveX.count,6); XCTAssertEqual(settings.curveY.count,6)
         XCTAssertEqual(settings["exposure"],3); XCTAssertEqual(settings["grain"],0)
     }
+    func testTemperatureTintUsesAndroidIntegerDivision() {
+        let values = OriginalFilmPipeline.curve(temperature:5000,tint:-3)
+        let blue = (138.5177312231*log(40)-305.0447927307+1)/255
+        XCTAssertEqual(Double(values[197]),blue,accuracy:0.000001)
+    }
     func testEveryPresetRendersWithItsOriginalAssets() throws {
         let source = CIImage(color:CIColor(red:0.3,green:0.5,blue:0.7)).cropped(to:CGRect(x:0,y:0,width:192,height:144))
         let renderer = FilmRenderer()

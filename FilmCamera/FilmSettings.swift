@@ -20,6 +20,7 @@ struct Adjustment: Identifiable {
     let label: String
     let range: ClosedRange<Double>
     let initial: Double
+    var step: Double {["temperature","tint","blur","flicker","jitter","shake","scratches","halationRadius","burnClip"].contains(id) ? 1 : 0.01}
     static let all: [Adjustment] = [
         .init(id:"exposure",label:"Exposure",range:-3...3,initial:0),
         .init(id:"contrast",label:"Contrast",range:0...2,initial:1),

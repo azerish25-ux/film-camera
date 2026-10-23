@@ -52,7 +52,7 @@ struct AdjustmentsView: View {
             ForEach(Adjustment.all.filter {!["burn","burnClip"].contains($0.id)}) { item in
                 VStack(alignment:.leading) {
                     HStack { Text(item.label); Spacer(); Text(store.state.settings[item.id],format:.number.precision(.fractionLength(2))).foregroundStyle(.secondary).monospacedDigit() }
-                    Slider(value:Binding(get:{store.state.settings[item.id]},set:{store.state.settings[item.id] = $0}),in:item.range).accessibilityLabel(item.label)
+                    Slider(value:Binding(get:{store.state.settings[item.id]},set:{store.state.settings[item.id] = $0}),in:item.range,step:item.step).accessibilityLabel(item.label)
                 }
             }
             Button("Reset adjustments") { store.state.settings = FilmSettings(); store.persist() }.accessibilityIdentifier("resetAdjustments")

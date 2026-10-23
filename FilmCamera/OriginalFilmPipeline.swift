@@ -312,9 +312,9 @@ final class OriginalFilmPipeline {
     }
     static let blurSchedule: [[Int]] = [[],[0],[0,0],[0,1],[0,1,1],[0,1,2],[0,1,1,2],[0,1,2,3],[0,1,2,2,3],[0,1,2,3,4],[0,1,2,3,3,4],[0,1,2,3,4,5],[0,1,2,3,4,4,5],[0,1,2,3,4,5,6],[0,1,2,3,4,5,5,6],[0,1,2,3,4,5,6,7],[0,1,2,3,4,5,7,8],[0,1,2,3,4,5,7,8,9],[0,1,2,3,4,5,7,8,8,9],[0,1,2,3,4,5,7,8,9,10]]
     static func curve(temperature: Double,tint: Double,samples: [Double] = (0...255).map(Double.init)) -> [Float] {
-        let t = floor(temperature/100), halfTint = floor(tint/2)
+        let t = Double(Int(temperature)/100), integralTint = Double(Int(tint)), halfTint = Double(Int(tint)/2)
         let r = t <= 66 ? 255-halfTint : 329.698727446*pow(t-60,-0.1332047592)-halfTint
-        let g = t <= 66 ? 99.4708025861*log(t)-161.1195681661+tint : 288.1221695283*pow(t-60,-0.0755148492)+tint
+        let g = t <= 66 ? 99.4708025861*log(t)-161.1195681661+integralTint : 288.1221695283*pow(t-60,-0.0755148492)+integralTint
         let b = t >= 66 ? 255-halfTint : t <= 19 ? 0 : 138.5177312231*log(t-10)-305.0447927307-halfTint
         let white = [r,g,b].map {min(1,max(0,$0/255))}
         return (0..<66).flatMap {index -> [Float] in

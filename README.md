@@ -10,4 +10,4 @@ The iOS renderer executes the recovered film algorithms with the original 88 col
 
 CI uses no signing secrets. The unsigned IPA requires your Apple development team/provisioning before installation on a physical iPhone. All application media and presets stay local.
 
-[Final verification](docs/VALIDATION.md): both macOS workflows passed, with 20 tests and 17 Android/iOS shader fixtures. See the [feature map](docs/FEATURE-PARITY.md) and [delivery inventory](docs/DELIVERY.md).
+[Expanded verification](docs/VALIDATION.md): the macOS numerical gate passed 1,528 Android/iOS shader cases and all 88 complete color pipelines. The final integrated build/test run is being completed. See the [feature map](docs/FEATURE-PARITY.md) and [delivery inventory](docs/DELIVERY.md).

@@ -1,0 +1,39 @@
+name: iOS UI screenshots
+on:
+  push:
+    branches: ['diagnostics/ui-screenshots']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  screenshots:
+    runs-on: macos-15
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - name: Generate project
+        run: |
+          brew install xcodegen librsvg
+          rsvg-convert -o FilmCamera/Assets.xcassets/AppIcon.appiconset/AppIcon.png FilmCamera/Resources/app-icon.svg
+          xcodegen generate
+      - name: Capture fifteen iPhone screens
+        run: |
+          set -o pipefail
+          DEVICE=$(xcrun simctl list devices available -j | python3 -c 'import json,sys; d=json.load(sys.stdin); print(next(x["udid"] for group in d["devices"].values() for x in group if "iPhone" in x["name"]))')
+          xcrun simctl boot "$DEVICE" || true
+          xcrun simctl bootstatus "$DEVICE" -b
+          xcrun simctl status_bar "$DEVICE" override --time '9:41' --dataNetwork wifi --wifiMode active --wifiBars 3 --batteryState charged --batteryLevel 100
+          xcodebuild -quiet -project FilmCamera.xcodeproj -scheme FilmCamera -destination "platform=iOS Simulator,id=$DEVICE" -derivedDataPath build/simulator -resultBundlePath build/Screenshots.xcresult -parallel-testing-enabled NO -only-testing:FilmCameraUITests/FilmCameraScreenshotTests CODE_SIGNING_ALLOWED=NO test 2>&1 | tee screenshots.log
+      - name: Export screenshots
+        if: always()
+        run: |
+          mkdir -p screenshots
+          if [ -d build/Screenshots.xcresult ]; then xcrun xcresulttool export attachments --path build/Screenshots.xcresult --output-path screenshots; fi
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: ios-ui-screenshots
+          path: |
+            screenshots
+            screenshots.log
+          retention-days: 14

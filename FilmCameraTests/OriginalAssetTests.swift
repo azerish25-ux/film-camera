@@ -4,9 +4,28 @@ import AVFoundation
 import UIKit
 @testable import FilmCamera
 final class OriginalAssetTests: XCTestCase {
+    private struct PresetExpectation: Decodable {
+        let name: String
+        let values: [String:Double]
+        let look: String
+        let frame: String
+        let curveX: [Double]
+        let curveY: [Double]
+    }
     func testCompleteOriginalCatalogAndPresets() throws {
         XCTAssertEqual(OriginalFilm.all.count,88)
         XCTAssertEqual(FilmPreset.originals.count,10)
+        let expectedURL = try XCTUnwrap(AndroidFixtures.bundle.url(forResource:"OriginalPresetExpectations",withExtension:"json"))
+        let expected = try JSONDecoder().decode([PresetExpectation].self,from:Data(contentsOf:expectedURL))
+        XCTAssertEqual(expected.count,FilmPreset.originals.count)
+        for (preset,golden) in zip(FilmPreset.originals,expected) {
+            XCTAssertEqual(preset.name,golden.name)
+            XCTAssertEqual(preset.settings.look,golden.look,preset.name)
+            XCTAssertEqual(preset.settings.frame.rawValue,golden.frame,preset.name)
+            XCTAssertEqual(preset.settings.curveX,golden.curveX,preset.name)
+            XCTAssertEqual(preset.settings.curveY,golden.curveY,preset.name)
+            for (key,value) in golden.values {XCTAssertEqual(preset.settings[key],value,accuracy:0.000001,"\(preset.name) / \(key)")}
+        }
         for film in OriginalFilm.all where !film.asset.isEmpty {
             let url = try XCTUnwrap(Bundle.main.url(forResource:film.asset,withExtension:"lut"))
             XCTAssertEqual(try Data(contentsOf:url).count,64*64*64*3,film.name)

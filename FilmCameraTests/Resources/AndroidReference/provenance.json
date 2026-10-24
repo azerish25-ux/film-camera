@@ -1,9 +1,10 @@
 {
-  "runURL": "https://github.com/azerish25-ux/film-camera/actions/runs/40034074197",
-  "sourceCommit": "3f004c0fee8666d326ff653f1002894295d0da0a",
-  "caseCount": 1520,
+  "runURL": "https://github.com/azerish25-ux/film-camera/actions/runs/40042781189",
+  "sourceCommit": "f68d86a",
+  "caseCount": 1528,
   "width": 128,
   "height": 96,
   "noiseDecoderMatchedPixels": 1048576,
-  "staticFrameScansNativeDecoded": 2
+  "staticFrameScansNativeDecoded": 2,
+  "undefinedFrameInputsInitialized": "transparent black"
 }

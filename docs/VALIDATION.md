@@ -1,10 +1,16 @@
 # Expanded validation
 
-Numerical code commit: 2b16306 (the ready Xcode project is copied from this run).
+Verified runtime/test/project commit: 869c9534e7a062ec3fd32fe0568be9f7f2b690a5. Later documentation-only commits preserve that tested source.
 
 [Processing gate](https://github.com/azerish25-ux/film-camera/actions/runs/40044846193): succeeded, ten selected tests, no issues. [Android reference generation](https://github.com/azerish25-ux/film-camera/actions/runs/40042781189): succeeded on macOS.
 
-The final integrated iPhone build and complete simulator suite are pending for the delivery commit. This document will record their actual result before completion.
+[Final full macOS workflow](https://github.com/azerish25-ux/film-camera/actions/runs/40045800863): succeeded. Android reference generation, unsigned iPhone build, the complete iPhone Simulator suite and packaging passed.
+
+All 32 tests passed with no issues: 30 processing/model/media tests and two UI workflows. This includes all 2,112 film/frame/orientation combinations, every adjustment's visible effect after temporal warm-up, all animation loops, 720p/1080p/4K processing, audio-preserving video trim/export, JPEG color preservation, persistence, curves and histograms. Six contact sheets covering all 88 color modes were visually inspected.
+
+The fresh final-run Android reference files are byte-identical to all 1,528 pinned fixtures. The ready-to-open Xcode project matches the generated/tested project. The IPA was inspected: bundle com.azerish.filmcamera, minimum iOS17, 87 LUTs, 14 overlay movies, one noise table and 56 shaders. No expected RGBA images or preset-test expectations are shipped in the app.
+
+Final local delivery: artifacts/verified-port, 7,742 files (466.0MiB), copied and SHA256-verified. VERIFICATION.json, TRANSFER-MANIFEST.json, C-CLEANUP.json, shader-comparison.json, production-comparison.json, build logs, Tests.xcresult and exported attachments retain the evidence. Both temporary C staging folders were removed after their D backups were hash-verified.
 
 ## Measured coverage
 

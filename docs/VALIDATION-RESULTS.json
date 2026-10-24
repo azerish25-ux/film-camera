@@ -1,0 +1,233 @@
+{
+  "testedCodeCommit": "869c9534e7a062ec3fd32fe0568be9f7f2b690a5",
+  "fullRunURL": "https://github.com/azerish25-ux/film-camera/actions/runs/40045800863",
+  "testsPassed": 32,
+  "tests": [
+    {
+      "suite": "AndroidParityTests",
+      "name": "testRecoveredPassesAgainstAndroidEmulator()",
+      "result": "Success",
+      "seconds": 43.27301800251007
+    },
+    {
+      "suite": "FilmCameraTests",
+      "name": "testAllEffectsRenderFiniteOutput()",
+      "result": "Success",
+      "seconds": 13.286250948905945
+    },
+    {
+      "suite": "FilmCameraTests",
+      "name": "testLUTValidation()",
+      "result": "Success",
+      "seconds": 0.00993502140045166
+    },
+    {
+      "suite": "FilmCameraTests",
+      "name": "testPersistenceAndPreset()",
+      "result": "Success",
+      "seconds": 0.01166999340057373
+    },
+    {
+      "suite": "FilmCameraTests",
+      "name": "testSettingsClampAndRoundTrip()",
+      "result": "Success",
+      "seconds": 0.0009069442749023438
+    },
+    {
+      "suite": "MediaExportTests",
+      "name": "testPhotoExportWritesReadablePixels()",
+      "result": "Success",
+      "seconds": 0.4407449960708618
+    },
+    {
+      "suite": "MediaExportTests",
+      "name": "testVideoExportRetainsAudioAndTrims()",
+      "result": "Success",
+      "seconds": 2.269913911819458
+    },
+    {
+      "suite": "OriginalAssetTests",
+      "name": "testAllFilmPhotoContactSheets()",
+      "result": "Success",
+      "seconds": 54.05617094039917
+    },
+    {
+      "suite": "OriginalAssetTests",
+      "name": "testAnimatedFramesChangeAndSeekBackToOriginalPixels()",
+      "result": "Success",
+      "seconds": 8.120127081871033
+    },
+    {
+      "suite": "OriginalAssetTests",
+      "name": "testCharacteristicCurveUsesRecoveredNaturalSpline()",
+      "result": "Success",
+      "seconds": 0.003168940544128418
+    },
+    {
+      "suite": "OriginalAssetTests",
+      "name": "testCompleteOriginalCatalogAndPresets()",
+      "result": "Success",
+      "seconds": 0.17223095893859863
+    },
+    {
+      "suite": "OriginalAssetTests",
+      "name": "testEveryAdjustmentChangesRenderedPhotoWhenItsEffectIsEnabled()",
+      "result": "Success",
+      "seconds": 225.3871968984604
+    },
+    {
+      "suite": "OriginalAssetTests",
+      "name": "testEveryAnimatedAssetDecodesAcrossLoopBoundary()",
+      "result": "Success",
+      "seconds": 1.091407060623169
+    },
+    {
+      "suite": "OriginalAssetTests",
+      "name": "testEveryFilmAndFrameOnLandscapeAndPortraitImages()",
+      "result": "Success",
+      "seconds": 812.2037349939346
+    },
+    {
+      "suite": "OriginalAssetTests",
+      "name": "testEveryFilmThroughProductionPipelineAgainstAndroidChain()",
+      "result": "Success",
+      "seconds": 25.150272011756897
+    },
+    {
+      "suite": "OriginalAssetTests",
+      "name": "testEveryPresetRendersWithItsOriginalAssets()",
+      "result": "Success",
+      "seconds": 8.541467070579529
+    },
+    {
+      "suite": "OriginalAssetTests",
+      "name": "testFastShakeUsesOriginalThreeSampleBuffer()",
+      "result": "Success",
+      "seconds": 0.008484959602355957
+    },
+    {
+      "suite": "OriginalAssetTests",
+      "name": "testFilmReadbackPreservesVerticalImageOrder()",
+      "result": "Success",
+      "seconds": 0.3088359832763672
+    },
+    {
+      "suite": "OriginalAssetTests",
+      "name": "testFogVariesIndependentlyOfFilmBreath()",
+      "result": "Success",
+      "seconds": 0.0006070137023925781
+    },
+    {
+      "suite": "OriginalAssetTests",
+      "name": "testFractionalPreviewUsesIntegralRasterBounds()",
+      "result": "Success",
+      "seconds": 0.6270129680633545
+    },
+    {
+      "suite": "OriginalAssetTests",
+      "name": "testJavaRandomMatchesKnownSequence()",
+      "result": "Success",
+      "seconds": 0.0009160041809082031
+    },
+    {
+      "suite": "OriginalAssetTests",
+      "name": "testNeutralPipelinePreservesNonblackSourcePixels()",
+      "result": "Success",
+      "seconds": 0.28984296321868896
+    },
+    {
+      "suite": "OriginalAssetTests",
+      "name": "testOriginalFrameContainerRatios()",
+      "result": "Success",
+      "seconds": 0.0006569623947143555
+    },
+    {
+      "suite": "OriginalAssetTests",
+      "name": "testRGBHistogramMatchesSourceChannels()",
+      "result": "Success",
+      "seconds": 0.14926302433013916
+    },
+    {
+      "suite": "OriginalAssetTests",
+      "name": "testSavedCurveValidationRepairsMalformedData()",
+      "result": "Success",
+      "seconds": 0.0005650520324707031
+    },
+    {
+      "suite": "OriginalAssetTests",
+      "name": "testSmallCubeIsResampledToOriginal64CubedLayout()",
+      "result": "Success",
+      "seconds": 11.170395970344543
+    },
+    {
+      "suite": "OriginalAssetTests",
+      "name": "testSubthresholdGrainUsesAndroidBypass()",
+      "result": "Success",
+      "seconds": 0.43068504333496094
+    },
+    {
+      "suite": "OriginalAssetTests",
+      "name": "testTemperatureTintUsesAndroidIntegerDivision()",
+      "result": "Success",
+      "seconds": 0.0006239414215087891
+    },
+    {
+      "suite": "OriginalAssetTests",
+      "name": "testTemporalEffectsAndBurnRollsRenderAcrossSeeking()",
+      "result": "Success",
+      "seconds": 28.493056058883667
+    },
+    {
+      "suite": "OriginalAssetTests",
+      "name": "testVideoResolutionProcessingPaths()",
+      "result": "Success",
+      "seconds": 20.575013041496277
+    },
+    {
+      "suite": "FilmCameraUITests",
+      "name": "testEditorPhotoExportToGallery()",
+      "result": "Success",
+      "seconds": 18.72162401676178
+    },
+    {
+      "suite": "FilmCameraUITests",
+      "name": "testNavigationAndPresetPersistence()",
+      "result": "Success",
+      "seconds": 21.172108054161072
+    }
+  ],
+  "shaderCases": 1528,
+  "productionColorModes": 88,
+  "filmFrameOrientationCombinations": 2112,
+  "contactSheets": 6,
+  "applicationAssets": {
+    ".lut": 87,
+    ".mp4": 14,
+    ".noise": 1,
+    ".glsl": 56,
+    ".rgba": 0
+  },
+  "minimumIOS": "17.0",
+  "bundleIdentifier": "com.azerish.filmcamera",
+  "testFixturesExcludedFromApp": true,
+  "readyProjectMatchesTestedGeneratedProject": [
+    "project.pbxproj",
+    "project.xcworkspace/contents.xcworkspacedata",
+    "xcshareddata/xcschemes/FilmCamera.xcscheme"
+  ],
+  "maximumProductionMeanByteError": 0.0971408420138889,
+  "maximumProductionRawByteError": 14,
+  "maximumCPUOracleByteError": 1,
+  "maximumShaderStableByteError": 4,
+  "maximumPhotoGrainMeanByteError": 0.181640625,
+  "deliverables": {
+    "FilmCamera-unsigned.ipa": {
+      "bytes": 80905024,
+      "SHA256": "b181fc1759fd1f50f38667b64671d346bb8fcbb970b75c7db277f073d0dc4554"
+    },
+    "FilmCamera-simulator.zip": {
+      "bytes": 120968270,
+      "SHA256": "104c827f1a26589bf8a8603a88f820dd9cc7c7649caaba9b057531233f55e3a2"
+    }
+  }
+}

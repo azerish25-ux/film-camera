@@ -1,0 +1,170 @@
+{
+  "run": "https://github.com/azerish25-ux/film-camera/actions/runs/40050928769",
+  "screenshots": [
+    {
+      "name": "01-Camera-Photo",
+      "file": "01-Camera-Photo.png",
+      "dimensions": [
+        1206,
+        2622
+      ],
+      "sha256": "a13d4b2536365bb1a4db4e31695196f3d146803decad0eae61a51b49840cb7c8",
+      "device": "iPhone 16 Pro",
+      "sourceRun": "40050928769"
+    },
+    {
+      "name": "02-Camera-Video",
+      "file": "02-Camera-Video.png",
+      "dimensions": [
+        1206,
+        2622
+      ],
+      "sha256": "2d671665a965c21b7e57f7a1422c993b9d7a1be542f82caadbbef221c1ede104",
+      "device": "iPhone 16 Pro",
+      "sourceRun": "40050928769"
+    },
+    {
+      "name": "03-Camera-Hardware-Controls",
+      "file": "03-Camera-Hardware-Controls.png",
+      "dimensions": [
+        1206,
+        2622
+      ],
+      "sha256": "50d988389d9e923fb1a767ee9fd483ca767a057754e79431ff0cee80f7027b96",
+      "device": "iPhone 16 Pro",
+      "sourceRun": "40050928769"
+    },
+    {
+      "name": "04-Editor-Film-Preview",
+      "file": "04-Editor-Film-Preview.png",
+      "dimensions": [
+        1206,
+        2622
+      ],
+      "sha256": "b50ed5c9738d14f7a78e145f76fff76ef04b4b44ae127d4a563975e32cc1fb99",
+      "device": "iPhone 16 Pro",
+      "sourceRun": "40050928769"
+    },
+    {
+      "name": "05-Editor-RGB-Histogram",
+      "file": "05-Editor-RGB-Histogram.png",
+      "dimensions": [
+        1206,
+        2622
+      ],
+      "sha256": "78cb62e3c9feca7c229860d790d0b5a07903f9b983cd3af4aaa943a3ec91ae53",
+      "device": "iPhone 16 Pro",
+      "sourceRun": "40050928769"
+    },
+    {
+      "name": "06-Film-Frame-Choices",
+      "file": "06-Film-Frame-Choices.png",
+      "dimensions": [
+        1206,
+        2622
+      ],
+      "sha256": "5d2c1495f7248e13f7a3f96b0a82c0c328416a76e72273c21ff9079fe64d1c5a",
+      "device": "iPhone 16 Pro",
+      "sourceRun": "40050928769"
+    },
+    {
+      "name": "07-Film-Color-Choices",
+      "file": "07-Film-Color-Choices.png",
+      "dimensions": [
+        1206,
+        2622
+      ],
+      "sha256": "3f51e026909d2c5925af322a7e0aa3d4a9cd91493deca3cdf3d76b1a29fb3c0c",
+      "device": "iPhone 16 Pro",
+      "sourceRun": "40050928769"
+    },
+    {
+      "name": "08-Tone-Adjustments",
+      "file": "08-Tone-Adjustments.png",
+      "dimensions": [
+        1206,
+        2622
+      ],
+      "sha256": "6c700dc97250b0ab12e39bf436ec523b109487664453d551d751e52b86ff4a81",
+      "device": "iPhone 16 Pro",
+      "sourceRun": "40050078708"
+    },
+    {
+      "name": "09-Film-Grain-Adjustments",
+      "file": "09-Film-Grain-Adjustments.png",
+      "dimensions": [
+        1206,
+        2622
+      ],
+      "sha256": "500c8242deead40893c98df345f2000bb188e75c532a4343072732e74588fcef",
+      "device": "iPhone 16 Pro",
+      "sourceRun": "40050928769"
+    },
+    {
+      "name": "10-Halation-Adjustments",
+      "file": "10-Halation-Adjustments.png",
+      "dimensions": [
+        1206,
+        2622
+      ],
+      "sha256": "d6423ed87171b34a162e82ae987a61e34243ded80a9d4b6afa7a7cd31db7f04e",
+      "device": "iPhone 16 Pro",
+      "sourceRun": "40050928769"
+    },
+    {
+      "name": "11-Gallery-Film-Roll",
+      "file": "11-Gallery-Film-Roll.png",
+      "dimensions": [
+        1206,
+        2622
+      ],
+      "sha256": "f8d31e745c7d37d300f7bcc8de468b2313f37a5507216addb20e147af1f2cc5f",
+      "device": "iPhone 16 Pro",
+      "sourceRun": "40050928769"
+    },
+    {
+      "name": "12-Gallery-Photo-Detail",
+      "file": "12-Gallery-Photo-Detail.png",
+      "dimensions": [
+        1206,
+        2622
+      ],
+      "sha256": "6b2c1ddd94b922c3cce1e38eded37fda5fee2fcbd4639f0d6e1d21735b2dc685",
+      "device": "iPhone 16 Pro",
+      "sourceRun": "40050928769"
+    },
+    {
+      "name": "13-Original-Camera-Presets",
+      "file": "13-Original-Camera-Presets.png",
+      "dimensions": [
+        1206,
+        2622
+      ],
+      "sha256": "135c15da32c7c74ae1287ba759b11b2e72d78062a446274ab44c269bcf56a74d",
+      "device": "iPhone 16 Pro",
+      "sourceRun": "40050928769"
+    },
+    {
+      "name": "14-Film-Looks-Library",
+      "file": "14-Film-Looks-Library.png",
+      "dimensions": [
+        1206,
+        2622
+      ],
+      "sha256": "8bbed9097290eaeaf4b45be2d11d686769d681ee0509b58707ef23e2c103d222",
+      "device": "iPhone 16 Pro",
+      "sourceRun": "40050928769"
+    },
+    {
+      "name": "15-Settings-And-Help",
+      "file": "15-Settings-And-Help.png",
+      "dimensions": [
+        1206,
+        2622
+      ],
+      "sha256": "b92cc549f2c209a9962e0cf57c1d9040e4f4c245753c2b9f7d0602830fe0ae87",
+      "device": "iPhone 16 Pro",
+      "sourceRun": "40050928769"
+    }
+  ]
+}

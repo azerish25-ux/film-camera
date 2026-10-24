@@ -29,11 +29,11 @@ jobs:
           xcrun simctl bootstatus "$DEVICE" -b
           ONLY=()
           if [ "$TEST_SUITE" != all ]; then
-            ONLY=(-only-testing:FilmCameraTests/OriginalAssetTests/testEveryFilmThroughProductionPipelineAgainstAndroidChain -only-testing:FilmCameraTests/OriginalAssetTests/testFogVariesIndependentlyOfFilmBreath -only-testing:FilmCameraTests/OriginalAssetTests/testFastShakeUsesOriginalThreeSampleBuffer -only-testing:FilmCameraTests/OriginalAssetTests/testSubthresholdGrainUsesAndroidBypass -only-testing:FilmCameraTests/OriginalAssetTests/testAnimatedFramesChangeAndSeekBackToOriginalPixels -only-testing:FilmCameraTests/MediaExportTests)
+            ONLY=(-only-testing:FilmCameraTests/OriginalAssetTests/testEveryFilmThroughProductionPipelineAgainstAndroidChain -only-testing:FilmCameraTests/OriginalAssetTests/testFogVariesIndependentlyOfFilmBreath -only-testing:FilmCameraTests/OriginalAssetTests/testFastShakeUsesOriginalThreeSampleBuffer -only-testing:FilmCameraTests/OriginalAssetTests/testSubthresholdGrainUsesAndroidBypass -only-testing:FilmCameraTests/OriginalAssetTests/testAnimatedFramesChangeAndSeekBackToOriginalPixels -only-testing:FilmCameraTests/MediaExportTests -only-testing:FilmCameraTests/OriginalAssetTests/testCompleteOriginalCatalogAndPresets -only-testing:FilmCameraTests/OriginalAssetTests/testFractionalPreviewUsesIntegralRasterBounds)
           fi
           if [ "$TEST_SUITE" = processing ]; then ONLY+=(-only-testing:FilmCameraTests/AndroidParityTests); fi
-          if [ "$TEST_SUITE" = processing ] || [ "$TEST_SUITE" = functional ]; then
-            ONLY+=(-only-testing:FilmCameraTests/OriginalAssetTests/testEveryAdjustmentChangesRenderedPhotoWhenItsEffectIsEnabled -only-testing:FilmCameraTests/OriginalAssetTests/testFractionalPreviewUsesIntegralRasterBounds -only-testing:FilmCameraTests/OriginalAssetTests/testCompleteOriginalCatalogAndPresets -only-testing:FilmCameraUITests)
+          if [ "$TEST_SUITE" = functional ]; then
+            ONLY+=(-only-testing:FilmCameraTests/OriginalAssetTests/testEveryAdjustmentChangesRenderedPhotoWhenItsEffectIsEnabled -only-testing:FilmCameraUITests)
           fi
           xcodebuild -quiet "${ONLY[@]}" -parallel-testing-enabled NO -project FilmCamera.xcodeproj -scheme FilmCamera -destination "platform=iOS Simulator,id=$DEVICE" -derivedDataPath build/simulator -resultBundlePath build/SwiftTests.xcresult CODE_SIGNING_ALLOWED=NO test 2>&1 | tee swift-validation.log
       - name: Export visual test evidence

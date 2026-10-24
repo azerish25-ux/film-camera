@@ -404,7 +404,7 @@ final class OriginalAssetTests: XCTestCase {
         let source = CIImage(color:CIColor(red:0.3,green:0.5,blue:0.7)).cropped(to:CGRect(x:0,y:0,width:103.5,height:77.25))
         var settings = FilmSettings(); settings["blur"] = 0; settings["scratches"] = 0; settings["verticalScratch"] = 1
         let renderer = FilmRenderer(), output = try renderer.render(source,settings:settings,time:0)
-        XCTAssertEqual(output.extent.size,CGSize(width:103,height:77))
+        XCTAssertEqual(output.extent.size,source.extent.integral.size)
         XCTAssertNotNil(renderer.context.createCGImage(output,from:output.extent))
     }
 

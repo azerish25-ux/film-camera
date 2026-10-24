@@ -178,7 +178,7 @@ struct EditorScreen: View {
             ScrollView {
                 VStack(spacing:18) {
                     if let player {VideoPlayer(player:player).frame(height:280)}
-                    else if let image = comparison ? original : preview {Image(uiImage:image).resizable().scaledToFit().frame(maxHeight:360)}
+                    else if let image = comparison ? original : preview {Image(uiImage:image).resizable().scaledToFit().frame(maxHeight:360).accessibilityLabel("Edited photo preview").accessibilityIdentifier("editorPreview")}
                     else {ContentUnavailableView("Import a photo or film",systemImage:"film",description:Text("Apply film effects and export a local copy."))}
                     Toggle("RGB histogram",isOn:$showHistogram).onChange(of:showHistogram) {_,_ in Task {await updatePreview()}}
                     if showHistogram {HistogramPlot(values:histogram)}
@@ -195,7 +195,7 @@ struct EditorScreen: View {
                     }
                     if original != nil || video != nil {
                         Button("Export to Gallery",action:export).buttonStyle(.borderedProminent).disabled(exporter.busy || photoExporting).accessibilityIdentifier("exportMedia")
-                        if let saved {ShareLink(item:saved) {Label("Share export",systemImage:"square.and.arrow.up")}}
+                        if let saved {ShareLink(item:saved) {Label("Share export",systemImage:"square.and.arrow.up")}.accessibilityIdentifier("shareExport")}
                         if photoExporting {ProgressView("Exporting photo")}
                         if exporter.busy {ProgressView("Exporting",value:exporter.progress); Button("Cancel") {exporter.cancel()}}
                     }

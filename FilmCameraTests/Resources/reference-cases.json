@@ -35643,6 +35643,286 @@
     "pattern": 1
   },
   {
+    "name": "grain-photo-normal-005",
+    "shader": "c_f25865r",
+    "floats": {
+      "saturation": 1,
+      "perfColor": 0,
+      "grainStrength": 0.15,
+      "grainSize": 0.05,
+      "grainSmoohtness": 0.3,
+      "grainChroma": 0.7,
+      "grainDarkLevel": 0.2
+    },
+    "vectors": {
+      "noiseRes": [
+        128,
+        96
+      ]
+    },
+    "samplers": {
+      "grainInputTexture": "source",
+      "framePerforationsTexture": "clear",
+      "mLutID": "lut",
+      "noiseTexture": "noise"
+    },
+    "ints": {
+      "seed": 71,
+      "stain.time": 0,
+      "scratch.time": 0,
+      "scratch_v.time": 0
+    },
+    "arrays": {},
+    "look": "Normal Mode",
+    "lookAsset": "",
+    "pattern": 3
+  },
+  {
+    "name": "grain-photo-normal-025",
+    "shader": "c_f25865r",
+    "floats": {
+      "saturation": 1,
+      "perfColor": 0,
+      "grainStrength": 0.15,
+      "grainSize": 0.25,
+      "grainSmoohtness": 0.3,
+      "grainChroma": 0.7,
+      "grainDarkLevel": 0.2
+    },
+    "vectors": {
+      "noiseRes": [
+        128,
+        96
+      ]
+    },
+    "samplers": {
+      "grainInputTexture": "source",
+      "framePerforationsTexture": "clear",
+      "mLutID": "lut",
+      "noiseTexture": "noise"
+    },
+    "ints": {
+      "seed": 71,
+      "stain.time": 0,
+      "scratch.time": 0,
+      "scratch_v.time": 0
+    },
+    "arrays": {},
+    "look": "Normal Mode",
+    "lookAsset": "",
+    "pattern": 3
+  },
+  {
+    "name": "grain-photo-normal-027",
+    "shader": "c_f25865r",
+    "floats": {
+      "saturation": 1,
+      "perfColor": 0,
+      "grainStrength": 0.15,
+      "grainSize": 0.27,
+      "grainSmoohtness": 0.3,
+      "grainChroma": 0.7,
+      "grainDarkLevel": 0.2
+    },
+    "vectors": {
+      "noiseRes": [
+        128,
+        96
+      ]
+    },
+    "samplers": {
+      "grainInputTexture": "source",
+      "framePerforationsTexture": "clear",
+      "mLutID": "lut",
+      "noiseTexture": "noise"
+    },
+    "ints": {
+      "seed": 71,
+      "stain.time": 0,
+      "scratch.time": 0,
+      "scratch_v.time": 0
+    },
+    "arrays": {},
+    "look": "Normal Mode",
+    "lookAsset": "",
+    "pattern": 3
+  },
+  {
+    "name": "grain-photo-normal-065",
+    "shader": "c_f25865r",
+    "floats": {
+      "saturation": 1,
+      "perfColor": 0,
+      "grainStrength": 0.15,
+      "grainSize": 0.65,
+      "grainSmoohtness": 0.3,
+      "grainChroma": 0.7,
+      "grainDarkLevel": 0.2
+    },
+    "vectors": {
+      "noiseRes": [
+        128,
+        96
+      ]
+    },
+    "samplers": {
+      "grainInputTexture": "source",
+      "framePerforationsTexture": "clear",
+      "mLutID": "lut",
+      "noiseTexture": "noise"
+    },
+    "ints": {
+      "seed": 71,
+      "stain.time": 0,
+      "scratch.time": 0,
+      "scratch_v.time": 0
+    },
+    "arrays": {},
+    "look": "Normal Mode",
+    "lookAsset": "",
+    "pattern": 3
+  },
+  {
+    "name": "grain-photo-grading22-005",
+    "shader": "c_f25865r",
+    "floats": {
+      "saturation": 1,
+      "perfColor": 0,
+      "grainStrength": 0.15,
+      "grainSize": 0.05,
+      "grainSmoohtness": 0.3,
+      "grainChroma": 0.7,
+      "grainDarkLevel": 0.2
+    },
+    "vectors": {
+      "noiseRes": [
+        128,
+        96
+      ]
+    },
+    "samplers": {
+      "grainInputTexture": "source",
+      "framePerforationsTexture": "clear",
+      "mLutID": "lut",
+      "noiseTexture": "noise"
+    },
+    "ints": {
+      "seed": 71,
+      "stain.time": 0,
+      "scratch.time": 0,
+      "scratch_v.time": 0
+    },
+    "arrays": {},
+    "look": "Color grading 22",
+    "lookAsset": "febf7cd5222a2a4c308342a0bdb5a9545d35413d",
+    "pattern": 3
+  },
+  {
+    "name": "grain-photo-grading22-025",
+    "shader": "c_f25865r",
+    "floats": {
+      "saturation": 1,
+      "perfColor": 0,
+      "grainStrength": 0.15,
+      "grainSize": 0.25,
+      "grainSmoohtness": 0.3,
+      "grainChroma": 0.7,
+      "grainDarkLevel": 0.2
+    },
+    "vectors": {
+      "noiseRes": [
+        128,
+        96
+      ]
+    },
+    "samplers": {
+      "grainInputTexture": "source",
+      "framePerforationsTexture": "clear",
+      "mLutID": "lut",
+      "noiseTexture": "noise"
+    },
+    "ints": {
+      "seed": 71,
+      "stain.time": 0,
+      "scratch.time": 0,
+      "scratch_v.time": 0
+    },
+    "arrays": {},
+    "look": "Color grading 22",
+    "lookAsset": "febf7cd5222a2a4c308342a0bdb5a9545d35413d",
+    "pattern": 3
+  },
+  {
+    "name": "grain-photo-grading22-027",
+    "shader": "c_f25865r",
+    "floats": {
+      "saturation": 1,
+      "perfColor": 0,
+      "grainStrength": 0.15,
+      "grainSize": 0.27,
+      "grainSmoohtness": 0.3,
+      "grainChroma": 0.7,
+      "grainDarkLevel": 0.2
+    },
+    "vectors": {
+      "noiseRes": [
+        128,
+        96
+      ]
+    },
+    "samplers": {
+      "grainInputTexture": "source",
+      "framePerforationsTexture": "clear",
+      "mLutID": "lut",
+      "noiseTexture": "noise"
+    },
+    "ints": {
+      "seed": 71,
+      "stain.time": 0,
+      "scratch.time": 0,
+      "scratch_v.time": 0
+    },
+    "arrays": {},
+    "look": "Color grading 22",
+    "lookAsset": "febf7cd5222a2a4c308342a0bdb5a9545d35413d",
+    "pattern": 3
+  },
+  {
+    "name": "grain-photo-grading22-065",
+    "shader": "c_f25865r",
+    "floats": {
+      "saturation": 1,
+      "perfColor": 0,
+      "grainStrength": 0.15,
+      "grainSize": 0.65,
+      "grainSmoohtness": 0.3,
+      "grainChroma": 0.7,
+      "grainDarkLevel": 0.2
+    },
+    "vectors": {
+      "noiseRes": [
+        128,
+        96
+      ]
+    },
+    "samplers": {
+      "grainInputTexture": "source",
+      "framePerforationsTexture": "clear",
+      "mLutID": "lut",
+      "noiseTexture": "noise"
+    },
+    "ints": {
+      "seed": 71,
+      "stain.time": 0,
+      "scratch.time": 0,
+      "scratch_v.time": 0
+    },
+    "arrays": {},
+    "look": "Color grading 22",
+    "lookAsset": "febf7cd5222a2a4c308342a0bdb5a9545d35413d",
+    "pattern": 3
+  },
+  {
     "name": "grain-size-step-000",
     "shader": "c_f25865r",
     "floats": {

@@ -59,6 +59,9 @@ final class OriginalFilmPipeline {
                 .replacingOccurrences(of:"tmpvar_3 = ((0.5 - (0.4 * grainSize)) * 2.0);",with:"tmpvar_3 = portableGrainScale;")
                 .replacingOccurrences(of:"void main ()",with:"uniform highp float portableGrainScale;\nvoid main ()")
         }
+        // The recovered gate code leaves masked source regions unassigned.
+        // Define transparent black rather than reading an undefined register.
+        pixelAligned = pixelAligned.replacingOccurrences(of:"\\bvec4\\s+(colorIn_\\d+)\\s*;",with:"vec4 $1 = vec4(0.0);",options:.regularExpression)
         return pixelAligned.replacingOccurrences(of:"textureLod\\s*\\(\\s*noiseTexture\\s*,\\s*(\\w+)\\s*,\\s*0\\.0\\s*\\)",with:"texelFetch(noiseTexture, ivec2(mod(floor($1 * vec2(1024.0)), vec2(1024.0))), 0)",options:.regularExpression)
     }
     private func compile(_ source: String, type: GLenum) throws -> GLuint {
@@ -198,7 +201,8 @@ final class OriginalFilmPipeline {
         guard w > 0, h > 0, w <= 8192, h <= 8192, w*h <= 16_777_216 else {throw PortError.message("Image dimensions exceed the supported 16-megapixel processing limit, or the image is empty.")}
         allocate(w,h)
         var bytes = [UInt8](repeating:0,count:w*h*4)
-        bytes.withUnsafeMutableBytes {ci.render(source,toBitmap:$0.baseAddress!,rowBytes:w*4,bounds:source.extent,format:.RGBA8,colorSpace:CGColorSpaceCreateDeviceRGB())}
+        let rasterBounds = CGRect(x:source.extent.minX,y:source.extent.minY,width:w,height:h)
+        bytes.withUnsafeMutableBytes {ci.render(source,toBitmap:$0.baseAddress!,rowBytes:w*4,bounds:rasterBounds,format:.RGBA8,colorSpace:CGColorSpaceCreateDeviceRGB())}
         glActiveTexture(GLenum(GL_TEXTURE0)); glBindTexture(GLenum(GL_TEXTURE_2D),textures[0])
         bytes.withUnsafeBytes {glTexSubImage2D(GLenum(GL_TEXTURE_2D),0,0,0,GLsizei(w),GLsizei(h),GLenum(GL_RGBA),GLenum(GL_UNSIGNED_BYTE),$0.baseAddress)}
         glBindTexture(GLenum(GL_TEXTURE_2D),textures[7])

@@ -12,6 +12,11 @@ on:
       - '.github/workflows/**'
       - '.gitattributes'
   workflow_dispatch:
+    inputs:
+      reference_only:
+        description: Generate Android references without building iOS
+        type: boolean
+        default: false
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
@@ -44,6 +49,7 @@ jobs:
           name: android-reference
           path: android-reference/
   build-test:
+    if: ${{ !inputs.reference_only }}
     needs: android-reference
     runs-on: macos-15
     timeout-minutes: 90

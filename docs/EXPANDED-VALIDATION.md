@@ -55,3 +55,10 @@ Diagnostic46184e5/run40035469293 measured: exposure exact; gate and tone maximum
 All three behavior regressions were confirmed red in40029498461. Its2112 film/frame renders passed in1405.524s; animated-asset loops, temporal seeking/burn rolls and720p/1080p/4K processing passed. Two animation repeat/seek assertions and video color-space normalization remain under targeted investigation.
 
 Temporary artifact staging folder to remove after verified evidence transfer: C:/Users/shahr/film-camera-ci-evidence-20261023-1947. Source remains on D. All1520 references from40034074197 are pinned/hash-verified, and both scanned frame borders passed native Android ETC1 verification.
+
+
+Grain investigation (6930187): all211 grain cases have zero errors greater than3/255 outside input-derived integer cell seams. The largest whole-image MAE is0.512045/255 (synthetic color cube,size0.25); the largest channel-mean bias is0.154542/255 and standard-deviation difference0.202924/255. These are neighboring random-sample choices at floating-point ambiguous seams, not a changed film table. Conformance now retains strict non-seam bounds and additionally bounds whole-image brightness, contrast and total error. Eight photo cases (four seam sizes, Normal and Color grading22) have been added with the original strict photo mean bound.
+
+A recovered16mm gate variable, colorIn_4, was unassigned in masked regions. The iOS adapter and Android offscreen reference now initialize recovered vec4 colorIn locals to transparent black; source GLSL files remain preserved. This removes undefined register reads under shifted sampling.
+
+The perforation leak endpoint test now runs through the original45-sample temporal warm-up. The UI export test waits for the photo preview/layout before tapping and records the Editor on failure. Fractional preview dimensions are normalized to an integral raster before allocating bitmap storage. All these changes still require final macOS verification.

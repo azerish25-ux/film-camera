@@ -16,7 +16,10 @@ final class FilmRenderer {
         let bounds = normalized.extent
         let portrait = bounds.width < bounds.height
         let landscape = portrait ? normalized.oriented(.right) : normalized
-        let size = s.frame.outputSize(for:landscape.extent.size)
+        let requestedSize = s.frame.outputSize(for:landscape.extent.size)
+        // A downscaled preview can have fractional bounds. The GPU bitmap must
+        // use a whole number of pixels before allocating its row storage.
+        let size = CGSize(width:max(1,floor(requestedSize.width)),height:max(1,floor(requestedSize.height)))
         let rect = CGRect(x:(landscape.extent.width-size.width)/2,y:(landscape.extent.height-size.height)/2,width:size.width,height:size.height)
         let cropped = landscape.cropped(to:rect).transformed(by:CGAffineTransform(translationX:-rect.minX,y:-rect.minY))
         let pipeline = try originalPipeline()

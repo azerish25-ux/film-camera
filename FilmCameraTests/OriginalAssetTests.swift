@@ -311,7 +311,7 @@ final class OriginalAssetTests: XCTestCase {
     func testEveryAdjustmentChangesRenderedPhotoWhenItsEffectIsEnabled() throws {
         let url = try XCTUnwrap(Bundle.main.url(forResource:"EditorFixture",withExtension:"jpg"))
         let cg = try XCTUnwrap(UIImage(contentsOfFile:url.path)?.cgImage)
-        let source = CIImage(cgImage:cg)
+        let source = CIImage(cgImage:cg).transformed(by:CGAffineTransform(scaleX:256/CGFloat(cg.width),y:192/CGFloat(cg.height)))
         for spec in Adjustment.all {
             var lower = FilmSettings()
             lower["blur"] = 0; lower["scratches"] = 0; lower["verticalScratch"] = 1
@@ -325,7 +325,7 @@ final class OriginalAssetTests: XCTestCase {
             lower[spec.id] = spec.range.lowerBound
             var upper = lower; upper[spec.id] = spec.range.upperBound
             let a = FilmRenderer(), b = FilmRenderer()
-            let frameCount = spec.id == "verticalScratch" ? 65 : 4
+            let frameCount = ["verticalScratch","leakHoles"].contains(spec.id) ? 65 : 4
             var changed = false
             for frame in 0..<frameCount {
                 let time = Double(frame)/8
@@ -379,6 +379,14 @@ final class OriginalAssetTests: XCTestCase {
         XCTAssertTrue(first != later,"The film burn clip must animate")
         XCTAssertEqual(first.count,sought.count)
         XCTAssertLessThanOrEqual(maximumRGB(first,sought),1,"Seeking to the first burn frame changed beyond GPU rounding")
+    }
+
+    func testFractionalPreviewUsesIntegralRasterBounds() throws {
+        let source = CIImage(color:CIColor(red:0.3,green:0.5,blue:0.7)).cropped(to:CGRect(x:0,y:0,width:103.5,height:77.25))
+        var settings = FilmSettings(); settings["blur"] = 0; settings["scratches"] = 0; settings["verticalScratch"] = 1
+        let renderer = FilmRenderer(), output = try renderer.render(source,settings:settings,time:0)
+        XCTAssertEqual(output.extent.size,CGSize(width:103,height:77))
+        XCTAssertNotNil(renderer.context.createCGImage(output,from:output.extent))
     }
 
 }

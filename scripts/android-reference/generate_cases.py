@@ -26,6 +26,11 @@ for index,film in enumerate(films):
     variant('film-lut-saturation',f'film-{index:02d}-scene',look=film['name'],lookAsset=film['asset'],pattern=3,floats={'saturation':1})
     # Actual colored LUT + grain, not just the neutral lookup table.
     variant('grain',f'film-{index:02d}-grain',look=film['name'],lookAsset=film['asset'],pattern=1)
+# Check ambiguous grain-cell sizes on an actual photo, including the steepest
+# color-grading stress look, without changing any original noise/sample data.
+for film,label in [(films[0],'normal'),(next(f for f in films if f['name']=='Color grading 22'),'grading22')]:
+    for step in (5,25,27,65):
+        variant('grain',f'grain-photo-{label}-{step:03d}',look=film['name'],lookAsset=film['asset'],pattern=3,floats={'grainSize':step/100})
 # Test all 101 selectable grain-size steps, including integer cell crossings.
 for step in range(101):
     variant('grain',f'grain-size-step-{step:03d}',floats={'grainSize':step/100},pattern=1)

@@ -45,9 +45,7 @@ final class FilmCameraScreenshotTests: XCTestCase {
         let curve = app.buttons["Characteristic curve"]
         reveal(curve)
         curve.tap()
-        app.swipeUp()
         shot("08-Characteristic-Curve")
-        reveal(app.buttons["Characteristic curve"])
         app.buttons["Characteristic curve"].tap()
         reveal(app.sliders["Grain amount"])
         shot("09-Film-Grain-Adjustments")
@@ -80,3 +78,4 @@ private extension XCUIApplication {
         coordinate(withNormalizedOffset: CGVector(dx: x, dy: y)).tap()
     }
 }
+

@@ -201,7 +201,7 @@ final class OriginalFilmPipeline {
         guard w > 0, h > 0, w <= 8192, h <= 8192, w*h <= 16_777_216 else {throw PortError.message("Image dimensions exceed the supported 16-megapixel processing limit, or the image is empty.")}
         allocate(w,h)
         var bytes = [UInt8](repeating:0,count:w*h*4)
-        let rasterBounds = CGRect(x:source.extent.minX,y:source.extent.minY,width:w,height:h)
+        let rasterBounds = CGRect(x:source.extent.minX,y:source.extent.minY,width:CGFloat(w),height:CGFloat(h))
         bytes.withUnsafeMutableBytes {ci.render(source,toBitmap:$0.baseAddress!,rowBytes:w*4,bounds:rasterBounds,format:.RGBA8,colorSpace:CGColorSpaceCreateDeviceRGB())}
         glActiveTexture(GLenum(GL_TEXTURE0)); glBindTexture(GLenum(GL_TEXTURE_2D),textures[0])
         bytes.withUnsafeBytes {glTexSubImage2D(GLenum(GL_TEXTURE_2D),0,0,0,GLsizei(w),GLsizei(h),GLenum(GL_RGBA),GLenum(GL_UNSIGNED_BYTE),$0.baseAddress)}

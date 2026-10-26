@@ -27,6 +27,7 @@ struct RawSequenceManifest: Codable {
         }
         if manifest.complete,let last = manifest.frames.last {guard manifest.endTimestampNs > last.timestampNs,manifest.endTimestampNs <= 8_000_000_000_000_000_000 else {throw PortError.message("Invalid RAW sequence end time.")}}
         if let origin = manifest.audioStartTimestampNs {guard origin >= 0,let rate = manifest.audioSampleRate,(8000...192000).contains(rate),let channels = manifest.audioChannels,(1...8).contains(channels) else {throw PortError.message("Invalid sequence audio metadata.")}}
+        if let origin = manifest.gyroOriginTimestampNs {guard origin >= 0,origin <= 8_000_000_000_000_000_000 else {throw PortError.message("Invalid sequence gyro timestamp.")}}
         return manifest
     }
     var fps: Double {

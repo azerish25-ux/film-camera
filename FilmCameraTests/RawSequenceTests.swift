@@ -41,7 +41,7 @@ final class RawSequenceTests: XCTestCase {
     func testDevelopedPhotoFitsFilmBudgetWithDesqueeze() {
         let source = CIImage(color:CIColor(red:0.5,green:0.5,blue:0.5)).cropped(to:CGRect(x:0,y:0,width:8064,height:6048))
         var grade = MotionGrade(); grade.enabled = true; grade.squeezeX = 2
-        let bounded = MotionProcessing.photoInput(source,grade:grade)
+        let bounded = MotionProcessing.filmInput(source,grade:grade)
         XCTAssertLessThanOrEqual(bounded.extent.width*bounded.extent.height*2,15_500_001)
         XCTAssertEqual(source.extent.width,8064)
     }

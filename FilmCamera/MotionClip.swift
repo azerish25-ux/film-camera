@@ -45,7 +45,9 @@ struct MotionClip {
         var result: [(String,Data)] = []
         if let origin = sequence.gyroOriginTimestampNs {
             info["motionLogOriginTimestamp"] = String(origin)
-            info["motionLogOffsetSeconds"] = Double(timestampNs(range.lowerBound)-origin)/1e9
+            let difference = timestampNs(range.lowerBound).subtractingReportingOverflow(origin)
+            guard !difference.overflow else {throw PortError.message("Gyro timestamp offset overflows the capture clock.")}
+            info["motionLogOffsetSeconds"] = Double(difference.partialValue)/1e9
             info["motionLogIsUntrimmed"] = true
             let source = url.appendingPathComponent("motion.gcsv").resolvingSymlinksInPath()
             if source.path.hasPrefix(url.resolvingSymlinksInPath().path+"/"),FileManager.default.fileExists(atPath:source.path),(try source.resourceValues(forKeys:[.fileSizeKey]).fileSize ?? 0) <= 64_000_000 {result.append(("motion.gcsv",try Data(contentsOf:source)))}

@@ -11,7 +11,7 @@ enum MotionJobRunner {
             let wav = job.destination.deletingPathExtension().appendingPathExtension("wav")
             defer {try? FileManager.default.removeItem(at:silent)}
             try await MotionVideoExport.encode(clip:clip,range:range,destination:silent,settings:job.settings,lut:job.lut,codec:job.codec,fps:job.fps,bitrate:job.bitrate,progress:progress)
-            if let container = clip.container,abs(job.fps-clip.fps) < 0.1,try MotionAudio.extract(container:container,range:range,to:wav) {try await MotionAudio.mux(video:silent,audio:wav,to:job.destination)}
+            if let container = clip.container,abs(job.fps-clip.fps) <= max(1e-6,clip.fps*1e-6),try MotionAudio.extract(container:container,range:range,to:wav) {try await MotionAudio.mux(video:silent,audio:wav,to:job.destination)}
             else {try FileManager.default.moveItem(at:silent,to:job.destination)}
         } else if job.kind == "JPEG" {
             let renderer = FilmRenderer(),source = try clip.image(job.first,context:renderer.context)

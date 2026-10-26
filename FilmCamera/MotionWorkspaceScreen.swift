@@ -7,7 +7,7 @@ struct MotionWorkspaceScreen: View {
     @EnvironmentObject var model: MotionWorkspace
     @State private var importing = false
     @State private var codec: MotionVideoCodec = .h264
-    @State private var fps = 24.0
+    @State private var fps = 0.0
     @State private var bitrate = 100.0
     @State private var deleting: URL?
     var initialURL: URL? = nil
@@ -43,7 +43,7 @@ struct MotionWorkspaceScreen: View {
                             Button("Export CinemaDNG sequence") {enqueue("CinemaDNG")}
                             Button("Export CinemaDNG ZIP") {enqueue("CinemaDNG ZIP")}
                             Picker("Video codec",selection:$codec) {ForEach(MotionVideoCodec.allCases) {Text($0.rawValue).tag($0)}}
-                            Stepper("Output \(Int(fps)) fps",value:$fps,in:1...120)
+                            Picker("Output frame rate",selection:$fps) {Text("Source (\(MotionVideoExport.sourceFPS(clip.fps),specifier:"%.3f") fps)").tag(0.0); ForEach(MotionExposure.frameRates.sorted(),id:\.self) {Text("\($0) fps").tag(Double($0))}}
                             Text("Bitrate \(Int(bitrate)) Mbps"); Slider(value:$bitrate,in:1...500,step:1)
                             Button("Export movie") {enqueue("Movie")}.accessibilityIdentifier("motionExportMovie")
                             Text("DNG exports preserve source Bayer samples and calibration. JPEG/movie exports apply MotionCam development then your film look. PCM audio is preserved at source frame rate; changing fps creates a silent speed-adjusted movie. Codec support depends on iOS.").font(.caption).foregroundStyle(.secondary)

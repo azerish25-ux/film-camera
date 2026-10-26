@@ -114,7 +114,7 @@ struct MotionExportJob: Codable, Identifiable {
     func enqueue(kind:String,root:URL,settings:FilmSettings,lut:CubeLUT?,codec:MotionVideoCodec,fps:Double,bitrate:Int) {
         guard let clip,first <= last,first >= 0,last < clip.count else {error = "Select a valid frame range."; return}
         let ext = kind == "Movie" ? "mov" : kind == "JPEG" ? "jpg" : kind == "DNG" ? "dng" : kind == "CinemaDNG ZIP" ? "zip" : "cinemadng"
-        jobs.append(MotionExportJob(source:clip.url,destination:root.appendingPathComponent("Motion-\(UUID().uuidString).\(ext)"),first:kind == "JPEG" || kind == "DNG" ? selected : first,last:kind == "JPEG" || kind == "DNG" ? selected : last,settings:settings,lut:lut,kind:kind,codec:codec,fps:fps,bitrate:bitrate))
+        jobs.append(MotionExportJob(source:clip.url,destination:root.appendingPathComponent("Motion-\(UUID().uuidString).\(ext)"),first:kind == "JPEG" || kind == "DNG" ? selected : first,last:kind == "JPEG" || kind == "DNG" ? selected : last,settings:settings,lut:lut,kind:kind,codec:codec,fps:fps > 0 ? fps : MotionVideoExport.sourceFPS(clip.fps),bitrate:bitrate))
         persist(); runNext()
     }
     func retry(_ id:UUID) {

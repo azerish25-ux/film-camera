@@ -7,6 +7,7 @@ enum MotionVideoCodec: String, Codable, CaseIterable, Identifiable {
     var av: AVVideoCodecType {switch self {case .h264:return .h264; case .hevc:return .hevc; case .prores:return .proRes422}}
 }
 enum MotionVideoExport {
+    static func sourceFPS(_ value:Double) -> Double {value.isFinite && value >= 1 && value <= 480 ? value : 24}
     static func encode(clip:MotionClip,range:ClosedRange<Int>,destination:URL,settings:FilmSettings,lut:CubeLUT?,codec:MotionVideoCodec,fps:Double,bitrate:Int,progress:@escaping (Double)->Void) async throws {
         guard range.lowerBound >= 0,range.upperBound < clip.count,fps.isFinite,fps >= 1,fps <= 480 else {throw PortError.message("Invalid video export range or frame rate.")}
         let renderer = FilmRenderer(), first = try renderer.render(clip.image(range.lowerBound,context:renderer.context),settings:settings,lut:lut)

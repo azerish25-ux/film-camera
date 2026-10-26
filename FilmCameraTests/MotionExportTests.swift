@@ -4,6 +4,12 @@ import CoreImage
 @testable import FilmCamera
 
 final class MotionExportTests: XCTestCase {
+    func testSourceFrameRatePreservesNormalTiming() {
+        XCTAssertEqual(MotionVideoExport.sourceFPS(29.97),29.97)
+        XCTAssertEqual(MotionVideoExport.sourceFPS(480),480)
+        XCTAssertEqual(MotionVideoExport.sourceFPS(0.2),24)
+        XCTAssertEqual(MotionVideoExport.sourceFPS(.nan),24)
+    }
     func testCinemaDNGZIP64WithAudio() async throws {
         let root = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
         try FileManager.default.createDirectory(at:root,withIntermediateDirectories:true)
@@ -37,6 +43,24 @@ final class MotionExportTests: XCTestCase {
         XCTAssertEqual(try data.motionUInt32(24),8000)
         XCTAssertEqual(UInt16(data[44]) | UInt16(data[45])<<8,1100)
         XCTAssertGreaterThan(data.count,44)
+    }
+    func testExplicitFrameRateChangeDoesNotDesynchronizeAudio() async throws {
+        let root = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+        try FileManager.default.createDirectory(at:root,withIntermediateDirectories:true)
+        defer {try? FileManager.default.removeItem(at:root)}
+        let source = root.appendingPathComponent("clip.mcraw"),destination = root.appendingPathComponent("changed-fps.mov")
+        var data = try MotionFixture.container(includeAudio:true)
+        let container = try MotionContainer(data:data)
+        for frame in 0..<3 {
+            var time = Data(); time.motionAppend(UInt64((Double(frame)*1e9/23.976).rounded()))
+            let start = container.indexStart+frame*16+8
+            data.replaceSubrange(start..<start+8,with:time)
+        }
+        try data.write(to:source)
+        let job = MotionExportJob(source:source,destination:destination,first:0,last:2,settings:FilmSettings(),lut:nil,kind:"Movie",codec:.h264,fps:24,bitrate:2_000_000)
+        try await MotionJobRunner.run(job) {_ in}
+        let audio = try await AVURLAsset(url:destination).loadTracks(withMediaType:.audio)
+        XCTAssertTrue(audio.isEmpty,"Explicitly retimed frames must not retain audio at the old playback speed")
     }
     func testRawFramesProducePlayableMovieWithAudio() async throws {
         let directory = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)

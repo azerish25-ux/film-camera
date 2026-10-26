@@ -4,6 +4,40 @@ import CoreImage
 @testable import FilmCamera
 
 final class RawSequenceTests: XCTestCase {
+    func testImportedSequenceRejectsInvalidGyroOrigin() async throws {
+        let root = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString+".rawseq")
+        defer {try? FileManager.default.removeItem(at:root)}
+        let writer = try RawSequenceWriter(url:root,timelapse:false)
+        let container = try MotionContainer(data:MotionFixture.container())
+        let frame = try container.frame(0)
+        try await writer.appendFrame(MotionDNG.encode(pixels:MotionRaw.unpack(frame.pixels,metadata:frame.metadata),metadata:frame.metadata),timestampNs:1_000_000_000)
+        try await writer.finish(endTimestampNs:2_000_000_000)
+        var manifest = try RawSequenceManifest.load(root)
+        for invalid in [Int64.min,Int64.max] {
+            manifest.gyroOriginTimestampNs = invalid
+            try JSONEncoder().encode(manifest).write(to:root.appendingPathComponent("sequence.json"),options:.atomic)
+            XCTAssertThrowsError(try RawSequenceManifest.load(root))
+        }
+    }
+    func testLargeDesqueezedMovieStaysWithinFilmBudget() async throws {
+        let root = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString+".rawseq")
+        let output = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString+".mov")
+        defer {try? FileManager.default.removeItem(at:root); try? FileManager.default.removeItem(at:output)}
+        let writer = try RawSequenceWriter(url:root,timelapse:false)
+        let small = try MotionContainer(data:MotionFixture.container()).frame(0)
+        var metadata = small.metadata; metadata["width"] = 4032; metadata["height"] = 3024
+        let pixels = [UInt16](repeating:1600,count:4032*3024)
+        let dng = try MotionDNG.encode(pixels:pixels,metadata:metadata)
+        for index in 0..<2 {try await writer.appendFrame(dng,timestampNs:Int64(index+1)*1_000_000_000)}
+        try await writer.finish(endTimestampNs:3_000_000_000)
+        var settings = FilmSettings(); settings.motion.enabled = true; settings.motion.squeezeX = 2
+        try await MotionVideoExport.encode(clip:MotionClip(url:root),range:0...1,destination:output,settings:settings,lut:nil,codec:.h264,fps:24,bitrate:4_000_000,resolution:.p4k) {_ in}
+        let tracks = try await AVURLAsset(url:output).loadTracks(withMediaType:.video)
+        let track = try XCTUnwrap(tracks.first),size = try await track.load(.naturalSize)
+        XCTAssertLessThanOrEqual(size.width,3840); XCTAssertLessThanOrEqual(size.height,2160)
+        XCTAssertEqual(size.width/size.height,8.0/3,accuracy:0.01)
+    }
+
     func testDevelopedPhotoFitsFilmBudgetWithDesqueeze() {
         let source = CIImage(color:CIColor(red:0.5,green:0.5,blue:0.5)).cropped(to:CGRect(x:0,y:0,width:8064,height:6048))
         var grade = MotionGrade(); grade.enabled = true; grade.squeezeX = 2

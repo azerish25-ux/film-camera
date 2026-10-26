@@ -51,11 +51,17 @@ enum MotionProcessing {
         return output
     }
     /// Keep RAW development within the recovered film GPU's 16-megapixel budget.
-    static func filmInput(_ image:CIImage,grade:MotionGrade) -> CIImage {
+    static func filmInput(_ image:CIImage,grade:MotionGrade,movieResolution:RawMovieResolution? = nil) -> CIImage {
         var g = grade; g.validate()
         let geometry = g.enabled ? g.squeezeX*g.squeezeY*(1-g.cropWidth/100)*(1-g.cropHeight/100) : 1
         let area = Double(image.extent.width*image.extent.height)*geometry
-        let scale = min(1,sqrt(15_500_000/max(1,area)))
+        var scale = min(1,sqrt(15_500_000/max(1,area)))
+        if let movieResolution {
+            let width = image.extent.width*(g.enabled ? (1-g.cropWidth/100)*g.squeezeX : 1)
+            let height = image.extent.height*(g.enabled ? (1-g.cropHeight/100)*g.squeezeY : 1)
+            let fitted = movieResolution.fit(CGSize(width:width,height:height))
+            scale = min(scale,min(fitted.width/max(1,width),fitted.height/max(1,height)))
+        }
         guard scale < 1 else {return image}
         let scaled = image.transformed(by:CGAffineTransform(scaleX:scale,y:scale))
         let rect = CGRect(x:scaled.extent.minX,y:scaled.extent.minY,width:max(1,floor(image.extent.width*scale)),height:max(1,floor(image.extent.height*scale)))

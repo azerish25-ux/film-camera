@@ -10,7 +10,7 @@ enum MotionVideoExport {
     static func sourceFPS(_ value:Double) -> Double {value.isFinite && value >= 1 && value <= 480 ? value : 24}
     static func encode(clip:MotionClip,range:ClosedRange<Int>,destination:URL,settings:FilmSettings,lut:CubeLUT?,codec:MotionVideoCodec,fps:Double,bitrate:Int,resolution:RawMovieResolution = .p1080,sourceTiming:Bool = false,progress:@escaping (Double)->Void) async throws {
         guard range.lowerBound >= 0,range.upperBound < clip.count,fps.isFinite,fps >= 1,fps <= 480 else {throw PortError.message("Invalid video export range or frame rate.")}
-        let renderer = FilmRenderer(), first = try renderer.render(MotionProcessing.filmInput(clip.image(range.lowerBound,context:renderer.context,maxDimension:resolution.decodeLimit),grade:settings.motion),settings:settings,lut:lut)
+        let renderer = FilmRenderer(), first = try renderer.render(MotionProcessing.filmInput(clip.image(range.lowerBound,context:renderer.context,maxDimension:resolution.decodeLimit),grade:settings.motion,movieResolution:resolution),settings:settings,lut:lut)
         let size = resolution.fit(first.extent.size),width = Int(size.width),height = Int(size.height)
         func problem(_ stage:String,_ error:Error?) -> Error {
             let detail = error.map {String(describing:$0)} ?? "no framework error"
@@ -37,7 +37,7 @@ enum MotionVideoExport {
                 try await Task.sleep(nanoseconds:2_000_000)
             }
             try autoreleasepool {
-                let image = index == range.lowerBound ? first : try renderer.render(MotionProcessing.filmInput(clip.image(index,context:renderer.context,maxDimension:resolution.decodeLimit),grade:settings.motion),settings:settings,lut:lut,time:presentation)
+                let image = index == range.lowerBound ? first : try renderer.render(MotionProcessing.filmInput(clip.image(index,context:renderer.context,maxDimension:resolution.decodeLimit),grade:settings.motion,movieResolution:resolution),settings:settings,lut:lut,time:presentation)
                 guard let pool = adaptor.pixelBufferPool else {throw PortError.message("Movie pixel pool is unavailable.")}
                 var pixel: CVPixelBuffer?
                 guard CVPixelBufferPoolCreatePixelBuffer(nil,pool,&pixel) == kCVReturnSuccess,let pixel else {throw PortError.message("Cannot allocate movie frame.")}

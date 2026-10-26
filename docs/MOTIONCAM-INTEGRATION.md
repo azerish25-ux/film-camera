@@ -50,7 +50,8 @@ the sequence journal and can be restored with Use capture look.
 JPEG/movie development runs before the existing Super 16 film renderer.
 DNG/CinemaDNG preserve source samples and color calibration, without baking film.
 Developed JPEGs are bounded to the recovered film GPU's 16-megapixel budget;
-full-resolution RAW archival files are unchanged.
+Movie development also fits the selected output bounds before film GPU allocation.
+Full-resolution RAW archival files are unchanged.
 Native iOS sequence frames are copied as their original DNG bytes, including
 their native metadata. Imported mcraw DNGs preserve Bayer samples, color/forward
 matrices, illuminants, neutral and black/white levels; lens-shading opcode maps,

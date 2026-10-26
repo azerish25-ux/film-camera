@@ -56,6 +56,12 @@ final class RawSequenceTests: XCTestCase {
     }
 
     func testMovieSizingKeepsFullSensorAspectWithinEncoderBounds() {
+        let source = CIImage(color:CIColor(red:0.5,green:0.5,blue:0.5)).cropped(to:CGRect(x:0,y:0,width:4032,height:3024))
+        var grade = MotionGrade(); grade.enabled = true; grade.squeezeX = 2
+        let bounded = MotionProcessing.filmInput(source,grade:grade,movieResolution:.p4k)
+        XCTAssertLessThanOrEqual(bounded.extent.width*2,3840)
+        XCTAssertLessThanOrEqual(bounded.extent.height,2160)
+        XCTAssertEqual(bounded.extent.width*2/bounded.extent.height,8.0/3,accuracy:0.01)
         XCTAssertEqual(RawMovieResolution.p1080.fit(CGSize(width:4032,height:3024)),CGSize(width:1440,height:1080))
         XCTAssertEqual(RawMovieResolution.p1080.fit(CGSize(width:3024,height:4032)),CGSize(width:1080,height:1440))
         XCTAssertEqual(RawMovieResolution.p4k.fit(CGSize(width:8064,height:6048)),CGSize(width:2880,height:2160))

@@ -12,7 +12,8 @@ final class FilmRenderer {
     }
     let context = CIContext(options: [.cacheIntermediates: false])
     func render(_ source: CIImage, settings s: FilmSettings, lut: CubeLUT? = nil, time: Double = 0, diagnostics: ((String,Data) -> Void)? = nil) throws -> CIImage {
-        let normalized = source.transformed(by:CGAffineTransform(translationX:-source.extent.minX,y:-source.extent.minY))
+        let graded = MotionProcessing.grade(source,s.motion)
+        let normalized = graded.transformed(by:CGAffineTransform(translationX:-graded.extent.minX,y:-graded.extent.minY))
         let bounds = normalized.extent
         let portrait = bounds.width < bounds.height
         let landscape = portrait ? normalized.oriented(.right) : normalized

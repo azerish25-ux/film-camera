@@ -21,6 +21,7 @@ targets:
         INFOPLIST_KEY_CFBundleDisplayName: Super 16
         INFOPLIST_KEY_NSCameraUsageDescription: Capture photos and videos with film effects.
         INFOPLIST_KEY_NSMicrophoneUsageDescription: Record sound with your videos.
+        INFOPLIST_KEY_NSMotionUsageDescription: Record gyroscope and accelerometer data for local Gyroflow sidecars.
         INFOPLIST_KEY_NSPhotoLibraryAddUsageDescription: Save your finished photos and films.
         INFOPLIST_KEY_UILaunchScreen_Generation: YES
         INFOPLIST_KEY_UIApplicationSceneManifest_Generation: YES

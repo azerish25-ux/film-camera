@@ -2,6 +2,7 @@ import SwiftUI
 import PhotosUI
 import AVKit
 import UniformTypeIdentifiers
+import CoreImage
 
 @main struct FilmCameraApp: App {
     @StateObject private var store = FilmStore()
@@ -24,6 +25,7 @@ struct AdjustmentsView: View {
     @EnvironmentObject var store: FilmStore
     var body: some View {
         VStack(alignment:.leading,spacing:14) {
+            DisclosureGroup("MotionCam development") {MotionGradeControls(grade:$store.state.settings.motion)}
             Picker("Film frame",selection:$store.state.settings.frame) { ForEach(FilmFrame.allCases) {Text($0.rawValue).tag($0)} }
             Picker("Color",selection:$store.state.settings.look) { ForEach(FilmSettings.looks,id:\.self) {Text($0).tag($0)} }
             Picker("LUT",selection:$store.state.settings.lutID) {
@@ -78,6 +80,8 @@ struct CameraScreen: View {
     @State private var lens = "Wide"
     @State private var fourK = false
     @State private var showHistogram = false
+    @State private var motion = MotionCaptureOptions()
+    @State private var rawWorkspace = false
     var body: some View {
         NavigationStack {
             ScrollView {
@@ -89,6 +93,9 @@ struct CameraScreen: View {
                         if camera.recording { VStack {Label("REC",systemImage:"record.circle.fill").foregroundStyle(.red).padding(); Spacer()} }
                     }.frame(height:360).clipShape(RoundedRectangle(cornerRadius:8))
                     Picker("Capture mode",selection:$videoMode) {Text("Photo").tag(false); Text("Video").tag(true)}.pickerStyle(.segmented).disabled(camera.recording || exporter.busy)
+                    DisclosureGroup("MotionCam capture") {MotionCaptureControls(options:$motion,rawSupported:camera.rawSupported)}.disabled(camera.recording || camera.processing)
+                    Button("RAW workspace") {rawWorkspace = true}.accessibilityIdentifier("rawWorkspace")
+                    if !camera.captureStats.isEmpty {Text(camera.captureStats).monospacedDigit()}
                     HStack(spacing:44) {
                         Button {camera.flip(); controls()} label: {Image(systemName:"arrow.triangle.2.circlepath.camera").font(.title2)}.accessibilityLabel("Switch camera").disabled(camera.recording)
                         Button(action:capture) {Image(systemName:camera.recording ? "stop.circle.fill" : videoMode ? "record.circle" : "circle.inset.filled").font(.system(size:66)).foregroundStyle(videoMode ? .red : .white)}.accessibilityLabel(camera.recording ? "Stop recording" : videoMode ? "Record video" : "Take photo").disabled(!camera.ready || exporter.busy || camera.processing)
@@ -102,6 +109,9 @@ struct CameraScreen: View {
             }.navigationTitle("SUPER 16").navigationBarTitleDisplayMode(.inline)
             .onAppear {
                 camera.update(store.state.settings,lut:store.selectedLUT)
+                if let data = UserDefaults.standard.data(forKey:"motionCaptureOptions"),let saved = try? JSONDecoder().decode(MotionCaptureOptions.self,from:data) {motion = saved}
+                camera.updateMotion(motion)
+                camera.onMedia = {_ in store.refresh()}
                 camera.onMovie = { url,settings,lut in
                     Task { @MainActor in
                         defer {try? FileManager.default.removeItem(at:url)}
@@ -110,6 +120,8 @@ struct CameraScreen: View {
                 }
                 camera.start()
             }.onDisappear {camera.stop()}
+            .sheet(isPresented:$rawWorkspace) {MotionWorkspaceScreen().environmentObject(store)}
+            .onChange(of:motion) {_,value in camera.updateMotion(value); controls(); if let data = try? JSONEncoder().encode(value) {UserDefaults.standard.set(data,forKey:"motionCaptureOptions")}}
             .onChange(of:store.state.settings) {_,value in camera.update(value,lut:store.selectedLUT)}
             .onChange(of:camera.ready) {_,ready in if ready {controls()} }
             .onChange(of:camera.availableLenses) {_,lenses in if !lenses.contains(lens) {lens = "Wide"} }
@@ -141,8 +153,10 @@ struct CameraScreen: View {
     }
     private func controls() {camera.controls(zoom:zoom,bias:bias,focus:manualFocus ? focus : nil,iso:manualExposure ? iso : nil,shutter:manualExposure ? shutter : nil,torch:torch,fps:fps)}
     private func capture() {
-        if videoMode {camera.toggleRecording()}
-        else {camera.capture {image in do {let url = store.destination("jpg"); guard let data = image.jpegData(compressionQuality:0.97) else {throw PortError.message("Photo encoding failed.")}; try data.write(to:url,options:.atomic); store.refresh()} catch {store.error = error.localizedDescription}}}
+        if motion.mode == .timelapse {camera.toggleTimelapse(to:store.destination("mov"))}
+        else if videoMode || motion.mode == .rawVideo {camera.toggleRecording()}
+        else if !motion.saveDNG && motion.mode != .photo {if motion.saveJPEG {camera.capturePreRoll(mode:motion.mode,directory:store.root)} else {store.error = "Enable Save JPEG or Save DNG before capturing."}}
+        else {camera.capture(rawURL:motion.saveDNG ? store.destination("dng") : nil) {image in do {guard motion.saveJPEG else {return}; let url = store.destination("jpg"); guard let data = image.jpegData(compressionQuality:motion.jpegQuality/100) else {throw PortError.message("Photo encoding failed.")}; try data.write(to:url,options:.atomic); store.refresh()} catch {store.error = error.localizedDescription}}}
     }
 }
 struct MovieTransfer: Transferable {
@@ -212,7 +226,7 @@ struct EditorScreen: View {
                     original = UIImage(contentsOfFile:url.path); await updatePreview()
                 }
             }
-            .fileImporter(isPresented:$importing,allowedContentTypes:[.image,.movie]) {result in
+            .fileImporter(isPresented:$importing,allowedContentTypes:[.image,.movie,.rawImage]) {result in
                 switch result {
                 case .success(let url): Task {await loadFile(url)}
                 case .failure(let error): store.error = error.localizedDescription
@@ -234,7 +248,11 @@ struct EditorScreen: View {
             if let type = UTType(filenameExtension:url.pathExtension), type.conforms(to:.movie) {
                 let copy = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString+"."+url.pathExtension)
                 try FileManager.default.copyItem(at:url,to:copy); try await openVideo(copy)
-            } else {guard let image = UIImage(contentsOfFile:url.path) else {throw PortError.message("Unsupported image.")}; clearVideo(); original = image; await updatePreview()}
+            } else {
+                let decoded = try MotionProcessing.decode(url),context = CIContext(options:[.cacheIntermediates:false])
+                guard let cg = context.createCGImage(decoded,from:decoded.extent) else {throw PortError.message("Unsupported image.")}
+                clearVideo(); original = UIImage(cgImage:cg); await updatePreview()
+            }
         } catch {store.error = error.localizedDescription}
     }
     private func clearVideo() {player?.pause(); player = nil; if let video {try? FileManager.default.removeItem(at:video)}; video = nil; saved = nil}

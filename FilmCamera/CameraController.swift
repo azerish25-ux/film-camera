@@ -250,7 +250,7 @@ final class CameraController: NSObject, ObservableObject, AVCaptureVideoDataOutp
     func fileOutput(_ output: AVCaptureFileOutput, didFinishRecordingTo outputFileURL: URL, from connections: [AVCaptureConnection], error: Error?) {
         queue.async {
         if self.logging {self.logging = false; do {try self.motionLogger.finish(to:outputFileURL.deletingPathExtension().appendingPathExtension("gcsv"))} catch {self.report(error)}}
-        let saved = snapshot
+        let saved = self.snapshot
         DispatchQueue.main.async {
             self.recording = false
             if let error, (error as NSError).userInfo[AVErrorRecordingSuccessfullyFinishedKey] as? Bool != true { self.message = error.localizedDescription; try? FileManager.default.removeItem(at:outputFileURL) }

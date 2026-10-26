@@ -4,7 +4,7 @@ import UniformTypeIdentifiers
 struct MotionWorkspaceScreen: View {
     @EnvironmentObject var store: FilmStore
     @Environment(\.dismiss) private var dismiss
-    @StateObject private var model = MotionWorkspace()
+    @EnvironmentObject var model: MotionWorkspace
     @State private var importing = false
     @State private var codec: MotionVideoCodec = .h264
     @State private var fps = 24.0

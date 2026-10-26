@@ -6,7 +6,7 @@ import CoreImage
 
 @main struct FilmCameraApp: App {
     @StateObject private var store = FilmStore()
-    var body: some Scene { WindowGroup { RootView().environmentObject(store).preferredColorScheme(.dark) } }
+    var body: some Scene { WindowGroup { RootView().environmentObject(store).environmentObject(store.motionWorkspace).preferredColorScheme(.dark) } }
 }
 struct RootView: View {
     @EnvironmentObject var store: FilmStore

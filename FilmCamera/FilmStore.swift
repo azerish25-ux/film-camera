@@ -6,6 +6,7 @@ struct LibraryState: Codable {
     var luts: [CubeLUT] = []
 }
 @MainActor final class FilmStore: ObservableObject {
+    let motionWorkspace = MotionWorkspace()
     @Published var state = LibraryState()
     @Published var media: [URL] = []
     @Published var error: String?

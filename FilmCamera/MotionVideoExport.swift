@@ -12,14 +12,19 @@ enum MotionVideoExport {
         guard range.lowerBound >= 0,range.upperBound < clip.count,fps.isFinite,fps >= 1,fps <= 480 else {throw PortError.message("Invalid video export range or frame rate.")}
         let renderer = FilmRenderer(), first = try renderer.render(MotionProcessing.filmInput(clip.image(range.lowerBound,context:renderer.context,maxDimension:resolution.decodeLimit),grade:settings.motion),settings:settings,lut:lut)
         let size = resolution.fit(first.extent.size),width = Int(size.width),height = Int(size.height)
-        let writer = try AVAssetWriter(outputURL:destination,fileType:.mov)
+        func problem(_ stage:String,_ error:Error?) -> Error {
+            let detail = error.map {String(describing:$0)} ?? "no framework error"
+            return PortError.message("Movie \(stage), \(codec.rawValue) \(width)x\(height), first image \(first.extent): \(detail)")
+        }
+        let writer: AVAssetWriter
+        do {writer = try AVAssetWriter(outputURL:destination,fileType:.mov)} catch {throw problem("initialize",error)}
         var options: [String:Any] = [AVVideoCodecKey:codec.av,AVVideoWidthKey:width,AVVideoHeightKey:height]
         if codec != .prores {options[AVVideoCompressionPropertiesKey] = [AVVideoAverageBitRateKey:max(1_000_000,min(500_000_000,bitrate))]}
         let input = AVAssetWriterInput(mediaType:.video,outputSettings:options)
         let adaptor = AVAssetWriterInputPixelBufferAdaptor(assetWriterInput:input,sourcePixelBufferAttributes:[kCVPixelBufferPixelFormatTypeKey as String:kCVPixelFormatType_32BGRA,kCVPixelBufferWidthKey as String:width,kCVPixelBufferHeightKey as String:height,kCVPixelBufferIOSurfacePropertiesKey as String:[:]])
         guard writer.canAdd(input) else {throw PortError.message("The selected codec is unavailable on this iOS device.")}
         writer.add(input)
-        guard writer.startWriting() else {throw writer.error ?? PortError.message("Cannot open movie encoder.")}
+        guard writer.startWriting() else {throw problem("start writing (status \(writer.status.rawValue))",writer.error)}
         writer.startSession(atSourceTime:.zero)
         var completed = false
         defer {if !completed {writer.cancelWriting(); try? FileManager.default.removeItem(at:destination)}}
@@ -28,7 +33,7 @@ enum MotionVideoExport {
             try Task.checkCancellation()
             while !input.isReadyForMoreMediaData {
                 try Task.checkCancellation()
-                guard writer.status == .writing else {throw writer.error ?? PortError.message("Movie encoding failed.")}
+                guard writer.status == .writing else {throw problem("ready check (status \(writer.status.rawValue))",writer.error)}
                 try await Task.sleep(nanoseconds:2_000_000)
             }
             try autoreleasepool {
@@ -39,7 +44,7 @@ enum MotionVideoExport {
                 let normalized = image.transformed(by:CGAffineTransform(translationX:-image.extent.minX,y:-image.extent.minY))
                 let scaled = normalized.transformed(by:CGAffineTransform(scaleX:Double(width)/normalized.extent.width,y:Double(height)/normalized.extent.height))
                 renderer.context.render(scaled,to:pixel,bounds:CGRect(x:0,y:0,width:width,height:height),colorSpace:CGColorSpaceCreateDeviceRGB())
-                guard adaptor.append(pixel,withPresentationTime:CMTime(seconds:presentation,preferredTimescale:600_000)) else {throw writer.error ?? PortError.message("Cannot write movie frame.")}
+                guard adaptor.append(pixel,withPresentationTime:CMTime(seconds:presentation,preferredTimescale:600_000)) else {throw problem("append frame \(index) (status \(writer.status.rawValue))",writer.error)}
             }
             progress(Double(index-range.lowerBound+1)/Double(range.count))
         }
@@ -47,7 +52,8 @@ enum MotionVideoExport {
         input.markAsFinished()
         await writer.finishWriting()
         try Task.checkCancellation()
-        guard writer.status == .completed else {throw writer.error ?? PortError.message("Movie finalization failed.")}
+        guard writer.status == .completed else {throw problem("finish writing (status \(writer.status.rawValue))",writer.error)}
+        guard FileManager.default.fileExists(atPath:destination.path) else {throw problem("completed without output file",writer.error)}
         completed = true
     }
 }

@@ -8,9 +8,9 @@ extension CameraController {
         frames.async {
             defer {DispatchQueue.main.async {self.processing = false}}
             do {
-                let captured = self.preRoll.latest(mode == .zsl ? 1 : mode == .night ? 12 : 30)
+                let captured = self.preRoll.latest(mode == .zsl ? 1 : mode == .night ? self.suggestedMergeCount : 30)
                 let images: [CIImage]
-                if mode == .night {images = [try MotionPreRoll.merge(captured)]}
+                if mode == .night {images = [try MotionPreRoll.merge(captured,align:true)]}
                 else {images = captured.map {CIImage(cgImage:$0)}}
                 guard !images.isEmpty else {throw PortError.message("Camera pre-roll is empty.")}
                 for image in images {

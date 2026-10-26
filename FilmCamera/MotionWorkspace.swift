@@ -26,6 +26,9 @@ struct MotionExportJob: Codable, Identifiable {
     @Published var jobs: [MotionExportJob] = []
     @Published var error: String?
     @Published var result: URL?
+    @Published var selecting = false
+    @Published var sources: [URL] = []
+    var onCompletion: ((URL) -> Void)?
     private var task: Task<Void,Never>?
     private var previewTask: Task<Void,Never>?
     private var queueURL: URL?
@@ -36,6 +39,12 @@ struct MotionExportJob: Codable, Identifiable {
             jobs = saved.map {job in var j = job; if ["Rendering","Queued"].contains(j.status) {j.status = "Interrupted — retry"}; return j}
         }
         persist()
+        refreshSources(root:root)
+    }
+    func refreshSources(root:URL) {sources = ((try? FileManager.default.contentsOfDirectory(at:root.appendingPathComponent("RAW"),includingPropertiesForKeys:nil)) ?? []).filter {!["json"].contains($0.pathExtension.lowercased())}.sorted {$0.lastPathComponent < $1.lastPathComponent}}
+    func deleteSource(_ url:URL,root:URL) {
+        guard !busy,!selecting,url.deletingLastPathComponent().standardizedFileURL == root.appendingPathComponent("RAW").standardizedFileURL else {return}
+        do {try FileManager.default.removeItem(at:url); if clip?.url == url {previewTask?.cancel(); clip = nil; preview = nil}; refreshSources(root:root)} catch {self.error = error.localizedDescription}
     }
     private func persist() {
         guard let queueURL else {return}
@@ -48,9 +57,15 @@ struct MotionExportJob: Codable, Identifiable {
             try FileManager.default.createDirectory(at:directory,withIntermediateDirectories:true)
             let local: URL
             if source.deletingLastPathComponent() == directory {local = source}
-            else {local = directory.appendingPathComponent(UUID().uuidString+"."+source.pathExtension); try FileManager.default.copyItem(at:source,to:local)}
-            let opened = try await Task.detached {try MotionClip(url:local)}.value
+            else {local = directory.appendingPathComponent(source.deletingPathExtension().lastPathComponent+"-"+UUID().uuidString+"."+source.pathExtension)}
+            let opened = try await Task.detached {
+                var success = false
+                defer {if !success && local != source {try? FileManager.default.removeItem(at:local)}}
+                if local != source {try FileManager.default.copyItem(at:source,to:local)}
+                let clip = try MotionClip(url:local); success = true; return clip
+            }.value
             clip = opened; selected = 0; first = 0; last = opened.count-1; result = nil
+            refreshSources(root:root)
             render(settings:settings,lut:lut)
         } catch {self.error = error.localizedDescription}
     }
@@ -70,13 +85,45 @@ struct MotionExportJob: Codable, Identifiable {
             } catch {if !Task.isCancelled {self.error = error.localizedDescription}}
         }
     }
+    func selectSharpest(settings:FilmSettings,lut:CubeLUT?) {
+        guard let clip,!selecting else {return}
+        let range = first...min(last,first+299); selecting = true
+        Task {
+            defer {selecting = false}
+            do {
+                let best = try await Task.detached {
+                    let context = CIContext(options:[.cacheIntermediates:false])
+                    var best = range.lowerBound,score = -Double.greatestFiniteMagnitude
+                    for index in range {
+                        try Task.checkCancellation()
+                        let value: Double = try autoreleasepool {
+                            let image = try clip.image(index,context:context)
+                            let scale = min(1,160/max(image.extent.width,image.extent.height))
+                            let small = image.transformed(by:CGAffineTransform(scaleX:scale,y:scale))
+                            guard let cg = context.createCGImage(small,from:small.extent) else {throw PortError.message("Cannot rank frame sharpness.")}
+                            return MotionSharpness.score(cg)
+                        }
+                        if value > score {best = index; score = value}
+                    }
+                    return best
+                }.value
+                selected = best; render(settings:settings,lut:lut)
+            } catch {self.error = error.localizedDescription}
+        }
+    }
     func enqueue(kind:String,root:URL,settings:FilmSettings,lut:CubeLUT?,codec:MotionVideoCodec,fps:Double,bitrate:Int) {
         guard let clip,first <= last,first >= 0,last < clip.count else {error = "Select a valid frame range."; return}
-        let ext = kind == "Movie" ? "mov" : kind == "JPEG" ? "jpg" : kind == "DNG" ? "dng" : "cinemadng"
+        let ext = kind == "Movie" ? "mov" : kind == "JPEG" ? "jpg" : kind == "DNG" ? "dng" : kind == "CinemaDNG ZIP" ? "zip" : "cinemadng"
         jobs.append(MotionExportJob(source:clip.url,destination:root.appendingPathComponent("Motion-\(UUID().uuidString).\(ext)"),first:kind == "JPEG" || kind == "DNG" ? selected : first,last:kind == "JPEG" || kind == "DNG" ? selected : last,settings:settings,lut:lut,kind:kind,codec:codec,fps:fps,bitrate:bitrate))
         persist(); runNext()
     }
-    func retry(_ id:UUID) {guard let i = jobs.firstIndex(where:{$0.id == id}),jobs[i].status != "Rendering" else {return}; jobs[i].status = "Queued"; persist(); runNext()}
+    func retry(_ id:UUID) {
+        guard let i = jobs.firstIndex(where:{$0.id == id}),!["Rendering","Queued","Finished"].contains(jobs[i].status),let root = queueURL?.deletingLastPathComponent() else {return}
+        let target = jobs[i].destination.standardizedFileURL
+        guard target.deletingLastPathComponent() == root.standardizedFileURL,target.lastPathComponent.hasPrefix("Motion-") else {error = "Invalid export retry destination."; return}
+        do {if FileManager.default.fileExists(atPath:target.path) {try FileManager.default.removeItem(at:target)}} catch {self.error = error.localizedDescription; return}
+        jobs[i].status = "Queued"; persist(); runNext()
+    }
     func cancel() {task?.cancel()}
     private func runNext() {
         guard !busy,let index = jobs.firstIndex(where:{$0.status == "Queued"}) else {return}
@@ -86,7 +133,7 @@ struct MotionExportJob: Codable, Identifiable {
             do {
                 let work = Task.detached {try await MotionJobRunner.run(job) {value in Task {@MainActor in self.progress = value}}}
                 try await withTaskCancellationHandler(operation:{try await work.value},onCancel:{work.cancel()})
-                jobs[index].status = "Finished"; result = job.destination
+                jobs[index].status = "Finished"; result = job.destination; onCompletion?(job.destination)
             } catch {jobs[index].status = error is CancellationError ? "Cancelled" : "Failed: \(error.localizedDescription)"; if !(error is CancellationError) {self.error = error.localizedDescription}}
             persist(); busy = false; task = nil; runNext()
         }

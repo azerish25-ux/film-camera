@@ -1,5 +1,6 @@
 import AVFoundation
 import CoreImage
+import Vision
 
 struct MotionCaptureOptions: Codable, Equatable {
     var mode: MotionCaptureMode = .photo
@@ -18,6 +19,10 @@ struct MotionCaptureOptions: Codable, Equatable {
     var audio = true
     var aeLock = false
     var awbLock = false
+    var gradedViewfinder = false
+    var trackPOI = false
+    var autoNight = false
+    var stabilization = true
 }
 
 /// Bounded RGB pre-roll. iOS video output is processed, not Bayer RAW.
@@ -32,13 +37,21 @@ final class MotionPreRoll {
     }
     func latest(_ count: Int) -> [CGImage] {Array(frames.suffix(max(0,count)))}
     func clear() {frames.removeAll(); bytes = 0}
-    static func merge(_ frames: [CGImage]) throws -> CIImage {
+    static func merge(_ frames: [CGImage],align:Bool = false) throws -> CIImage {
         guard let first = frames.first else {throw PortError.message("Wait for the camera preview before capturing.")}
         var result = CIImage(cgImage:first)
-        for (i,frame) in frames.dropFirst().enumerated() {
-            let weight = 1/Double(i+2)
-            let next = CIImage(cgImage:frame).applyingFilter("CIColorMatrix",parameters:["inputAVector":CIVector(x:0,y:0,z:0,w:weight)])
-            result = next.composited(over:result)
+        var mergedCount = 1
+        for frame in frames.dropFirst() {
+            var next = CIImage(cgImage:frame)
+            if align {
+                let request = VNTranslationalImageRegistrationRequest(targetedCGImage:first)
+                if (try? VNImageRequestHandler(cgImage:frame).perform([request])) != nil,
+                   let observation = request.results?.first as? VNImageTranslationAlignmentObservation {
+                    next = next.transformed(by:observation.alignmentTransform).cropped(to:result.extent).composited(over:CIImage(cgImage:first))
+                } else {continue}
+            }
+            let weight = 1/Double(mergedCount+1); mergedCount += 1
+            result = result.applyingFilter("CIDissolveTransition",parameters:["inputTargetImage":next,"inputTime":weight])
         }
         return result
     }

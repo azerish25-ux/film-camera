@@ -133,7 +133,7 @@ struct MotionFocusState {
 }
 
 struct MotionOrientation {
-    enum Orientation: Int {case landscape, portrait, reverseLandscape, reversePortrait}
+    enum Orientation: Int {case portrait = 0, reversePortrait = 1, landscape = 2, reverseLandscape = 3}
     private(set) var orientation: Orientation = .portrait
     private var pitches: [Double] = [], rolls: [Double] = []
     mutating func update(pitch: Double, roll: Double) -> Orientation {

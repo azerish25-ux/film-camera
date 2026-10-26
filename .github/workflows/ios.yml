@@ -1,7 +1,7 @@
 name: iOS macOS validation
 on:
   push:
-    branches-ignore: ['diagnostics/**']
+    branches-ignore: ['diagnostics/**', 'motioncam-integration']
     paths:
       - 'FilmCamera/**'
       - 'FilmCameraTests/**'

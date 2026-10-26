@@ -11,7 +11,7 @@ Camera retains full-resolution Photo and processed Video capture. Expand MotionC
 capture for ZSL, Night, Burst, Timelapse, DNG stills, clipping, focus peaking,
 shutter angle, exposure/white-balance locks and Gyroflow logging.
 ZSL/Night/Burst use a memory-limited 1280-pixel RGB pre-roll. Night averages up to
-12 recent frames; Burst saves up to 30 available frames. These are native iOS
+12 recent frames with native Vision translation registration; Burst saves up to 30 available frames. These are native iOS
 fallbacks, not Android Bayer capture or DIS optical-flow fusion. Save DNG requests
 a full-resolution native RAW still with an optional film-developed JPEG, regardless
 of pre-roll mode. It requires a compatible physical iPhone lens.
@@ -25,6 +25,9 @@ is bounded to 180,000 samples/stream (30 minutes at 100 Hz).
 Open RAW workspace from Camera to import `.mcraw` v2/v3 or an iOS-supported RAW
 still. Scrub frames, set trim endpoints, develop through MotionCam controls and
 the existing Super 16 film look, and queue JPEG, DNG, CinemaDNG or MOV exports.
+CinemaDNG can be shared as a streaming ZIP64 archive, including its audio sidecar.
+Imported sources can be reopened/deleted; a sharpness scan selects the best frame
+from up to 300 frames in the selected range.
 Sources are copied into the local RAW directory. The queue is saved atomically;
 interrupted jobs require explicit retry rather than automatic crash loops.
 Cancel removes incomplete movie/sequence output. Gallery shares finished media.
@@ -55,8 +58,10 @@ No pixel parity with MotionCam's native ISP is claimed. Original Super 16 film
 parity remains independently tested with MotionCam development disabled.
 
 Legacy v1/ZIP and newer compressed codecs are rejected explicitly. Missing Bayer
-calibration is rejected. RAW movie export is currently silent: embedded BW64/PCM
-extraction/synchronization remains unimplemented. Native camera MOV capture keeps
+calibration is rejected. Embedded 16-bit PCM audio is extracted to a trimmed WAV
+and muxed into RAW movie exports at source frame rate. Changed-fps movies are
+silent; CinemaDNG sequences include an audio sidecar. Extraction is limited to
+256 MB of PCM per export. Native camera MOV capture keeps
 its microphone through the existing exporter. Split-write, GPS and automatic app
 exit are not implemented. Simulator CI cannot validate physical camera/sensors.
 
@@ -68,5 +73,11 @@ Tests cover every codec-6 mode, RAW10/12, Bayer interleaving, corrupt containers
 DNG development, settings migration, exposure thresholds, focus/orientation,
 Gyroflow and renderer integration.
 
+Native Vision supplies optional focus-point tracking. The recovered full-viewfinder
+HSV tone map is available independently of saved film pixels. These controls are
+preview-only; development settings alone are persisted in film presets.
+
 The [published decoder](https://github.com/mirsadm/motioncam-decoder) was consulted
 to verify packing and metadata keys; its C++ code is not bundled or linked.
+The [additional metadata audit](motioncam/METADATA-AUDIT.md) records direct Ghidra
+verification of calibration illuminants and RAW level accessors in the APK.

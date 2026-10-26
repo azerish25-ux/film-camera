@@ -6,7 +6,7 @@ enum MotionGyroflow {
     static func encode(gyro:[MotionSample],accel:[MotionSample],model:String,startMilliseconds:Int64) throws -> String {
         guard gyro.count >= 2,accel.count >= 2 else {throw PortError.message("Insufficient motion samples.")}
         for samples in [gyro,accel] {
-            guard samples.allSatisfy({$0.time.isFinite && $0.value.x.isFinite && $0.value.y.isFinite && $0.value.z.isFinite}),zip(samples,samples.dropFirst()).allSatisfy({$0.time < $1.time}) else {throw PortError.message("Invalid motion timeline.")}
+            guard samples.allSatisfy({$0.time.isFinite && $0.value.x.isFinite && $0.value.y.isFinite && $0.value.z.isFinite && abs($0.value.x) < 1e9 && abs($0.value.y) < 1e9 && abs($0.value.z) < 1e9}),zip(samples,samples.dropFirst()).allSatisfy({$0.time < $1.time}) else {throw PortError.message("Invalid motion timeline.")}
         }
         func step(_ samples:[MotionSample]) -> Double {let n = min(20,samples.count); return (samples[n-1].time-samples[0].time)/Double(n)}
         let period = min(step(gyro),step(accel)), start = max(gyro[0].time,accel[0].time), end = min(gyro.last!.time,accel.last!.time)

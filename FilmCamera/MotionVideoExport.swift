@@ -43,6 +43,7 @@ enum MotionVideoExport {
         }
         input.markAsFinished()
         await writer.finishWriting()
+        try Task.checkCancellation()
         guard writer.status == .completed else {throw writer.error ?? PortError.message("Movie finalization failed.")}
         completed = true
     }

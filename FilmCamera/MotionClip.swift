@@ -27,8 +27,9 @@ struct MotionClip {
 
 enum MotionFixture {
     /// Deterministic camera-free input used by simulator integration tests.
-    static func container() throws -> Data {
-        let meta: [String:Any] = ["width":64,"height":48,"isCompressed":true,"compressionType":6,"sensorArrangment":"rggb","blackLevel":[0,0,0,0],"whiteLevel":4095,"colorMatrix1":[0.64,0.33,0.03,0.21,0.71,0.08,0.02,0.12,0.86],"asShotNeutral":[1,1,1],"model":"MotionCam CI fixture"]
+    static func container(includeAudio:Bool = false) throws -> Data {
+        var meta: [String:Any] = ["width":64,"height":48,"isCompressed":true,"compressionType":6,"sensorArrangment":"rggb","blackLevel":[0,0,0,0],"whiteLevel":4095,"colorMatrix1":[0.64,0.33,0.03,0.21,0.71,0.08,0.02,0.12,0.86],"asShotNeutral":[1,1,1],"model":"MotionCam CI fixture"]
+        if includeAudio {meta["extraData"] = ["audioSampleRate":8000,"audioChannels":1]}
         var d = Data("MOTION \u{3}".utf8)
         func chunk(_ type:UInt32,_ payload:Data) {d.motionAppend(type); d.motionAppend(UInt32(payload.count)); d.append(payload)}
         chunk(3,try JSONSerialization.data(withJSONObject:meta,options:.sortedKeys))
@@ -44,6 +45,10 @@ enum MotionFixture {
             }}
             pixels.append(0)
             chunk(2,pixels); chunk(3,try JSONSerialization.data(withJSONObject:meta,options:.sortedKeys))
+            if includeAudio {
+                var pcm = Data(); for _ in 0..<333 {pcm.motionAppend(Int16(1000+frame*100))}
+                chunk(5,pcm); var time = Data(); time.motionAppend(UInt64(frame)*41_666_667); chunk(6,time)
+            }
         }
         let start = UInt64(d.count)
         for (offset,time) in offsets {d.motionAppend(offset); d.motionAppend(time)}

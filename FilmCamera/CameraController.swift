@@ -12,6 +12,11 @@ final class CameraController: NSObject, ObservableObject, AVCaptureVideoDataOutp
     private var histogramEnabled = false
     @Published var rawSupported = false
     @Published var captureStats = ""
+    @Published var sceneEV = 10.0
+    @Published var sceneShadows = 1.0
+    @Published var sceneExposure = 0.0
+    var suggestedMergeCount = 12
+    private var lastAnalysisTime = 0.0
     var motionOptions = MotionCaptureOptions()
     let preRoll = MotionPreRoll()
     let motionLogger = MotionLogger()
@@ -22,7 +27,10 @@ final class CameraController: NSObject, ObservableObject, AVCaptureVideoDataOutp
     var timelapseStarted = 0.0
     var timelapseDeadline = Double.greatestFiniteMagnitude
     var onMedia: ((URL) -> Void)?
+    private var focusState = MotionFocusState()
+    private let poi = MotionPOI()
     @Published var availableLenses: [String] = ["Wide"]
+    @Published var availableFrameRates: [Double] = [24,30]
     private var selectedLens = "Wide"
     let session = AVCaptureSession()
     private let queue = DispatchQueue(label:"film.camera")
@@ -40,6 +48,9 @@ final class CameraController: NSObject, ObservableObject, AVCaptureVideoDataOutp
     private var onPhoto: ((UIImage) -> Void)?
     var onMovie: ((URL,FilmSettings,CubeLUT?) -> Void)?
     private var lastFrame = CMTime.zero
+    private var statistics = MotionStatistics()
+    private var lastStatsTime = 0.0
+    private var statsText = ""
     private var photoInFlight = false
     private var rotationAngle = 90.0
     private var orientationObserver: NSObjectProtocol?
@@ -82,15 +93,15 @@ final class CameraController: NSObject, ObservableObject, AVCaptureVideoDataOutp
             queue.async {
                 do {
                     if self.session.inputs.isEmpty { try self.configure(audio:audio) }
-                    self.session.startRunning()
+                    if !self.session.isRunning {self.frames.async {self.statistics = MotionStatistics(); self.lastStatsTime = 0}; self.session.startRunning()}
                     DispatchQueue.main.async { self.ready = true }
                 } catch { self.report(error) }
             }
         }
     }
-    func stop() { finishTimelapse(); queue.async { if self.movie.isRecording { self.movie.stopRecording() }; self.session.stopRunning(); self.frames.async {self.preRoll.clear()}; DispatchQueue.main.async {self.ready = false} } }
+    func stop() { finishTimelapse(); queue.async { if self.movie.isRecording { self.movie.stopRecording() }; self.session.stopRunning(); self.frames.async {self.preRoll.clear(); self.poi.reset()}; DispatchQueue.main.async {self.ready = false} } }
     private func configure(audio: Bool) throws {
-        session.beginConfiguration(); defer { session.commitConfiguration() }
+        session.beginConfiguration(); defer { session.commitConfiguration(); publishCapabilities() }
         session.sessionPreset = .hd1920x1080
         try addCamera()
         if audio, let mic = AVCaptureDevice.default(for:.audio) {
@@ -123,6 +134,12 @@ final class CameraController: NSObject, ObservableObject, AVCaptureVideoDataOutp
             if connection.isVideoMirroringSupported { connection.automaticallyAdjustsVideoMirroring = false; connection.isVideoMirrored = position == .front }
         }
     }
+    private func publishCapabilities() {
+        let ranges = device?.activeFormat.videoSupportedFrameRateRanges ?? []
+        let rates = MotionExposure.frameRates.map(Double.init).filter {fps in ranges.contains {$0.minFrameRate <= fps && $0.maxFrameRate >= fps}}.sorted()
+        let supportsRAW = !photo.availableRawPhotoPixelFormatTypes.isEmpty
+        DispatchQueue.main.async {self.availableFrameRates = rates.isEmpty ? [24,30] : rates; self.rawSupported = supportsRAW}
+    }
     func flip() {
         queue.async {
             guard !self.movie.isRecording else { return }
@@ -131,13 +148,13 @@ final class CameraController: NSObject, ObservableObject, AVCaptureVideoDataOutp
             if let old { self.session.removeInput(old) }
             self.position = self.position == .back ? .front : .back; self.selectedLens = "Wide"
             do { try self.addCamera() } catch { if let old, self.session.canAddInput(old) { self.session.addInput(old); self.device = old.device }; self.report(error) }
-            self.orient(); self.session.commitConfiguration()
+            self.orient(); self.session.commitConfiguration(); self.publishCapabilities()
         }
     }
     func selectLens(_ name: String) {
         queue.async {
             guard !self.movie.isRecording else {return}
-            self.session.beginConfiguration(); defer {self.session.commitConfiguration()}
+            self.session.beginConfiguration(); defer {self.session.commitConfiguration(); self.publishCapabilities()}
             let old = self.session.inputs.compactMap {$0 as? AVCaptureDeviceInput}.first {$0.device.hasMediaType(.video)}
             if let old {self.session.removeInput(old)}
             let previous = self.selectedLens; self.selectedLens = name
@@ -152,7 +169,7 @@ final class CameraController: NSObject, ObservableObject, AVCaptureVideoDataOutp
         queue.async {
             guard !self.movie.isRecording else {return}
             let preset: AVCaptureSession.Preset = fourK ? .hd4K3840x2160 : .hd1920x1080
-            self.session.beginConfiguration(); defer {self.session.commitConfiguration()}
+            self.session.beginConfiguration(); defer {self.session.commitConfiguration(); self.publishCapabilities()}
             if self.session.canSetSessionPreset(preset) {self.session.sessionPreset = preset}
             else {self.report(PortError.message("This camera does not support the selected resolution."))}
         }
@@ -172,6 +189,7 @@ final class CameraController: NSObject, ObservableObject, AVCaptureVideoDataOutp
                 } else if d.isExposureModeSupported(.continuousAutoExposure) { d.exposureMode = .continuousAutoExposure }
                 if d.hasTorch, d.isTorchModeSupported(torch ? .on : .off) { d.torchMode = torch ? .on : .off }
                 let opts = self.options()
+                for connection in [self.movie.connection(with:.video),self.video.connection(with:.video)].compactMap({$0}) where connection.isVideoStabilizationSupported {connection.preferredVideoStabilizationMode = opts.stabilization ? .standard : .off}
                 if opts.aeLock,d.isExposureModeSupported(.locked) {d.exposureMode = .locked}
                 if d.isWhiteBalanceModeSupported(opts.awbLock ? .locked : .continuousAutoWhiteBalance) {d.whiteBalanceMode = opts.awbLock ? .locked : .continuousAutoWhiteBalance}
                 if opts.shutterAngle > 0,d.isExposureModeSupported(.custom) {
@@ -230,16 +248,23 @@ final class CameraController: NSObject, ObservableObject, AVCaptureVideoDataOutp
         queue.async {self.photoInFlight = false; self.rawDestination = nil; if let error {self.report(error)}; DispatchQueue.main.async {self.processing = false}}
     }
     func fileOutput(_ output: AVCaptureFileOutput, didFinishRecordingTo outputFileURL: URL, from connections: [AVCaptureConnection], error: Error?) {
-        queue.async {if self.logging {self.logging = false; do {try self.motionLogger.finish(to:outputFileURL.deletingPathExtension().appendingPathExtension("gcsv"))} catch {self.report(error)}}}
+        queue.async {
+        if self.logging {self.logging = false; do {try self.motionLogger.finish(to:outputFileURL.deletingPathExtension().appendingPathExtension("gcsv"))} catch {self.report(error)}}
         let saved = snapshot
         DispatchQueue.main.async {
             self.recording = false
             if let error, (error as NSError).userInfo[AVErrorRecordingSuccessfullyFinishedKey] as? Bool != true { self.message = error.localizedDescription; try? FileManager.default.removeItem(at:outputFileURL) }
             else { self.onMovie?(outputFileURL,saved.0,saved.1) }
         }
+        }
     }
     func captureOutput(_ output: AVCaptureOutput, didOutput sampleBuffer: CMSampleBuffer, from connection: AVCaptureConnection) {
         let time = CMSampleBufferGetPresentationTimeStamp(sampleBuffer)
+        statistics.append(time:time.seconds)
+        if time.seconds-lastStatsTime >= 0.5 {
+            lastStatsTime = time.seconds
+            statsText = String(format:"%.1f fps • %d dropped",statistics.fps,statistics.dropped)
+        }
         guard time.seconds-lastFrame.seconds > 1/24.0, let buffer = CMSampleBufferGetImageBuffer(sampleBuffer) else { return }
         lastFrame = time
         do {
@@ -247,6 +272,19 @@ final class CameraController: NSObject, ObservableObject, AVCaptureVideoDataOutp
         let previewScale = min(1,1280/max(raw.extent.width,raw.extent.height))
         let source = raw.transformed(by:CGAffineTransform(scaleX:previewScale,y:previewScale))
         let opts = options()
+        if time.seconds-lastAnalysisTime >= 0.25 && (opts.autoNight || opts.mode == .night || opts.mode == .zsl) {
+            lastAnalysisTime = time.seconds
+            let gray = source.applyingFilter("CIColorMatrix",parameters:["inputRVector":CIVector(x:1.0/3,y:1.0/3,z:1.0/3,w:0),"inputGVector":CIVector(x:1.0/3,y:1.0/3,z:1.0/3,w:0),"inputBVector":CIVector(x:1.0/3,y:1.0/3,z:1.0/3,w:0)])
+            let histogram = FilmHistogram.values(gray)
+            let bins = stride(from:0,to:histogram.count,by:4).map {Double(histogram[$0])}
+            queue.async {
+                let ev = self.device.map {MotionExposure.ev(aperture:Double($0.lensAperture),seconds:$0.exposureDuration.seconds,iso:Double($0.iso))} ?? 10
+                let estimate = MotionExposure.estimate(histogram:bins,ev:ev)
+                self.frames.async {self.suggestedMergeCount = MotionExposure.mergeCount(ev:ev,shadows:estimate.shadows)}
+                DispatchQueue.main.async {self.sceneEV = ev; self.sceneShadows = estimate.shadows; self.sceneExposure = estimate.exposure}
+            }
+        }
+        if opts.trackPOI,let tracked = try poi.update(source) {focus(at:tracked,tracking:true)}
         if let cg = renderer.context.createCGImage(source,from:source.extent) {preRoll.append(cg,limit:max(16,min(512,opts.memoryMB))*1024*1024)}
         let state = current(), image = try renderer.render(source,settings:state.0,lut:state.1,time:time.seconds)
         if let target = timelapseTarget {
@@ -257,23 +295,37 @@ final class CameraController: NSObject, ObservableObject, AVCaptureVideoDataOutp
         let scale = min(1,720/image.extent.width)
         let small = image.transformed(by:CGAffineTransform(scaleX:scale,y:scale))
         let bins = needsHistogram() ? FilmHistogram.values(image) : []
-        let display = try MotionProcessing.aids(small,clipping:opts.clipping,peaking:opts.peaking,sensitivity:opts.sensitivity)
-        let stats = timelapse.map {"\($0.count) frames • \($0.dropped) dropped"} ?? ""
+        let toneMapped = opts.gradedViewfinder ? try MotionViewfinder.render(small,shadows:state.0.motion.shadows,contrast:state.0.motion.contrast,saturation:state.0.motion.saturation) : small
+        let display = try MotionProcessing.aids(toneMapped,clipping:opts.clipping,peaking:opts.peaking,sensitivity:opts.sensitivity)
+        let stats = timelapse.map {"\($0.count) frames • \($0.dropped) dropped"} ?? statsText
         if let cg = renderer.context.createCGImage(display,from:display.extent) { DispatchQueue.main.async { self.preview = UIImage(cgImage:cg); self.histogram = bins; self.captureStats = stats } }
-        } catch {report(error)}
+        } catch {if timelapseTarget != nil {finishTimelapse()}; report(error)}
     }
     func report(_ error: Error) { DispatchQueue.main.async { self.message = error.localizedDescription } }
-    func focus(at point:CGPoint,locked:Bool = false) {
+    func captureOutput(_ output:AVCaptureOutput,didDrop sampleBuffer:CMSampleBuffer,from connection:AVCaptureConnection) {statistics.drop()}
+    func focus(at point:CGPoint,locked:Bool = false,tracking:Bool = false) {
+        if !tracking && options().trackPOI {poi.select(point)}
         queue.async {
             guard let d = self.device else {return}
+            let now = ProcessInfo.processInfo.systemUptime
+            guard self.focusState.select(SIMD2(point.x,point.y),time:now) else {return}
+            if locked {self.focusState.lock()}
+            let sensorPoint: CGPoint
+            switch Int(self.rotationAngle) {
+            case 90: sensorPoint = CGPoint(x:point.y,y:1-point.x)
+            case 180: sensorPoint = CGPoint(x:1-point.x,y:1-point.y)
+            case 270: sensorPoint = CGPoint(x:1-point.y,y:point.x)
+            default: sensorPoint = point
+            }
             do {try d.lockForConfiguration(); defer {d.unlockForConfiguration()}
-                if d.isFocusPointOfInterestSupported {d.focusPointOfInterest = point}
-                if d.isExposurePointOfInterestSupported {d.exposurePointOfInterest = point}
+                if d.isFocusPointOfInterestSupported {d.focusPointOfInterest = sensorPoint}
+                if d.isExposurePointOfInterestSupported {d.exposurePointOfInterest = sensorPoint}
                 if d.isFocusModeSupported(.autoFocus) {d.focusMode = .autoFocus}
                 if d.isExposureModeSupported(locked ? .locked : .continuousAutoExposure) {d.exposureMode = locked ? .locked : .continuousAutoExposure}
             } catch {self.report(error)}
-            if !locked {self.queue.asyncAfter(deadline:.now()+5) {
+            if !locked && !self.options().trackPOI {self.queue.asyncAfter(deadline:.now()+5) {
                 guard let d = self.device else {return}
+                guard self.focusState.update(time:ProcessInfo.processInfo.systemUptime,settled:!d.isAdjustingFocus) else {return}
                 do {try d.lockForConfiguration(); defer {d.unlockForConfiguration()}; if d.isFocusModeSupported(.continuousAutoFocus) {d.focusMode = .continuousAutoFocus}} catch {self.report(error)}
             }}
         }

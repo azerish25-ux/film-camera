@@ -19,8 +19,10 @@ struct MotionContainer {
         let magic = try data.motionUInt32(end+(version == 3 ? 8 : 0))
         guard magic == (version == 3 ? 0x8A905612 : 0x34884CED) else {throw PortError.message("Container is incomplete: frame index is missing.")}
         let count = Int(try data.motionUInt32(end+(version == 3 ? 12 : 4)))
-        guard count > 0, count <= 10_000_000, count <= (end-8)/16 else {throw PortError.message("Invalid container frame count.")}
-        let start = end-count*16
+        guard count > 0, count <= 1_000_000, count <= (end-8)/16 else {throw PortError.message("Invalid container frame count (limit one million frames).")}
+        let start: Int
+        if version == 3 {let pointer = try data.motionUInt64(end+16); guard pointer >= 16,pointer <= UInt64(end-count*16) else {throw PortError.message("Invalid index start.")}; start = Int(pointer)}
+        else {start = end-count*16}
         if version == 3 {
             guard try data.motionUInt32(end) == 0, try data.motionUInt32(end+4) == 16,
                   try data.motionUInt64(end+16) == UInt64(start) else {throw PortError.message("Invalid container index offset.")}
@@ -31,15 +33,13 @@ struct MotionContainer {
         guard let meta = try JSONSerialization.jsonObject(with:data.subdata(in:16..<16+headerLength)) as? [String:Any] else {throw PortError.message("Container metadata must be an object.")}
         metadata = meta
         var list: [Frame] = []; list.reserveCapacity(count)
-        var previous: Int64 = -1
         for i in 0..<count {
             let offset = try data.motionUInt64(start+i*16), timestamp = try data.motionUInt64(start+i*16+8)
             guard offset >= UInt64(16+headerLength),offset < UInt64(start),timestamp <= UInt64(Int64.max) else {throw PortError.message("Frame index points outside the container.")}
             let time = Int64(timestamp)
-            guard time >= previous else {throw PortError.message("Frame timestamps are out of order.")}
-            list.append(Frame(offset:Int(offset),timestamp:time)); previous = time
+            list.append(Frame(offset:Int(offset),timestamp:time))
         }
-        frames = list
+        frames = list.sorted {$0.timestamp < $1.timestamp}
     }
     func chunk(at offset: Int) throws -> (type:UInt32,payload:Range<Int>,next:Int) {
         guard offset >= 8, offset <= indexStart-8 else {throw PortError.message("Truncated frame chunk.")}

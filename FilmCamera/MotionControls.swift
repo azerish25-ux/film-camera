@@ -41,14 +41,18 @@ struct MotionCaptureControls: View {
             Toggle("Save DNG",isOn:$options.saveDNG).disabled(!rawSupported)
             if !rawSupported {Text("RAW still capture is unavailable on this camera.").font(.caption)}
             Toggle("Save JPEG",isOn:$options.saveJPEG)
+            Toggle("Auto Night in dim scenes",isOn:$options.autoNight)
             Text("JPEG quality \(Int(options.jpegQuality))"); Slider(value:$options.jpegQuality,in:10...100,step:1)
             Toggle("Clipping overlay",isOn:$options.clipping)
+            Toggle("MotionCam graded viewfinder",isOn:$options.gradedViewfinder)
             Toggle("Focus peaking",isOn:$options.peaking)
+            Toggle("Track focus point",isOn:$options.trackPOI)
             if options.peaking {Text("Peaking threshold"); Slider(value:$options.sensitivity,in:0.001...0.1)}
             Toggle("Lock auto exposure",isOn:$options.aeLock)
             Toggle("Lock white balance",isOn:$options.awbLock)
             Picker("Shutter angle",selection:$options.shutterAngle) {Text("Off").tag(0); ForEach([45,90,144,172,180,270,360],id:\.self) {Text("\($0)°").tag($0)}}
             Toggle("Record microphone",isOn:$options.audio)
+            Toggle("Video stabilization",isOn:$options.stabilization)
             Toggle("Save Gyroflow motion log",isOn:$options.saveGyro)
             Text("Motion logs are limited to 30 minutes at 100 Hz.").font(.caption)
             Stepper("Pre-roll memory: \(options.memoryMB) MB",value:$options.memoryMB,in:16...512,step:16)

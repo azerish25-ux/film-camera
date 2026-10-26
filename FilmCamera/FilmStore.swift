@@ -24,6 +24,7 @@ struct LibraryState: Codable {
                 if let id = state.presets[index].settings.lutID, !lutIDs.contains(id) {state.presets[index].settings.lutID = nil}
             }
             refresh()
+            motionWorkspace.onCompletion = {[weak self] _ in self?.refresh()}
         } catch { self.error = error.localizedDescription }
     }
     func persist() {
@@ -43,6 +44,6 @@ struct LibraryState: Codable {
     }
     var selectedLUT: CubeLUT? { state.luts.first { $0.id == state.settings.lutID } }
     func destination(_ ext: String) -> URL { root.appendingPathComponent("Film-\(UUID().uuidString).\(ext)") }
-    func refresh() { media = ((try? FileManager.default.contentsOfDirectory(at:root,includingPropertiesForKeys:[.creationDateKey])) ?? []).filter { ["jpg","mov","mp4","dng","gcsv","wav","cinemadng"].contains($0.pathExtension.lowercased()) }.sorted { $0.lastPathComponent > $1.lastPathComponent } }
+    func refresh() { media = ((try? FileManager.default.contentsOfDirectory(at:root,includingPropertiesForKeys:[.creationDateKey])) ?? []).filter { ["jpg","mov","mp4","dng","gcsv","wav","cinemadng","zip"].contains($0.pathExtension.lowercased()) }.sorted { $0.lastPathComponent > $1.lastPathComponent } }
     func delete(_ url: URL) { do { try FileManager.default.removeItem(at:url); refresh() } catch { self.error = error.localizedDescription } }
 }

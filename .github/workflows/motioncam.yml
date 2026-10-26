@@ -29,12 +29,17 @@ jobs:
           DEVICE=$(xcrun simctl list devices available -j | python3 -c 'import json,sys; d=json.load(sys.stdin); print(next(x["udid"] for g in d["devices"].values() for x in g if "iPhone" in x["name"]))')
           xcrun simctl boot "$DEVICE" || true
           xcrun simctl bootstatus "$DEVICE" -b
-          xcodebuild -quiet -parallel-testing-enabled NO -scheme FilmCamera -destination "platform=iOS Simulator,id=$DEVICE" -derivedDataPath build/simulator -resultBundlePath build/MotionCam.xcresult CODE_SIGNING_ALLOWED=NO test 2>&1 | tee simulator-test.log
+          xcodebuild -quiet -parallel-testing-enabled NO -scheme FilmCamera -destination "platform=iOS Simulator,id=$DEVICE" -derivedDataPath build/simulator -resultBundlePath build/MotionCam.xcresult -only-testing:FilmCameraTests/MotionCamTests -only-testing:FilmCameraTests/MotionExportTests -only-testing:FilmCameraUITests/MotionCamUITests CODE_SIGNING_ALLOWED=NO test 2>&1 | tee simulator-test.log
+          xcrun xcresulttool export attachments --path build/MotionCam.xcresult --output-path build/zip-validation
+          python3 scripts/verify_motioncam_archive.py build/zip-validation | tee archive-validation.json
+          xcodebuild -quiet -parallel-testing-enabled NO -scheme FilmCamera -destination "platform=iOS Simulator,id=$DEVICE" -derivedDataPath build/simulator -resultBundlePath build/FilmRegression.xcresult -skip-testing:FilmCameraTests/MotionCamTests -skip-testing:FilmCameraTests/MotionExportTests -skip-testing:FilmCameraUITests/MotionCamUITests CODE_SIGNING_ALLOWED=NO test 2>&1 | tee film-regression.log
       - name: Package results
         if: always()
         run: |
           mkdir -p build/deliverables
           if [ -d build/MotionCam.xcresult ]; then xcrun xcresulttool export attachments --path build/MotionCam.xcresult --output-path build/deliverables/attachments; fi
+          if [ -d build/MotionCam.xcresult ]; then xcrun xcresulttool get test-results summary --path build/MotionCam.xcresult > build/deliverables/test-summary.json || true; fi
+          if [ -d build/FilmRegression.xcresult ]; then xcrun xcresulttool get test-results summary --path build/FilmRegression.xcresult > build/deliverables/regression-summary.json || true; fi
           if [ -d build/simulator/Build/Products/Debug-iphonesimulator/FilmCamera.app ]; then ditto -c -k --keepParent build/simulator/Build/Products/Debug-iphonesimulator/FilmCamera.app build/deliverables/FilmCamera-simulator.zip; fi
           if [ -d build/device/Build/Products/Debug-iphoneos/FilmCamera.app ]; then mkdir -p build/unsigned/Payload; cp -R build/device/Build/Products/Debug-iphoneos/FilmCamera.app build/unsigned/Payload/; (cd build/unsigned && zip -qry ../deliverables/FilmCamera-unsigned.ipa Payload); fi
       - uses: actions/upload-artifact@v4
@@ -43,7 +48,10 @@ jobs:
           name: motioncam-ios-validation
           path: |
             build/MotionCam.xcresult
+            build/FilmRegression.xcresult
             build/deliverables
             device-build.log
             simulator-test.log
+            film-regression.log
+            archive-validation.json
           retention-days: 14

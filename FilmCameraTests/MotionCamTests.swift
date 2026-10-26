@@ -15,6 +15,14 @@ final class MotionCamTests: XCTestCase {
         XCTAssertEqual(MotionExposure.mergeCount(ev:0, shadows:1), 12)
         XCTAssertEqual(MotionExposure.ev(aperture:2, seconds:0.01, iso:100), log2(400), accuracy:1e-8)
     }
+    func testRecordingStatsUseMonotonicSamples() {
+        var stats = MotionStatistics()
+        for i in 0..<25 {stats.append(time:Double(i)/24)}
+        stats.append(time:0); stats.append(time:.nan); stats.drop()
+        XCTAssertEqual(stats.fps,24,accuracy:1e-8)
+        XCTAssertEqual(stats.captured,25); XCTAssertEqual(stats.dropped,1)
+        XCTAssertEqual(stats.dropFraction,1.0/26,accuracy:1e-8)
+    }
     func testRecoveredSliderEquations() {
         XCTAssertEqual(MotionGrade.value(.shadows, progress:50), 8)
         XCTAssertEqual(MotionGrade.value(.exposure, progress:16), 0)
@@ -23,6 +31,12 @@ final class MotionCamTests: XCTestCase {
         XCTAssertEqual(MotionGrade.value(.tint, progress:150), 0)
         XCTAssertEqual(MotionGrade.value(.saturation, progress:75), 1.5)
         XCTAssertEqual(MotionGrade.value(.sharpen0, progress:25), 1.5)
+    }
+    func testAPKIlluminantLabelsArePreserved() throws {
+        for (name,code) in [("standarda",17),("standardb",18),("standardc",19),("d50",23),("d55",20),("d65",21),("d75",22)] {XCTAssertEqual(try MotionDNG.illuminant(name,fallback:0),UInt16(code))}
+        XCTAssertEqual(try MotionDNG.illuminant(nil,fallback:21),21)
+        XCTAssertThrowsError(try MotionDNG.illuminant("unknown",fallback:21))
+        XCTAssertThrowsError(try MotionDNG.illuminant(NSNumber(value:-1),fallback:21))
     }
     func testLegacyFilmSettingsStillDecode() throws {
         let settings = FilmSettings()
@@ -110,5 +124,25 @@ final class MotionCamTests: XCTestCase {
         XCTAssertNotNil(context.createCGImage(result,from:result.extent))
         let aid = try MotionProcessing.aids(source,clipping:true,peaking:true,sensitivity:0.03)
         XCTAssertNotNil(context.createCGImage(aid,from:aid.extent))
+        let mapped = try MotionViewfinder.render(source,shadows:2,contrast:0.5,saturation:1)
+        XCTAssertNotNil(context.createCGImage(mapped,from:mapped.extent))
+    }
+    func testRecoveredViewfinderPixels() throws {
+        let context = CIContext(options:[.workingColorSpace:NSNull(),.outputColorSpace:NSNull()])
+        let bounds = CGRect(x:0,y:0,width:8,height:8)
+        func pixel(_ image:CIImage) -> [Float] {
+            var out = [Float](repeating:0,count:4)
+            context.render(image,toBitmap:&out,rowBytes:16,bounds:CGRect(x:4,y:4,width:1,height:1),format:.RGBAf,colorSpace:nil)
+            return out
+        }
+        let black = CIImage(color:.black).cropped(to:bounds),white = CIImage(color:.white).cropped(to:bounds)
+        let dark = pixel(try MotionProcessing.aids(black,clipping:true,peaking:false,sensitivity:0.03))
+        XCTAssertEqual(dark[0],1,accuracy:0.001); XCTAssertEqual(dark[1],1,accuracy:0.001); XCTAssertEqual(dark[2],0,accuracy:0.001)
+        let bright = pixel(try MotionProcessing.aids(white,clipping:true,peaking:false,sensitivity:0.03))
+        XCTAssertEqual(bright[0],1,accuracy:0.001); XCTAssertEqual(bright[1],0,accuracy:0.001)
+        let gray = CIImage(color:CIColor(red:0.25,green:0.25,blue:0.25)).cropped(to:bounds)
+        let mapped = pixel(try MotionViewfinder.render(gray,shadows:2,contrast:0.5,saturation:1))
+        let gamma = pow(0.5/1.5,1/2.2),b = gamma/(1-gamma),expected = 1/(1+pow(b,-1.5))
+        XCTAssertEqual(Double(mapped[0]),expected,accuracy:0.005)
     }
 }

@@ -2,6 +2,13 @@ import Foundation
 
 /// Uncompressed TIFF/DNG writer preserving Bayer samples and calibration.
 enum MotionDNG {
+    static func illuminant(_ value:Any?,fallback:UInt16) throws -> UInt16 {
+        guard let value else {return fallback}
+        if let number = value as? NSNumber {guard number.intValue >= 0,number.intValue <= 255 else {throw PortError.message("Invalid DNG illuminant.")}; return number.uint16Value}
+        let map: [String:UInt16] = ["standarda":17,"standardb":18,"standardc":19,"d50":23,"d55":20,"d65":21,"d75":22]
+        guard let name = value as? String,let result = map[name.lowercased().replacingOccurrences(of:" ",with:"")] else {throw PortError.message("Unknown camera calibration illuminant.")}
+        return result
+    }
     struct Tag {let id:UInt16; let type:UInt16; let count:UInt32; let bytes:Data}
     static func encode(pixels:[UInt16], metadata:[String:Any]) throws -> Data {
         let (w,h) = try MotionRaw.dimensions(metadata)
@@ -18,9 +25,9 @@ enum MotionDNG {
             var d = Data()
             for n in a {
                 let v = n.doubleValue
-                guard v.isFinite,abs(v) <= 2000,signed || v >= 0 else {throw PortError.message("Invalid DNG calibration value.")}
+                guard v.isFinite,abs(v) <= (signed ? 2000 : 65535),signed || v >= 0 else {throw PortError.message("Invalid DNG calibration value.")}
                 if signed {d.motionAppend(Int32((v*1_000_000).rounded())); d.motionAppend(Int32(1_000_000))}
-                else {d.motionAppend(UInt32((v*1_000_000).rounded())); d.motionAppend(UInt32(1_000_000))}
+                else {d.motionAppend(UInt32((v*10_000).rounded())); d.motionAppend(UInt32(10_000))}
             }
             tags.append(Tag(id:id,type:signed ? 10 : 5,count:UInt32(a.count),bytes:d))
         }
@@ -32,8 +39,8 @@ enum MotionDNG {
         bytes(50710,[0,1,2]); short(50711,[1]); short(50713,[2,2])
         try rational(50714,black,signed:false); long(50717,[white.uint32Value])
         try rational(50721,matrix,signed:true); try rational(50728,neutral,signed:false)
-        short(50778,[(metadata["calibrationIlluminant1"] as? NSNumber)?.uint16Value ?? 21])
-        if let m = metadata["colorMatrix2"] as? [NSNumber],m.count == 9 {try rational(50722,m,signed:true); short(50779,[(metadata["calibrationIlluminant2"] as? NSNumber)?.uint16Value ?? 17])}
+        short(50778,[try illuminant(metadata["colorIlluminant1"] ?? metadata["calibrationIlluminant1"],fallback:21)])
+        if let m = metadata["colorMatrix2"] as? [NSNumber],m.count == 9 {try rational(50722,m,signed:true); short(50779,[try illuminant(metadata["colorIlluminant2"] ?? metadata["calibrationIlluminant2"],fallback:17)])}
         for (name,id) in [("forwardMatrix1",UInt16(50964)),("forwardMatrix2",UInt16(50965))] {if let m = metadata[name] as? [NSNumber],m.count == 9 {try rational(id,m,signed:true)}}
         long(50829,[0,0,UInt32(h),UInt32(w)])
         tags.sort {$0.id < $1.id}

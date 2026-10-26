@@ -2,6 +2,12 @@
 
 Native Swift/SwiftUI port of the supplied fully local Android Super 16 app, including its recovered film-processing shaders, original film tables, frame assets, presets and local workflows.
 
+MotionCam development is integrated with the existing film renderer: RAW/DNG and
+MotionCam container import, frame scrubbing, CinemaDNG/JPEG/MOV export, persisted
+render jobs, native RAW stills, bounded ZSL/night/burst, timelapse and Gyroflow
+logging. See [MotionCam integration and platform limits](docs/MOTIONCAM-INTEGRATION.md)
+and the [supplied reverse-engineering specification](docs/motioncam/REVERSE-ENGINEERING-SPEC.md).
+
 Open `FilmCamera.xcodeproj` on a Mac. GitHub Actions also generates the project, builds an unsigned iPhone application, runs iPhone Simulator tests, and compares its shader output with Android-emulator reference pixels. See [building instructions](docs/BUILDING.md) and [processing provenance](docs/PROCESSING-PROVENANCE.md).
 
 Features include photo/video capture, manual camera controls, available lens selection, 4K capture, photo/video editing, audio-preserving trim/export, Photos/Files import, local gallery/share, unlimited CUBE imports, local presets, RGB histograms and full characteristic-curve controls.

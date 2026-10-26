@@ -23,6 +23,8 @@ final class RawSequenceTests: XCTestCase {
         let root = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString+".rawseq")
         let output = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString+".mov")
         defer {try? FileManager.default.removeItem(at:root); try? FileManager.default.removeItem(at:output)}
+        var stage = "create RAW fixture"
+        do {
         let writer = try RawSequenceWriter(url:root,timelapse:false)
         let small = try MotionContainer(data:MotionFixture.container()).frame(0)
         var metadata = small.metadata; metadata["width"] = 4032; metadata["height"] = 3024
@@ -31,11 +33,18 @@ final class RawSequenceTests: XCTestCase {
         for index in 0..<2 {try await writer.appendFrame(dng,timestampNs:Int64(index+1)*1_000_000_000)}
         try await writer.finish(endTimestampNs:3_000_000_000)
         var settings = FilmSettings(); settings.motion.enabled = true; settings.motion.squeezeX = 2
+        stage = "encode movie"
         try await MotionVideoExport.encode(clip:MotionClip(url:root),range:0...1,destination:output,settings:settings,lut:nil,codec:.h264,fps:24,bitrate:4_000_000,resolution:.p4k) {_ in}
+        stage = "load movie tracks"
+        print("Large RAW movie encoded: exists=\(FileManager.default.fileExists(atPath:output.path))")
         let tracks = try await AVURLAsset(url:output).loadTracks(withMediaType:.video)
+        stage = "load movie dimensions"
         let track = try XCTUnwrap(tracks.first),size = try await track.load(.naturalSize)
         XCTAssertLessThanOrEqual(size.width,3840); XCTAssertLessThanOrEqual(size.height,2160)
         XCTAssertEqual(size.width/size.height,8.0/3,accuracy:0.01)
+        } catch {
+            XCTFail("Large RAW movie stage \(stage): \(error)")
+        }
     }
 
     func testDevelopedPhotoFitsFilmBudgetWithDesqueeze() {

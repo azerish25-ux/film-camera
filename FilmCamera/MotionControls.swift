@@ -38,7 +38,7 @@ struct MotionCaptureControls: View {
         VStack(alignment:.leading,spacing:12) {
             Picker("MotionCam mode",selection:$options.mode) {ForEach(MotionCaptureMode.allCases) {Text($0.rawValue).tag($0)}}.accessibilityIdentifier("motionCaptureMode")
             Text("ZSL, Night and Burst use a bounded 1280-pixel processed pre-roll. Save DNG uses full-resolution RAW still capture on supported lenses. Video uses the iOS processed camera stream.").font(.caption).foregroundStyle(.secondary)
-            Toggle("Save DNG",isOn:$options.saveDNG).disabled(!rawSupported)
+            Toggle("Save DNG",isOn:$options.saveDNG).disabled(!rawSupported && !options.saveDNG)
             if !rawSupported {Text("RAW still capture is unavailable on this camera.").font(.caption)}
             Toggle("Save JPEG",isOn:$options.saveJPEG)
             Toggle("Auto Night in dim scenes",isOn:$options.autoNight)

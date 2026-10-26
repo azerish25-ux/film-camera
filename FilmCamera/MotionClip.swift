@@ -27,8 +27,8 @@ struct MotionClip {
 
 enum MotionFixture {
     /// Deterministic camera-free input used by simulator integration tests.
-    static func container(includeAudio:Bool = false) throws -> Data {
-        var meta: [String:Any] = ["width":64,"height":48,"isCompressed":true,"compressionType":6,"sensorArrangment":"rggb","blackLevel":[0,0,0,0],"whiteLevel":4095,"colorMatrix1":[0.64,0.33,0.03,0.21,0.71,0.08,0.02,0.12,0.86],"asShotNeutral":[1,1,1],"model":"MotionCam CI fixture"]
+    static func container(includeAudio:Bool = false, width:Int = 320, height:Int = 240) throws -> Data {
+        var meta: [String:Any] = ["width":width,"height":height,"isCompressed":true,"compressionType":6,"sensorArrangment":"rggb","blackLevel":[0,0,0,0],"whiteLevel":4095,"colorMatrix1":[0.64,0.33,0.03,0.21,0.71,0.08,0.02,0.12,0.86],"asShotNeutral":[1,1,1],"model":"MotionCam CI fixture"]
         if includeAudio {meta["extraData"] = ["audioSampleRate":8000,"audioChannels":1]}
         var d = Data("MOTION \u{3}".utf8)
         func chunk(_ type:UInt32,_ payload:Data) {d.motionAppend(type); d.motionAppend(UInt32(payload.count)); d.append(payload)}
@@ -37,9 +37,9 @@ enum MotionFixture {
         for frame in 0..<3 {
             offsets.append((UInt64(d.count),UInt64(frame)*41_666_667))
             var pixels = Data()
-            for y in 0..<48 {for x in 0..<2 {
+            for y in 0..<height {for x in 0..<((width+31)/32) {
                 for phase in 0..<2 {
-                    let base = 400+y*20+x*300+phase*200+frame*100
+                    let base = 400+y*4+x*100+phase*200+frame*100
                     pixels.append(UInt8(base>>8)); pixels.append(UInt8(base&255))
                 }
             }}

@@ -58,13 +58,15 @@ final class MotionCamTests: XCTestCase {
         XCTAssertEqual(container.frames.count,3)
         XCTAssertEqual(container.fps,24,accuracy:0.001)
         let frame = try container.frame(1),pixels = try MotionRaw.unpack(frame.pixels,metadata:frame.metadata)
-        XCTAssertEqual(pixels.count,64*48)
+        XCTAssertEqual(pixels.count,320*240)
         XCTAssertEqual(pixels[0],500); XCTAssertEqual(pixels[1],700)
         let dng = try MotionDNG.encode(pixels:pixels,metadata:frame.metadata)
         XCTAssertEqual(Array(dng.prefix(4)),[0x49,0x49,42,0])
         let filter = try XCTUnwrap(CIRAWFilter(imageData:dng,identifierHint:"com.adobe.raw-image"))
         let image = try XCTUnwrap(filter.outputImage)
-        XCTAssertNotNil(CIContext().createCGImage(image,from:image.extent))
+        let rendered = CIContext().createCGImage(image,from:image.extent)
+        if rendered == nil {let attachment = XCTAttachment(data:dng,uniformTypeIdentifier:"com.adobe.raw-image"); attachment.name = "Rejected-generated-DNG"; attachment.lifetime = .keepAlways; add(attachment); let details = XCTAttachment(string:"RAW extent: \(image.extent), properties: \(filter.properties)"); details.lifetime = .keepAlways; add(details)}
+        XCTAssertNotNil(rendered)
         XCTAssertThrowsError(try container.frame(3))
         for length in [0,7,8,16,data.count-1] {XCTAssertThrowsError(try MotionContainer(data:data.prefix(length)))}
         var corrupt = data; corrupt[corrupt.count-8] = 255

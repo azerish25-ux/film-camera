@@ -4,7 +4,7 @@ on:
     branches: [motioncam-integration]
   workflow_dispatch:
 permissions:
-  contents: read
+  contents: write
 concurrency:
   group: motioncam-${{ github.ref }}
   cancel-in-progress: true
@@ -32,14 +32,31 @@ jobs:
           xcodebuild -quiet -parallel-testing-enabled NO -scheme FilmCamera -destination "platform=iOS Simulator,id=$DEVICE" -derivedDataPath build/simulator -resultBundlePath build/MotionCam.xcresult -only-testing:FilmCameraTests/MotionCamTests -only-testing:FilmCameraTests/MotionExportTests -only-testing:FilmCameraUITests/MotionCamUITests CODE_SIGNING_ALLOWED=NO test 2>&1 | tee simulator-test.log
           xcrun xcresulttool export attachments --path build/MotionCam.xcresult --output-path build/zip-validation
           python3 scripts/verify_motioncam_archive.py build/zip-validation | tee archive-validation.json
-          xcodebuild -quiet -parallel-testing-enabled NO -scheme FilmCamera -destination "platform=iOS Simulator,id=$DEVICE" -derivedDataPath build/simulator -resultBundlePath build/FilmRegression.xcresult -skip-testing:FilmCameraTests/MotionCamTests -skip-testing:FilmCameraTests/MotionExportTests -skip-testing:FilmCameraUITests/MotionCamUITests CODE_SIGNING_ALLOWED=NO test 2>&1 | tee film-regression.log
+          echo "SIMULATOR_UDID=$DEVICE" >> "$GITHUB_ENV"
+      - name: Original film regression tests
+        run: |
+          set -o pipefail
+          xcodebuild -quiet -parallel-testing-enabled NO -scheme FilmCamera -destination "platform=iOS Simulator,id=$SIMULATOR_UDID" -derivedDataPath build/simulator -resultBundlePath build/FilmRegression.xcresult -skip-testing:FilmCameraTests/MotionCamTests -skip-testing:FilmCameraTests/MotionExportTests -skip-testing:FilmCameraUITests/MotionCamUITests CODE_SIGNING_ALLOWED=NO test 2>&1 | tee film-regression.log
+      - name: Save verified Xcode project
+        if: github.ref == 'refs/heads/motioncam-integration'
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -- FilmCamera.xcodeproj
+          if ! git diff --cached --quiet; then
+            git commit -m "build: save Xcode project validated at $GITHUB_SHA"
+            git push origin HEAD:motioncam-integration
+          fi
+          mkdir -p build/deliverables
+          git rev-parse HEAD > build/deliverables/verified-project-commit.txt
       - name: Package results
         if: always()
         run: |
           mkdir -p build/deliverables
+          cp -R FilmCamera.xcodeproj build/deliverables/
           if [ -d build/MotionCam.xcresult ]; then xcrun xcresulttool export attachments --path build/MotionCam.xcresult --output-path build/deliverables/attachments; fi
-          if [ -d build/MotionCam.xcresult ]; then xcrun xcresulttool get test-results summary --path build/MotionCam.xcresult > build/deliverables/test-summary.json || true; fi
-          if [ -d build/FilmRegression.xcresult ]; then xcrun xcresulttool get test-results summary --path build/FilmRegression.xcresult > build/deliverables/regression-summary.json || true; fi
+          if [ -d build/MotionCam.xcresult ]; then xcrun xcresulttool get test-results summary --path build/MotionCam.xcresult > build/deliverables/test-summary.json || true; cat build/deliverables/test-summary.json; fi
+          if [ -d build/FilmRegression.xcresult ]; then xcrun xcresulttool get test-results summary --path build/FilmRegression.xcresult > build/deliverables/regression-summary.json || true; cat build/deliverables/regression-summary.json; fi
           if [ -d build/simulator/Build/Products/Debug-iphonesimulator/FilmCamera.app ]; then ditto -c -k --keepParent build/simulator/Build/Products/Debug-iphonesimulator/FilmCamera.app build/deliverables/FilmCamera-simulator.zip; fi
           if [ -d build/device/Build/Products/Debug-iphoneos/FilmCamera.app ]; then mkdir -p build/unsigned/Payload; cp -R build/device/Build/Products/Debug-iphoneos/FilmCamera.app build/unsigned/Payload/; (cd build/unsigned && zip -qry ../deliverables/FilmCamera-unsigned.ipa Payload); fi
       - uses: actions/upload-artifact@v4

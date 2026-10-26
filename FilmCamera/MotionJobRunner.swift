@@ -15,7 +15,8 @@ enum MotionJobRunner {
             else {try FileManager.default.moveItem(at:silent,to:job.destination)}
             if job.sourceTiming == true {for (name,data) in try clip.captureSidecars(range:range) {let ext = name == "motion.gcsv" ? "gcsv" : "capture-timing.json"; try data.write(to:job.destination.deletingPathExtension().appendingPathExtension(ext),options:.atomic)}}
         } else if job.kind == "JPEG" {
-            let renderer = FilmRenderer(),source = try clip.image(job.first,context:renderer.context)
+            let renderer = FilmRenderer(),decoded = try clip.image(job.first,context:renderer.context,maxDimension:4096)
+            let source = MotionProcessing.photoInput(decoded,grade:job.settings.motion)
             let output = try renderer.render(source,settings:job.settings,lut:job.lut)
             guard let cg = renderer.context.createCGImage(output,from:output.extent),let data = UIImage(cgImage:cg).jpegData(compressionQuality:0.95) else {throw PortError.message("JPEG encoding failed.")}
             try Task.checkCancellation(); try data.write(to:job.destination,options:.atomic)

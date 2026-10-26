@@ -1,8 +1,17 @@
 import XCTest
 import AVFoundation
+import CoreImage
 @testable import FilmCamera
 
 final class RawSequenceTests: XCTestCase {
+    func testDevelopedPhotoFitsFilmBudgetWithDesqueeze() {
+        let source = CIImage(color:CIColor(red:0.5,green:0.5,blue:0.5)).cropped(to:CGRect(x:0,y:0,width:8064,height:6048))
+        var grade = MotionGrade(); grade.enabled = true; grade.squeezeX = 2
+        let bounded = MotionProcessing.photoInput(source,grade:grade)
+        XCTAssertLessThanOrEqual(bounded.extent.width*bounded.extent.height*2,15_500_001)
+        XCTAssertEqual(source.extent.width,8064)
+    }
+
     func testMovieSizingKeepsFullSensorAspectWithinEncoderBounds() {
         XCTAssertEqual(RawMovieResolution.p1080.fit(CGSize(width:4032,height:3024)),CGSize(width:1440,height:1080))
         XCTAssertEqual(RawMovieResolution.p1080.fit(CGSize(width:3024,height:4032)),CGSize(width:1080,height:1440))

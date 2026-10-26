@@ -50,6 +50,14 @@ enum MotionProcessing {
         guard let kernel = aidKernel, let output = kernel.apply(extent:image.extent,roiCallback:{_,r in r.insetBy(dx:-1,dy:-1)},arguments:[image,clipping ? 1.0 : 0.0,peaking ? 1.0 : 0.0,sensitivity]) else {throw PortError.message("Viewfinder aids could not be compiled.")}
         return output
     }
+    /// Keep developed JPEGs within the recovered film GPU's 16-megapixel budget.
+    static func photoInput(_ image:CIImage,grade:MotionGrade) -> CIImage {
+        var g = grade; g.validate()
+        let geometry = g.enabled ? g.squeezeX*g.squeezeY*(1-g.cropWidth/100)*(1-g.cropHeight/100) : 1
+        let area = Double(image.extent.width*image.extent.height)*geometry
+        let scale = min(1,sqrt(15_500_000/max(1,area)))
+        return image.transformed(by:CGAffineTransform(scaleX:scale,y:scale))
+    }
     static func decode(_ url: URL,maxDimension:Double? = nil) throws -> CIImage {
         if ["dng","nef","arw","cr2","cr3","raf","rw2"].contains(url.pathExtension.lowercased()) {
             guard let filter = CIRAWFilter(imageURL:url) else {throw PortError.message("This RAW camera format is not supported by iOS.")}

@@ -1,0 +1,49 @@
+name: MotionCam iOS integration
+on:
+  push:
+    branches: [motioncam-integration]
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: motioncam-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  simulator:
+    runs-on: macos-15
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+      - name: Generate project
+        run: |
+          brew install xcodegen
+          xcodegen generate
+          xcodebuild -version
+      - name: Build unsigned iPhone app
+        run: |
+          set -o pipefail
+          xcodebuild -quiet -scheme FilmCamera -destination 'generic/platform=iOS' -derivedDataPath build/device CODE_SIGNING_ALLOWED=NO build 2>&1 | tee device-build.log
+      - name: Run simulator tests
+        run: |
+          set -o pipefail
+          DEVICE=$(xcrun simctl list devices available -j | python3 -c 'import json,sys; d=json.load(sys.stdin); print(next(x["udid"] for g in d["devices"].values() for x in g if "iPhone" in x["name"]))')
+          xcrun simctl boot "$DEVICE" || true
+          xcrun simctl bootstatus "$DEVICE" -b
+          xcodebuild -quiet -parallel-testing-enabled NO -scheme FilmCamera -destination "platform=iOS Simulator,id=$DEVICE" -derivedDataPath build/simulator -resultBundlePath build/MotionCam.xcresult CODE_SIGNING_ALLOWED=NO test 2>&1 | tee simulator-test.log
+      - name: Package results
+        if: always()
+        run: |
+          mkdir -p build/deliverables
+          if [ -d build/MotionCam.xcresult ]; then xcrun xcresulttool export attachments --path build/MotionCam.xcresult --output-path build/deliverables/attachments; fi
+          if [ -d build/simulator/Build/Products/Debug-iphonesimulator/FilmCamera.app ]; then ditto -c -k --keepParent build/simulator/Build/Products/Debug-iphonesimulator/FilmCamera.app build/deliverables/FilmCamera-simulator.zip; fi
+          if [ -d build/device/Build/Products/Debug-iphoneos/FilmCamera.app ]; then mkdir -p build/unsigned/Payload; cp -R build/device/Build/Products/Debug-iphoneos/FilmCamera.app build/unsigned/Payload/; (cd build/unsigned && zip -qry ../deliverables/FilmCamera-unsigned.ipa Payload); fi
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: motioncam-ios-validation
+          path: |
+            build/MotionCam.xcresult
+            build/deliverables
+            device-build.log
+            simulator-test.log
+          retention-days: 14

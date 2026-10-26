@@ -20,7 +20,7 @@ struct GalleryScreen: View {
                     VStack {
                         if item.url.pathExtension == "jpg", let image = UIImage(contentsOfFile:item.url.path) {Image(uiImage:image).resizable().scaledToFit()}
                         else if ["mov","mp4"].contains(item.url.pathExtension) {MovieViewer(url:item.url)}
-                        else if item.url.pathExtension == "dng" {MotionWorkspaceScreen(initialURL:item.url).environmentObject(store)}
+                        else if ["dng","rawseq"].contains(item.url.pathExtension) {MotionWorkspaceScreen(initialURL:item.url).environmentObject(store)}
                         else {Label(item.url.lastPathComponent,systemImage:"doc")}
                         HStack {ShareLink(item:item.url); if ["jpg","mov","mp4"].contains(item.url.pathExtension) {Button("Save to Photos") {Task {do {try await MediaExporter.saveToPhotos(item.url)} catch {store.error = error.localizedDescription}}}}}
                     }.padding().toolbar {Button("Done") {selected = nil}}

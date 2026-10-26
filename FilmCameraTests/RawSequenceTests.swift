@@ -3,6 +3,38 @@ import AVFoundation
 @testable import FilmCamera
 
 final class RawSequenceTests: XCTestCase {
+    func testMovieSizingKeepsFullSensorAspectWithinEncoderBounds() {
+        XCTAssertEqual(RawMovieResolution.p1080.fit(CGSize(width:4032,height:3024)),CGSize(width:1440,height:1080))
+        XCTAssertEqual(RawMovieResolution.p1080.fit(CGSize(width:3024,height:4032)),CGSize(width:1080,height:1440))
+        XCTAssertEqual(RawMovieResolution.p4k.fit(CGSize(width:8064,height:6048)),CGSize(width:2880,height:2160))
+    }
+
+    func testRawSequenceAudioTrimUsesSensorClock() async throws {
+        let root = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString+".rawseq")
+        let destination = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString+".mov")
+        defer {try? FileManager.default.removeItem(at:root); try? FileManager.default.removeItem(at:destination)}
+        let writer = try RawSequenceWriter(url:root,timelapse:false)
+        var pcm = Data()
+        for _ in 0..<32_000 {pcm.motionAppend(Int16(1000))}
+        try await writer.appendPCM(pcm,timestampNs:500_000_000,sampleRate:8000,channels:1)
+        let container = try MotionContainer(data:MotionFixture.container())
+        for index in 0..<3 {
+            let frame = try container.frame(index)
+            try await writer.appendFrame(MotionDNG.encode(pixels:MotionRaw.unpack(frame.pixels,metadata:frame.metadata),metadata:frame.metadata),timestampNs:1_000_000_000+Int64(index)*1_250_000_000)
+        }
+        try await writer.finish(endTimestampNs:4_000_000_000)
+        let clip = try MotionClip(url:root)
+        let job = MotionExportJob(source:root,destination:destination,first:0,last:2,settings:FilmSettings(),lut:nil,kind:"Movie",codec:.h264,fps:24,bitrate:2_000_000,sourceTiming:true)
+        try await MotionJobRunner.run(job) {_ in}
+        let asset = AVURLAsset(url:destination)
+        let tracks = try await asset.loadTracks(withMediaType:.audio),duration = try await asset.load(.duration)
+        XCTAssertEqual(tracks.count,1); XCTAssertEqual(duration.seconds,3,accuracy:0.1)
+        let trimmed = root.appendingPathComponent("trim.wav")
+        XCTAssertTrue(try clip.extractAudio(range:1...2,to:trimmed))
+        let bytes = try Data(contentsOf:trimmed)
+        XCTAssertEqual(try bytes.motionUInt32(40),28_000)
+    }
+
     func testRawSequenceJournalsFramesAndPreservesOriginalDNG() async throws {
         let root = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString+".rawseq")
         defer {try? FileManager.default.removeItem(at:root)}

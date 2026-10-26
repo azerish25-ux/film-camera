@@ -35,3 +35,14 @@ Core Image, or device capture validation from a simulator.
 - [ ] Merge verified integration into the repository default branch.
 
 All source work remains on D:. iOS execution occurs on GitHub Actions, not Windows.
+
+
+## Native RAW sequence extension
+
+The public iOS RAW photo API supplies real DNG/ProRAW frame sequences at still
+capture speeds. CameraRawSequence schedules only when photo output is ready and
+keeps one in-flight photo/write. RawSequenceWriter journals original DNGs and
+streaming PCM. MotionClip supports .rawseq folders and sensor-time movie pacing.
+Tests exercise journal recovery, path containment, exact DNG identity, source
+timestamps, PCM trimming and the capture-folder UI. Physical capture rates and
+sensor behavior remain outside simulator verification.

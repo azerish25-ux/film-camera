@@ -50,9 +50,11 @@ enum MotionProcessing {
         guard let kernel = aidKernel, let output = kernel.apply(extent:image.extent,roiCallback:{_,r in r.insetBy(dx:-1,dy:-1)},arguments:[image,clipping ? 1.0 : 0.0,peaking ? 1.0 : 0.0,sensitivity]) else {throw PortError.message("Viewfinder aids could not be compiled.")}
         return output
     }
-    static func decode(_ url: URL) throws -> CIImage {
+    static func decode(_ url: URL,maxDimension:Double? = nil) throws -> CIImage {
         if ["dng","nef","arw","cr2","cr3","raf","rw2"].contains(url.pathExtension.lowercased()) {
-            guard let filter = CIRAWFilter(imageURL:url),let image = filter.outputImage else {throw PortError.message("This RAW camera format is not supported by iOS.")}
+            guard let filter = CIRAWFilter(imageURL:url) else {throw PortError.message("This RAW camera format is not supported by iOS.")}
+            if let maxDimension {filter.scaleFactor = Float(min(1,maxDimension/Double(max(filter.nativeSize.width,filter.nativeSize.height))))}
+            guard let image = filter.outputImage else {throw PortError.message("This RAW camera format is not supported by iOS.")}
             return image
         }
         guard let image = CIImage(contentsOf:url,options:[.applyOrientationProperty:true]) else {throw PortError.message("Cannot decode this image.")}

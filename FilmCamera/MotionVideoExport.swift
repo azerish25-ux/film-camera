@@ -8,10 +8,10 @@ enum MotionVideoCodec: String, Codable, CaseIterable, Identifiable {
 }
 enum MotionVideoExport {
     static func sourceFPS(_ value:Double) -> Double {value.isFinite && value >= 1 && value <= 480 ? value : 24}
-    static func encode(clip:MotionClip,range:ClosedRange<Int>,destination:URL,settings:FilmSettings,lut:CubeLUT?,codec:MotionVideoCodec,fps:Double,bitrate:Int,progress:@escaping (Double)->Void) async throws {
+    static func encode(clip:MotionClip,range:ClosedRange<Int>,destination:URL,settings:FilmSettings,lut:CubeLUT?,codec:MotionVideoCodec,fps:Double,bitrate:Int,resolution:RawMovieResolution = .p1080,sourceTiming:Bool = false,progress:@escaping (Double)->Void) async throws {
         guard range.lowerBound >= 0,range.upperBound < clip.count,fps.isFinite,fps >= 1,fps <= 480 else {throw PortError.message("Invalid video export range or frame rate.")}
-        let renderer = FilmRenderer(), first = try renderer.render(clip.image(range.lowerBound,context:renderer.context),settings:settings,lut:lut)
-        let width = max(2,Int(first.extent.width)/2*2), height = max(2,Int(first.extent.height)/2*2)
+        let renderer = FilmRenderer(), first = try renderer.render(clip.image(range.lowerBound,context:renderer.context,maxDimension:resolution.decodeLimit),settings:settings,lut:lut)
+        let size = resolution.fit(first.extent.size),width = Int(size.width),height = Int(size.height)
         let writer = try AVAssetWriter(outputURL:destination,fileType:.mov)
         var options: [String:Any] = [AVVideoCodecKey:codec.av,AVVideoWidthKey:width,AVVideoHeightKey:height]
         if codec != .prores {options[AVVideoCompressionPropertiesKey] = [AVVideoAverageBitRateKey:max(1_000_000,min(500_000_000,bitrate))]}
@@ -24,6 +24,7 @@ enum MotionVideoExport {
         var completed = false
         defer {if !completed {writer.cancelWriting(); try? FileManager.default.removeItem(at:destination)}}
         for index in range {
+            let presentation = sourceTiming ? clip.relativeTime(index,from:range.lowerBound) : Double(index-range.lowerBound)/fps
             try Task.checkCancellation()
             while !input.isReadyForMoreMediaData {
                 try Task.checkCancellation()
@@ -31,17 +32,18 @@ enum MotionVideoExport {
                 try await Task.sleep(nanoseconds:2_000_000)
             }
             try autoreleasepool {
-                let image = index == range.lowerBound ? first : try renderer.render(clip.image(index,context:renderer.context),settings:settings,lut:lut,time:Double(index-range.lowerBound)/fps)
+                let image = index == range.lowerBound ? first : try renderer.render(clip.image(index,context:renderer.context,maxDimension:resolution.decodeLimit),settings:settings,lut:lut,time:presentation)
                 guard let pool = adaptor.pixelBufferPool else {throw PortError.message("Movie pixel pool is unavailable.")}
                 var pixel: CVPixelBuffer?
                 guard CVPixelBufferPoolCreatePixelBuffer(nil,pool,&pixel) == kCVReturnSuccess,let pixel else {throw PortError.message("Cannot allocate movie frame.")}
                 let normalized = image.transformed(by:CGAffineTransform(translationX:-image.extent.minX,y:-image.extent.minY))
                 let scaled = normalized.transformed(by:CGAffineTransform(scaleX:Double(width)/normalized.extent.width,y:Double(height)/normalized.extent.height))
                 renderer.context.render(scaled,to:pixel,bounds:CGRect(x:0,y:0,width:width,height:height),colorSpace:CGColorSpaceCreateDeviceRGB())
-                guard adaptor.append(pixel,withPresentationTime:CMTime(seconds:Double(index-range.lowerBound)/fps,preferredTimescale:600_000)) else {throw writer.error ?? PortError.message("Cannot write movie frame.")}
+                guard adaptor.append(pixel,withPresentationTime:CMTime(seconds:presentation,preferredTimescale:600_000)) else {throw writer.error ?? PortError.message("Cannot write movie frame.")}
             }
             progress(Double(index-range.lowerBound+1)/Double(range.count))
         }
+        if sourceTiming {writer.endSession(atSourceTime:CMTime(seconds:clip.endTime(after:range.upperBound,from:range.lowerBound),preferredTimescale:600_000))}
         input.markAsFinished()
         await writer.finishWriting()
         try Task.checkCancellation()

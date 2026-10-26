@@ -4,7 +4,7 @@ Native Swift/SwiftUI port of the supplied fully local Android Super 16 app, incl
 
 MotionCam development is integrated with the existing film renderer: RAW/DNG and
 MotionCam container import, frame scrubbing, CinemaDNG/JPEG/MOV export, persisted
-render jobs, native RAW stills, bounded ZSL/night/burst, timelapse and Gyroflow
+render jobs, native RAW still/sequence capture, bounded ZSL/night/burst, timelapse and Gyroflow
 logging. See [MotionCam integration and platform limits](docs/MOTIONCAM-INTEGRATION.md)
 and the [supplied reverse-engineering specification](docs/motioncam/REVERSE-ENGINEERING-SPEC.md).
 

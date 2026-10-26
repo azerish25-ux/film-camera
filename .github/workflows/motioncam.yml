@@ -29,14 +29,14 @@ jobs:
           DEVICE=$(xcrun simctl list devices available -j | python3 -c 'import json,sys; d=json.load(sys.stdin); print(next(x["udid"] for g in d["devices"].values() for x in g if "iPhone" in x["name"]))')
           xcrun simctl boot "$DEVICE" || true
           xcrun simctl bootstatus "$DEVICE" -b
-          xcodebuild -quiet -parallel-testing-enabled NO -scheme FilmCamera -destination "platform=iOS Simulator,id=$DEVICE" -derivedDataPath build/simulator -resultBundlePath build/MotionCam.xcresult -only-testing:FilmCameraTests/MotionCamTests -only-testing:FilmCameraTests/MotionExportTests -only-testing:FilmCameraUITests/MotionCamUITests CODE_SIGNING_ALLOWED=NO test 2>&1 | tee simulator-test.log
+          xcodebuild -quiet -parallel-testing-enabled NO -scheme FilmCamera -destination "platform=iOS Simulator,id=$DEVICE" -derivedDataPath build/simulator -resultBundlePath build/MotionCam.xcresult -only-testing:FilmCameraTests/MotionCamTests -only-testing:FilmCameraTests/MotionExportTests -only-testing:FilmCameraTests/RawSequenceTests -only-testing:FilmCameraUITests/MotionCamUITests -only-testing:FilmCameraUITests/RawSequenceUITests CODE_SIGNING_ALLOWED=NO test 2>&1 | tee simulator-test.log
           xcrun xcresulttool export attachments --path build/MotionCam.xcresult --output-path build/zip-validation
           python3 scripts/verify_motioncam_archive.py build/zip-validation | tee archive-validation.json
           echo "SIMULATOR_UDID=$DEVICE" >> "$GITHUB_ENV"
       - name: Original film regression tests
         run: |
           set -o pipefail
-          xcodebuild -quiet -parallel-testing-enabled NO -scheme FilmCamera -destination "platform=iOS Simulator,id=$SIMULATOR_UDID" -derivedDataPath build/simulator -resultBundlePath build/FilmRegression.xcresult -skip-testing:FilmCameraTests/MotionCamTests -skip-testing:FilmCameraTests/MotionExportTests -skip-testing:FilmCameraUITests/MotionCamUITests CODE_SIGNING_ALLOWED=NO test 2>&1 | tee film-regression.log
+          xcodebuild -quiet -parallel-testing-enabled NO -scheme FilmCamera -destination "platform=iOS Simulator,id=$SIMULATOR_UDID" -derivedDataPath build/simulator -resultBundlePath build/FilmRegression.xcresult -skip-testing:FilmCameraTests/MotionCamTests -skip-testing:FilmCameraTests/MotionExportTests -skip-testing:FilmCameraTests/RawSequenceTests -skip-testing:FilmCameraUITests/MotionCamUITests -skip-testing:FilmCameraUITests/RawSequenceUITests CODE_SIGNING_ALLOWED=NO test 2>&1 | tee film-regression.log
       - name: Save verified Xcode project
         if: github.ref == 'refs/heads/motioncam-integration'
         run: |

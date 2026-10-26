@@ -36,8 +36,9 @@ struct MotionCaptureControls: View {
     let rawSupported: Bool
     var body: some View {
         VStack(alignment:.leading,spacing:12) {
-            Picker("MotionCam mode",selection:$options.mode) {ForEach(MotionCaptureMode.allCases) {Text($0.rawValue).tag($0)}}.accessibilityIdentifier("motionCaptureMode")
-            Text("ZSL, Night and Burst use a bounded 1280-pixel processed pre-roll. Save DNG uses full-resolution RAW still capture on supported lenses. Video uses the iOS processed camera stream.").font(.caption).foregroundStyle(.secondary)
+            Picker("MotionCam mode",selection:$options.mode) {ForEach(MotionCaptureMode.allCases) {Text($0.title).tag($0)}}.accessibilityIdentifier("motionCaptureMode")
+            Text("ZSL/Night/Burst use processed pre-roll unless Save DNG is enabled. RAW sequence preserves native DNG/ProRAW frames at still-capture speeds. The Video switch records processed video.").font(.caption).foregroundStyle(.secondary)
+            if options.mode == .rawVideo {Text("RAW interval: \(options.rawInterval,specifier:"%.2f") seconds"); Slider(value:$options.rawInterval,in:0.25...5,step:0.25); Text("Actual RAW rate depends on photo readiness and storage. This is not high-frame-rate Bayer video.").font(.caption)}
             Toggle("Save DNG",isOn:$options.saveDNG).disabled(!rawSupported && !options.saveDNG)
             if !rawSupported {Text("RAW still capture is unavailable on this camera.").font(.caption)}
             Toggle("Save JPEG",isOn:$options.saveJPEG)

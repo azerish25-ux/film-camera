@@ -13,6 +13,8 @@ struct MotionExportJob: Codable, Identifiable {
     let codec: MotionVideoCodec
     let fps: Double
     let bitrate: Int
+    var resolution: RawMovieResolution? = nil
+    var sourceTiming: Bool? = nil
     var status = "Queued"
 }
 @MainActor final class MotionWorkspace: ObservableObject {
@@ -31,6 +33,7 @@ struct MotionExportJob: Codable, Identifiable {
     var onCompletion: ((URL) -> Void)?
     private var task: Task<Void,Never>?
     private var previewTask: Task<Void,Never>?
+    private let previewWorker = MotionPreviewWorker()
     private var queueURL: URL?
     func configure(root:URL) {
         guard queueURL == nil else {return}
@@ -56,7 +59,7 @@ struct MotionExportJob: Codable, Identifiable {
             let directory = root.appendingPathComponent("RAW",isDirectory:true)
             try FileManager.default.createDirectory(at:directory,withIntermediateDirectories:true)
             let local: URL
-            if source.deletingLastPathComponent() == directory {local = source}
+            if source.standardizedFileURL.path.hasPrefix(root.standardizedFileURL.path+"/") {local = source}
             else {local = directory.appendingPathComponent(source.deletingPathExtension().lastPathComponent+"-"+UUID().uuidString+"."+source.pathExtension)}
             let opened = try await Task.detached {
                 var success = false
@@ -74,13 +77,7 @@ struct MotionExportJob: Codable, Identifiable {
         let index = selected
         previewTask = Task {
             do {
-                let image = try await Task.detached {
-                    let renderer = FilmRenderer(),source = try clip.image(index,context:renderer.context)
-                    let scale = min(1,1024/max(source.extent.width,source.extent.height))
-                    let processed = try renderer.render(source.transformed(by:CGAffineTransform(scaleX:scale,y:scale)),settings:settings,lut:lut,time:Double(index)/clip.fps)
-                    guard let cg = renderer.context.createCGImage(processed,from:processed.extent) else {throw PortError.message("Cannot render RAW preview.")}
-                    return UIImage(cgImage:cg)
-                }.value
+                let image = try await previewWorker.render(clip:clip,index:index,settings:settings,lut:lut)
                 if !Task.isCancelled {preview = image}
             } catch {if !Task.isCancelled {self.error = error.localizedDescription}}
         }
@@ -97,7 +94,7 @@ struct MotionExportJob: Codable, Identifiable {
                     for index in range {
                         try Task.checkCancellation()
                         let value: Double = try autoreleasepool {
-                            let image = try clip.image(index,context:context)
+                            let image = try clip.image(index,context:context,maxDimension:160)
                             let scale = min(1,160/max(image.extent.width,image.extent.height))
                             let small = image.transformed(by:CGAffineTransform(scaleX:scale,y:scale))
                             guard let cg = context.createCGImage(small,from:small.extent) else {throw PortError.message("Cannot rank frame sharpness.")}
@@ -111,10 +108,10 @@ struct MotionExportJob: Codable, Identifiable {
             } catch {self.error = error.localizedDescription}
         }
     }
-    func enqueue(kind:String,root:URL,settings:FilmSettings,lut:CubeLUT?,codec:MotionVideoCodec,fps:Double,bitrate:Int) {
+    func enqueue(kind:String,root:URL,settings:FilmSettings,lut:CubeLUT?,codec:MotionVideoCodec,fps:Double,bitrate:Int,resolution:RawMovieResolution = .p1080) {
         guard let clip,first <= last,first >= 0,last < clip.count else {error = "Select a valid frame range."; return}
         let ext = kind == "Movie" ? "mov" : kind == "JPEG" ? "jpg" : kind == "DNG" ? "dng" : kind == "CinemaDNG ZIP" ? "zip" : "cinemadng"
-        jobs.append(MotionExportJob(source:clip.url,destination:root.appendingPathComponent("Motion-\(UUID().uuidString).\(ext)"),first:kind == "JPEG" || kind == "DNG" ? selected : first,last:kind == "JPEG" || kind == "DNG" ? selected : last,settings:settings,lut:lut,kind:kind,codec:codec,fps:fps > 0 ? fps : MotionVideoExport.sourceFPS(clip.fps),bitrate:bitrate))
+        jobs.append(MotionExportJob(source:clip.url,destination:root.appendingPathComponent("Motion-\(UUID().uuidString).\(ext)"),first:kind == "JPEG" || kind == "DNG" ? selected : first,last:kind == "JPEG" || kind == "DNG" ? selected : last,settings:settings,lut:lut,kind:kind,codec:codec,fps:fps > 0 ? fps : MotionVideoExport.sourceFPS(clip.fps),bitrate:bitrate,resolution:resolution,sourceTiming:kind == "Movie" && fps <= 0 && !clip.isTimelapse))
         persist(); runNext()
     }
     func retry(_ id:UUID) {

@@ -4,22 +4,74 @@ import UIKit
 struct MotionClip {
     let url: URL
     let container: MotionContainer?
+    let sequence: RawSequenceManifest?
     init(url:URL) throws {
         self.url = url
-        container = url.pathExtension.lowercased() == "mcraw" ? try MotionContainer(url:url) : nil
-        if container == nil {_ = try MotionProcessing.decode(url)}
+        if url.pathExtension.lowercased() == "rawseq" {
+            let manifest = try RawSequenceManifest.load(url)
+            guard !manifest.frames.isEmpty else {throw PortError.message("This RAW sequence has no completed frames yet.")}
+            sequence = manifest; container = nil
+        } else {
+            sequence = nil
+            container = url.pathExtension.lowercased() == "mcraw" ? try MotionContainer(url:url) : nil
+            if container == nil {_ = try MotionProcessing.decode(url)}
+        }
     }
-    var count: Int {container?.frames.count ?? 1}
-    var fps: Double {container?.fps ?? 24}
+    var count: Int {sequence?.frames.count ?? container?.frames.count ?? 1}
+    var fps: Double {sequence?.fps ?? container?.fps ?? 24}
+    var isSequence: Bool {container != nil || sequence != nil}
+    var isTimelapse: Bool {sequence?.timelapse ?? (container != nil && fps < 1)}
+    var sourceDisplayFPS: Double {isTimelapse ? 24 : fps}
+    func timestampNs(_ index:Int) -> Int64 {sequence?.frames[index].timestampNs ?? container?.frames[index].timestamp ?? Int64(Double(index)*1e9/fps)}
+    func relativeTime(_ index:Int,from first:Int) -> Double {Double(timestampNs(index)-timestampNs(first))/1e9}
+    func endTime(after index:Int,from first:Int) -> Double {
+        if index+1 < count {return relativeTime(index+1,from:first)}
+        if let sequence,sequence.complete {return Double(sequence.endTimestampNs-timestampNs(first))/1e9}
+        return relativeTime(index,from:first)+1/max(0.001,fps)
+    }
+    func extractAudio(range:ClosedRange<Int>,to destination:URL) throws -> Bool {
+        if let container {return try MotionAudio.extract(container:container,range:range,to:destination)}
+        if let sequence {
+            let start = timestampNs(range.lowerBound)
+            let end = start+Int64((endTime(after:range.upperBound,from:range.lowerBound)*1e9).rounded())
+            return try RawSequenceAudio.extract(directory:url,manifest:sequence,startNs:start,endNs:end,to:destination)
+        }
+        return false
+    }
+    func captureSidecars(range:ClosedRange<Int>) throws -> [(String,Data)] {
+        guard let sequence else {return []}
+        var info: [String:Any] = ["format":"Super16 RAW sensor timing v1","frameTimestampUnits":"nanoseconds","sourceStartTimestamp":String(timestampNs(range.lowerBound)),"sourceEndTimestamp":String(timestampNs(range.lowerBound)+Int64((endTime(after:range.upperBound,from:range.lowerBound)*1e9).rounded()))]
+        info["frames"] = range.map {["exportedFile":String(format:"%06d.dng",$0-range.lowerBound),"sensorTimestamp":String(timestampNs($0))]}
+        var result: [(String,Data)] = []
+        if let origin = sequence.gyroOriginTimestampNs {
+            info["motionLogOriginTimestamp"] = String(origin)
+            info["motionLogOffsetSeconds"] = Double(timestampNs(range.lowerBound)-origin)/1e9
+            info["motionLogIsUntrimmed"] = true
+            let source = url.appendingPathComponent("motion.gcsv").resolvingSymlinksInPath()
+            if source.path.hasPrefix(url.resolvingSymlinksInPath().path+"/"),FileManager.default.fileExists(atPath:source.path),(try source.resourceValues(forKeys:[.fileSizeKey]).fileSize ?? 0) <= 64_000_000 {result.append(("motion.gcsv",try Data(contentsOf:source)))}
+        }
+        result.append(("capture-timing.json",try JSONSerialization.data(withJSONObject:info,options:[.prettyPrinted,.sortedKeys])))
+        return result
+    }
     func dng(_ index:Int) throws -> Data {
-        guard let container else {guard url.pathExtension.lowercased() == "dng" else {throw PortError.message("This source is not Bayer RAW.")}; return try Data(contentsOf:url)}
+        guard (0..<count).contains(index) else {throw PortError.message("Frame selection is out of range.")}
+        if let sequence {
+            let source = url.appendingPathComponent(sequence.frames[index].file)
+            guard (try source.resourceValues(forKeys:[.fileSizeKey]).fileSize ?? 0) <= 128_000_000 else {throw PortError.message("RAW frame exceeds 128 MB.")}
+            return try Data(contentsOf:source)
+        }
+        guard let container else {guard url.pathExtension.lowercased() == "dng" else {throw PortError.message("This source is not RAW DNG.")}; return try Data(contentsOf:url)}
         let frame = try container.frame(index)
         return try MotionDNG.encode(pixels:MotionRaw.unpack(frame.pixels,metadata:frame.metadata),metadata:frame.metadata)
     }
-    func image(_ index:Int,context:CIContext) throws -> CIImage {
-        if container == nil {return try MotionProcessing.decode(url)}
+    func image(_ index:Int,context:CIContext,maxDimension:Double? = nil) throws -> CIImage {
+        guard (0..<count).contains(index) else {throw PortError.message("Frame selection is out of range.")}
+        if let sequence {return try MotionProcessing.decode(url.appendingPathComponent(sequence.frames[index].file),maxDimension:maxDimension)}
+        if container == nil {return try MotionProcessing.decode(url,maxDimension:maxDimension)}
         let data = try dng(index)
-        guard let filter = CIRAWFilter(imageData:data,identifierHint:"com.adobe.raw-image"),let image = filter.outputImage,
+        guard let filter = CIRAWFilter(imageData:data,identifierHint:"com.adobe.raw-image") else {throw PortError.message("Cannot create RAW frame decoder.")}
+        if let maxDimension {filter.scaleFactor = Float(min(1,maxDimension/Double(max(filter.nativeSize.width,filter.nativeSize.height))))}
+        guard let image = filter.outputImage,
               let cg = context.createCGImage(image,from:image.extent) else {throw PortError.message("iOS could not develop this camera's DNG frame.")}
         return CIImage(cgImage:cg)
     }

@@ -32,6 +32,7 @@ final class MotionLogger {
     private let lock = NSLock()
     private var gyro: [MotionSample] = [],accel: [MotionSample] = []
     private var start: Int64 = 0
+    private(set) var sampleOriginTime: Double?
     func begin() throws {
         guard manager.isGyroAvailable,manager.isAccelerometerAvailable else {throw PortError.message("Motion sensors are unavailable on this device.")}
         lock.lock(); gyro = []; accel = []; start = Int64(Date().timeIntervalSince1970*1000); lock.unlock()
@@ -48,6 +49,7 @@ final class MotionLogger {
     func finish(to url:URL) throws {
         manager.stopGyroUpdates(); manager.stopAccelerometerUpdates(); queue.waitUntilAllOperationsAreFinished()
         lock.lock(); let g = gyro,a = accel,t = start; gyro = []; accel = []; lock.unlock()
+        sampleOriginTime = max(g.first?.time ?? 0,a.first?.time ?? 0)
         let text = try MotionGyroflow.encode(gyro:g,accel:a,model:UIDevice.current.model,startMilliseconds:t)
         try text.write(to:url,atomically:true,encoding:.utf8)
     }

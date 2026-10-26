@@ -12,6 +12,7 @@ struct MotionCaptureOptions: Codable, Equatable {
     var sensitivity = 0.03
     var shutterAngle = 0
     var saveGyro = false
+    var rawInterval = 1.0
     var interval = 5.0
     var totalMinutes = 10.0
     var unlimited = false

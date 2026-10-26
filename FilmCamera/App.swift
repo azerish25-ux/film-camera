@@ -82,6 +82,7 @@ struct CameraScreen: View {
     @State private var showHistogram = false
     @State private var motion = MotionCaptureOptions()
     @State private var rawWorkspace = false
+    private var captureIsSequence: Bool {videoMode || motion.mode == .rawVideo || motion.mode == .timelapse || camera.rawRecording}
     var body: some View {
         NavigationStack {
             ScrollView {
@@ -94,7 +95,7 @@ struct CameraScreen: View {
                     }.frame(height:360).clipShape(RoundedRectangle(cornerRadius:8))
                     Picker("Capture mode",selection:$videoMode) {Text("Photo").tag(false); Text("Video").tag(true)}.pickerStyle(.segmented).disabled(camera.recording || exporter.busy)
                     DisclosureGroup("MotionCam capture") {MotionCaptureControls(options:$motion,rawSupported:camera.rawSupported)}.disabled(camera.recording || camera.processing)
-                    Button("RAW workspace") {rawWorkspace = true}.accessibilityIdentifier("rawWorkspace")
+                    Button("RAW workspace") {rawWorkspace = true}.accessibilityIdentifier("rawWorkspace").disabled(camera.recording || camera.processing)
                     if !camera.captureStats.isEmpty {Text(camera.captureStats).monospacedDigit()}
                     if motion.autoNight || motion.mode == .night || motion.mode == .zsl {
                         Text("Scene EV \(camera.sceneEV,specifier:"%.1f") • shadows ×\(camera.sceneShadows,specifier:"%.1f")").font(.caption)
@@ -102,7 +103,7 @@ struct CameraScreen: View {
                     }
                     HStack(spacing:44) {
                         Button {camera.flip(); controls()} label: {Image(systemName:"arrow.triangle.2.circlepath.camera").font(.title2)}.accessibilityLabel("Switch camera").disabled(camera.recording)
-                        Button(action:capture) {Image(systemName:camera.recording ? "stop.circle.fill" : videoMode ? "record.circle" : "circle.inset.filled").font(.system(size:66)).foregroundStyle(videoMode ? .red : .white)}.accessibilityLabel(camera.recording ? "Stop recording" : videoMode ? "Record video" : "Take photo").disabled(!camera.ready || exporter.busy || camera.processing)
+                        Button(action:capture) {Image(systemName:camera.recording ? "stop.circle.fill" : captureIsSequence ? "record.circle" : "circle.inset.filled").font(.system(size:66)).foregroundStyle(captureIsSequence ? .red : .white)}.accessibilityLabel(camera.recording ? "Stop recording" : motion.mode == .rawVideo ? "Record RAW sequence" : captureIsSequence ? "Record video" : "Take photo").disabled(!camera.ready || exporter.busy || camera.processing)
                         Button {tools.toggle()} label: {Image(systemName:"slider.horizontal.3").font(.title2)}.accessibilityLabel("Camera controls")
                     }
                     if camera.processing {ProgressView("Developing photo")}
@@ -164,8 +165,11 @@ struct CameraScreen: View {
     }
     private func controls() {camera.controls(zoom:zoom,bias:bias,focus:manualFocus ? focus : nil,iso:manualExposure ? iso : nil,shutter:manualExposure ? shutter : nil,torch:torch,fps:fps)}
     private func capture() {
-        if motion.mode == .timelapse {camera.toggleTimelapse(to:store.destination("mov"))}
-        else if videoMode || motion.mode == .rawVideo {camera.toggleRecording()}
+        if camera.rawRecording {camera.stopRawSequence()}
+        else if motion.mode == .rawVideo {camera.toggleRawSequence(to:store.destination("rawseq"))}
+        else if motion.mode == .timelapse {if motion.saveDNG {camera.toggleRawSequence(to:store.destination("rawseq"),timelapse:true)} else {camera.toggleTimelapse(to:store.destination("mov"))}}
+        else if videoMode {camera.toggleRecording()}
+        else if motion.mode == .burst && motion.saveDNG {camera.toggleRawSequence(to:store.destination("rawseq"),maximumFrames:30)}
         else if !motion.saveDNG && (motion.mode != .photo || (motion.autoNight && camera.sceneEV < 4)) {if motion.saveJPEG {camera.capturePreRoll(mode:motion.autoNight && camera.sceneEV < 4 ? .night : motion.mode,directory:store.root)} else {store.error = "Enable Save JPEG or Save DNG before capturing."}}
         else {camera.capture(rawURL:motion.saveDNG ? store.destination("dng") : nil) {image in do {guard motion.saveJPEG else {return}; let url = store.destination("jpg"); guard let data = image.jpegData(compressionQuality:motion.jpegQuality/100) else {throw PortError.message("Photo encoding failed.")}; try data.write(to:url,options:.atomic); store.refresh()} catch {store.error = error.localizedDescription}}}
     }

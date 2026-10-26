@@ -3,6 +3,7 @@ import Foundation
 enum MotionCaptureMode: String, Codable, CaseIterable, Identifiable {
     case photo = "Photo", zsl = "ZSL", night = "Night", burst = "Burst", rawVideo = "Video", timelapse = "Timelapse"
     var id: String {rawValue}
+    var title: String {self == .rawVideo ? "RAW sequence" : rawValue}
 }
 
 enum MotionExposure {

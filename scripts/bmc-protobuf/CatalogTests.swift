@@ -29,5 +29,27 @@ final class BMCMediaCatalogTests: XCTestCase {
         XCTAssertEqual(result.unhandled.count, 1)
         guard case .clipDataStopRequest(_)? = result.unhandled.first?.message else { return XCTFail("Expected unrelated message") }
     }
+
+    func testSessionCutoffsAndInvalidDates() async throws {
+        let sender = FakeCatalogSender()
+        let catalog = BMCMediaCatalog(sender: sender)
+        let now = Date(timeIntervalSince1970: 86_401)
+        try await catalog.request(scope: .lastDay, now: now, includeThumbnails: false)
+        try await catalog.request(scope: .lastSession(Date(timeIntervalSince1970: 123)), now: now, includeThumbnails: false)
+        try await catalog.request(scope: .currentSession(nil), now: now, includeThumbnails: false)
+        do {
+            try await catalog.request(scope: .lastDay, now: Date(timeIntervalSince1970: 1), includeThumbnails: false)
+            XCTFail("Expected a pre-epoch cutoff to be rejected")
+        } catch { }
+        let packets = await sender.sent()
+        XCTAssertEqual(packets.count, 3)
+        let cutoffs = try packets.map { data -> UInt64 in
+            let root = try CamAppMediaSyncRootMessage(serializedBytes: data)
+            let request = try XCTUnwrap(root.messages.first?.listClipsRequest)
+            XCTAssertTrue(request.hasCutoffTs)
+            return request.cutoffTs
+        }
+        XCTAssertEqual(cutoffs, [1, 123, 86_401])
+    }
 }
 

@@ -375,6 +375,7 @@
 		33400D9C9FF1E265F846F218 /* af13dd8934d9a4dd2120747371e1f69240484845.mp4 in Resources */ = {isa = PBXBuildFile; fileRef = 03C6E6741FBC9903204666F4 /* af13dd8934d9a4dd2120747371e1f69240484845.mp4 */; };
 		335273969C23FC7401BC41BF /* film-67-p2-s0.7.rgba in Resources */ = {isa = PBXBuildFile; fileRef = A9A03484AC0DB78DB53F26D3 /* film-67-p2-s0.7.rgba */; };
 		33732A55932AAA809ED30376 /* 85575657296c1abad55d1b9eb8af3e59b59cce6a.lut in Resources */ = {isa = PBXBuildFile; fileRef = 22B8B8346CFD145E924424BD /* 85575657296c1abad55d1b9eb8af3e59b59cce6a.lut */; };
+		33FE62E906D7A52034EB4833 /* BMCMediaReceiverTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 54417EAA27103FD2F1FDCB46 /* BMCMediaReceiverTests.swift */; };
 		34124E6DBE2BCC253592B8EB /* chain-film-39.rgba in Resources */ = {isa = PBXBuildFile; fileRef = 9481E7FB4B1D9BB74ECDA43B /* chain-film-39.rgba */; };
 		34345F01EE57A5D3B4380595 /* film-29-p1-s1.rgba in Resources */ = {isa = PBXBuildFile; fileRef = CB97CED4E096AD77788318FE /* film-29-p1-s1.rgba */; };
 		3458C5E67E2CB02B8D26F6E2 /* grain-size-step-084.rgba in Resources */ = {isa = PBXBuildFile; fileRef = FA61F999C4F84C46F5DA3292 /* grain-size-step-084.rgba */; };
@@ -544,6 +545,7 @@
 		497DC1C855817E0876F71505 /* film-23-grain.rgba in Resources */ = {isa = PBXBuildFile; fileRef = 0E804DED28BC80D2624E7092 /* film-23-grain.rgba */; };
 		49CCD94ED39F04AFEFB6E7DD /* grain-size-step-005.rgba in Resources */ = {isa = PBXBuildFile; fileRef = B1E413285E1408F382FA3E44 /* grain-size-step-005.rgba */; };
 		49F9F621DD83D7F05F94A35D /* grain-size-step-100.rgba in Resources */ = {isa = PBXBuildFile; fileRef = 9569DD7CEAF5F12A6624DEF8 /* grain-size-step-100.rgba */; };
+		4A631797AAA5D1D3D4F6FE46 /* BMCMediaReceiver.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9C95932FE283EAFD3CA1A9AF /* BMCMediaReceiver.swift */; };
 		4AA616A2194D369393E89A16 /* grain-size-step-068.rgba in Resources */ = {isa = PBXBuildFile; fileRef = 8227C65E9A6153D663CDD28E /* grain-size-step-068.rgba */; };
 		4AC7DA495F71321FED4D9F7D /* film-26-p2-s0.7.rgba in Resources */ = {isa = PBXBuildFile; fileRef = CFE936BFD974F6AE36AF7C51 /* film-26-p2-s0.7.rgba */; };
 		4AF044712E6EDBE642FE23A1 /* MotionJobRunner.swift in Sources */ = {isa = PBXBuildFile; fileRef = BF8617D4FC423C862563221F /* MotionJobRunner.swift */; };
@@ -2512,6 +2514,7 @@
 		54254699DD664DED760B9463 /* grain-size-step-036.rgba */ = {isa = PBXFileReference; path = "grain-size-step-036.rgba"; sourceTree = "<group>"; };
 		543262659C889B15CFA5E4A5 /* grain-size-step-033.rgba */ = {isa = PBXFileReference; path = "grain-size-step-033.rgba"; sourceTree = "<group>"; };
 		543EC4826BF23EB3504C0C11 /* film-15-p2-s0.rgba */ = {isa = PBXFileReference; path = "film-15-p2-s0.rgba"; sourceTree = "<group>"; };
+		54417EAA27103FD2F1FDCB46 /* BMCMediaReceiverTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BMCMediaReceiverTests.swift; sourceTree = "<group>"; };
 		549EE344B78EF470B9279BD5 /* MotionControls.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MotionControls.swift; sourceTree = "<group>"; };
 		54A64E1E494AD6AA3034C318 /* film-62-p2-s0.7.rgba */ = {isa = PBXFileReference; path = "film-62-p2-s0.7.rgba"; sourceTree = "<group>"; };
 		54C0820DC3414052B3ED6D46 /* film-42-p1-s0.rgba */ = {isa = PBXFileReference; path = "film-42-p1-s0.rgba"; sourceTree = "<group>"; };
@@ -3031,6 +3034,7 @@
 		9C5CDC7BC0124B3B64A82367 /* film-10-p1-s0.7.rgba */ = {isa = PBXFileReference; path = "film-10-p1-s0.7.rgba"; sourceTree = "<group>"; };
 		9C5CEB902C4ACC951FA22A69 /* chain-film-04.rgba */ = {isa = PBXFileReference; path = "chain-film-04.rgba"; sourceTree = "<group>"; };
 		9C7E03D8D6C92C48A081AABB /* film-57-p0-s0.7.rgba */ = {isa = PBXFileReference; path = "film-57-p0-s0.7.rgba"; sourceTree = "<group>"; };
+		9C95932FE283EAFD3CA1A9AF /* BMCMediaReceiver.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BMCMediaReceiver.swift; sourceTree = "<group>"; };
 		9D05F097025A5AEC4A822845 /* film-63-grain.rgba */ = {isa = PBXFileReference; path = "film-63-grain.rgba"; sourceTree = "<group>"; };
 		9D63701EDAF4D9472C514138 /* film-32-p1-s0.7.rgba */ = {isa = PBXFileReference; path = "film-32-p1-s0.7.rgba"; sourceTree = "<group>"; };
 		9D73702500D2D2BC508A1720 /* a7d51b8319055d0e.rgba */ = {isa = PBXFileReference; path = a7d51b8319055d0e.rgba; sourceTree = "<group>"; };
@@ -3834,6 +3838,7 @@
 				8B3B11FB62029EB0F95E2504 /* BMCHandshakeTests.swift */,
 				E4C6105589C5161BC5604A5C /* BMCLUTTests.swift */,
 				7FF8276E3DE42958F32F6425 /* BMCMediaChecksumTests.swift */,
+				54417EAA27103FD2F1FDCB46 /* BMCMediaReceiverTests.swift */,
 				50A87C4AC007DA1DD7A57B30 /* BMCMonitorTests.swift */,
 				29528825ABC287357DF0A5FF /* BMCMovieCodecTests.swift */,
 				013F99253035B3AE5C039AD5 /* BMCProtocolTests.swift */,
@@ -4010,6 +4015,7 @@
 				ABCF90137E1D22451093BD0F /* BMCGuides.swift */,
 				94AB97B0EF4673AF2B6F6EA0 /* BMCLUTCatalog.swift */,
 				9457F96E214763456C29A723 /* BMCMediaChecksum.swift */,
+				9C95932FE283EAFD3CA1A9AF /* BMCMediaReceiver.swift */,
 				C820AE9B838CCBEBB27BAD8B /* BMCMonitor.swift */,
 				C5020E7F6B4C42373F7AA8C7 /* BMCMovieCodec.swift */,
 				9C02DED520F0B4A642D50C80 /* BMCRemoteAuthentication.swift */,
@@ -7580,6 +7586,7 @@
 				8FA5863327E60DECB92099C4 /* BMCHandshakeTests.swift in Sources */,
 				F4EBE5F968FA1604E9353E4C /* BMCLUTTests.swift in Sources */,
 				E3D8E12A25F6ECF760489ACC /* BMCMediaChecksumTests.swift in Sources */,
+				33FE62E906D7A52034EB4833 /* BMCMediaReceiverTests.swift in Sources */,
 				CD8D70DCCC1AAD193C563168 /* BMCMonitorTests.swift in Sources */,
 				84DC197459B65899410DAD0D /* BMCMovieCodecTests.swift in Sources */,
 				D8EB98142CAFAAB46A097304 /* BMCProtocolTests.swift in Sources */,
@@ -7611,6 +7618,7 @@
 				E20AA045E3E20EAD266ABDB7 /* BMCGuides.swift in Sources */,
 				E3B90A8BBC7CB47D08A46F6B /* BMCLUTCatalog.swift in Sources */,
 				627400B85F434F55875EFBFA /* BMCMediaChecksum.swift in Sources */,
+				4A631797AAA5D1D3D4F6FE46 /* BMCMediaReceiver.swift in Sources */,
 				0470F434D0E403682CF5B858 /* BMCMonitor.swift in Sources */,
 				459818701FEE0A761984BA75 /* BMCMovieCodec.swift in Sources */,
 				375531B039531FC567FD389B /* BMCRemoteAuthentication.swift in Sources */,

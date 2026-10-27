@@ -36,6 +36,7 @@ jobs:
       - name: Save generated project if branch has not moved
         if: ${{ success() && github.ref == 'refs/heads/bmc-integration' }}
         run: |
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
           git fetch origin bmc-integration
           if ! git diff --quiet HEAD FETCH_HEAD -- project.yml FilmCamera FilmCameraTests FilmCameraUITests; then
             echo 'Source changed during generation; a later run must regenerate the project.'

@@ -20,6 +20,10 @@ integration, generated Xcode project, test fixtures, workflows and provenance.
 built the iPhone target and passed all 62 simulator tests plus independent ZIP64
 validation. The tested generated project was committed as
 `615e75fd7e35bd9c5186831753da73341e30dc07`.
+[Main-branch validation](https://github.com/azerish25-ux/film-camera/actions/runs/40424128745)
+also passed after regenerating Android references. Its `ios-validation` artifact
+contains the merged application's builds and complete test evidence.
+
 Artifacts contain the simulator application, unsigned IPA, generated Xcode project,
 xcresult bundles, logs, summaries and exported screenshots. GitHub retains artifacts
 for 14 days; source and workflows remain committed for reproducible builds.

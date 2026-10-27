@@ -32,7 +32,7 @@ Core Image, or device capture validation from a simulator.
 - [x] Document exact logic, native adaptations and unsupported operations honestly.
 - [x] Review changes and run device build, simulator unit/UI tests and original film
   parity regression tests in GitHub Actions. Fix failures and record final run evidence.
-- [ ] Merge verified integration into the repository default branch.
+- [x] Merge verified integration into the repository default branch.
 
 All source work remains on D:. iOS execution occurs on GitHub Actions, not Windows.
 
@@ -46,3 +46,7 @@ streaming PCM. MotionClip supports .rawseq folders and sensor-time movie pacing.
 Tests exercise journal recovery, path containment, exact DNG identity, source
 timestamps, PCM trimming and the capture-folder UI. Physical capture rates and
 sensor behavior remain outside simulator verification.
+
+Merged in [PR #1](https://github.com/azerish25-ux/film-camera/pull/1).
+The [full main-branch workflow](https://github.com/azerish25-ux/film-camera/actions/runs/40424128745)
+regenerated Android references, built the iPhone target and passed all 62 simulator tests.

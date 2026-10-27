@@ -9,7 +9,10 @@ Succeeded: unsigned iPhone build, all **30 focused tests**, independent Python
 ZIP64 validation and all **32 original film regressions** (62 simulator tests,
 zero failures). The workflow saved its tested Xcode project in commit
 `615e75fd7e35bd9c5186831753da73341e30dc07` and uploaded the application/test artifacts.
-The automatic main-branch workflow will additionally regenerate Android references.
+[Main-branch confirmation](https://github.com/azerish25-ux/film-camera/actions/runs/40424128745)
+also succeeded at merged source `ebb60df75d54e9ac3350ae833b740b1b74137dec`:
+fresh Android references, unsigned iPhone build, the complete 62-test simulator
+suite and packaging. Subsequent documentation-only changes preserve that runtime.
 
 The focused suite covers recovered exposure/slider/focus/orientation/Gyroflow logic,
 all codec-6 modes and packed RAW, malformed containers, DNG development, saved jobs,

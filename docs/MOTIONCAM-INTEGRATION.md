@@ -134,3 +134,7 @@ unsigned iPhone build, 30 focused simulator tests, independent Python ZIP64 vali
 and 32 original film regressions passed with zero failures. The generated tested
 project is committed. Workspace/export simulator screenshots were visually inspected.
 See [validation evidence](VALIDATION.md) and [delivery inventory](DELIVERY.md).
+
+The integration is merged in [PR #1](https://github.com/azerish25-ux/film-camera/pull/1).
+[Full main-branch validation](https://github.com/azerish25-ux/film-camera/actions/runs/40424128745)
+also passed fresh Android reference generation, the iPhone build and all 62 tests.

@@ -1,5 +1,19 @@
 import AVFoundation
 
+enum BMCWhiteBalancePreset: String, CaseIterable, Identifiable {
+    case sunny, tungsten, fluorescent, shady, cloudy
+    var id: String { rawValue }
+    var value: BMCWhiteBalance {
+        switch self {
+        case .sunny: return BMCWhiteBalance(temperature: 5600, tint: 10)
+        case .tungsten: return BMCWhiteBalance(temperature: 3200, tint: 0)
+        case .fluorescent: return BMCWhiteBalance(temperature: 4000, tint: 15)
+        case .shady: return BMCWhiteBalance(temperature: 4500, tint: 15)
+        case .cloudy: return BMCWhiteBalance(temperature: 6500, tint: 10)
+        }
+    }
+}
+
 struct BMCWhiteBalance: Equatable {
     var temperature: Double
     var tint: Double

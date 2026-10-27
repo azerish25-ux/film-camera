@@ -8,6 +8,8 @@ final class CameraController: NSObject, ObservableObject, AVCaptureVideoDataOutp
     @Published var recording = false
     @Published var processing = false
     @Published var audioEnabled = false
+    @Published var bmcAudioReadings: [BMCAudioMeter.Reading] = []
+    @Published var bmcAudioUnavailable = false
     @Published var histogram: [Float] = []
     private var histogramEnabled = false
     @Published var rawRecording = false
@@ -27,6 +29,12 @@ final class CameraController: NSObject, ObservableObject, AVCaptureVideoDataOutp
     var motionOptions = MotionCaptureOptions()
     private var monitorOptions = BMCMonitorOptions()
     private var bmcFocusOptions = BMCFocusOptions()
+    private var meterEnabled = false
+    private var meterMode: BMCAudioMeter.Mode = .vu18
+    var bmcMeter: BMCAudioMeter?
+    var bmcMeterFormat = ""
+    var bmcMeterLastUpdate = 0.0
+    var bmcMeterUnavailableReported = false
     let preRoll = MotionPreRoll()
     let motionLogger = MotionLogger()
     var logging = false
@@ -93,6 +101,8 @@ final class CameraController: NSObject, ObservableObject, AVCaptureVideoDataOutp
     private func monitor() -> BMCMonitorOptions {lock.lock(); defer {lock.unlock()}; return monitorOptions}
     func updateBMCFocus(_ options: BMCFocusOptions) {lock.lock(); bmcFocusOptions = options; lock.unlock()}
     private func bmcFocus() -> BMCFocusOptions {lock.lock(); defer {lock.unlock()}; return bmcFocusOptions}
+    func updateBMCAudioMeter(enabled: Bool, mode: BMCAudioMeter.Mode) {lock.lock(); meterEnabled = enabled; meterMode = mode; lock.unlock()}
+    func bmcAudioMeterOptions() -> (Bool, BMCAudioMeter.Mode) {lock.lock(); defer {lock.unlock()}; return (meterEnabled,meterMode)}
     func setRawAudioWriter(_ writer:RawSequenceWriter?) {lock.lock(); rawAudioWriter = writer; lock.unlock()}
     func rawAudioWriterSnapshot() -> RawSequenceWriter? {lock.lock(); defer {lock.unlock()}; return rawAudioWriter}
     func options() -> MotionCaptureOptions {lock.lock(); defer {lock.unlock()}; return motionOptions}
@@ -132,6 +142,8 @@ final class CameraController: NSObject, ObservableObject, AVCaptureVideoDataOutp
         video.videoSettings = [kCVPixelBufferPixelFormatTypeKey as String:kCVPixelFormatType_32BGRA]
         video.setSampleBufferDelegate(self,queue:frames)
         if audio,session.canAddOutput(rawAudio) {session.addOutput(rawAudio); rawAudio.setSampleBufferDelegate(self,queue:frames); rawAudioAvailable = true}
+        let audioMeterUnavailable = audio && !rawAudioAvailable
+        DispatchQueue.main.async {self.bmcAudioUnavailable = audioMeterUnavailable}
         photo.isAppleProRAWEnabled = photo.isAppleProRAWSupported
         DispatchQueue.main.async {self.rawSupported = !self.photo.availableRawPhotoPixelFormatTypes.isEmpty}
         orient()
@@ -278,7 +290,7 @@ final class CameraController: NSObject, ObservableObject, AVCaptureVideoDataOutp
         }
     }
     func captureOutput(_ output: AVCaptureOutput, didOutput sampleBuffer: CMSampleBuffer, from connection: AVCaptureConnection) {
-        if output === rawAudio {handleRawAudio(sampleBuffer); return}
+        if output === rawAudio {handleBMCAudioMeter(sampleBuffer); handleRawAudio(sampleBuffer); return}
         let time = CMSampleBufferGetPresentationTimeStamp(sampleBuffer)
         statistics.append(time:time.seconds)
         if time.seconds-lastStatsTime >= 0.5 {

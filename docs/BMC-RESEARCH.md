@@ -17,6 +17,14 @@ and 123,886 method declarations across the three decoded DEX files. Of these,
 namespace. The JSONL ledger identifies each method and its smali file; it is an
 inventory, not proof of behavioral analysis. Namespace counts omit obfuscated
 application code and include generated code. Native functions are separate.
+The largest named-package method counts are camera 8,088, settings 4,214,
+cloud 4,087, remote 3,427, metadata editor 2,327, protobuf 2,322 and media
+1,672. These are declaration counts, not feature counts or completed ports.
+REA's APK artifact graph and obligation-ledger output are also saved on D:.
+For the supplied static graph the generated ledger reports unknown, partial
+coverage and zero automatically generated obligations; that result is not a
+claim that the APK has no remaining work. The separate smali inventory keeps
+unreviewed methods visible.
 
 ## Feature families found in resources
 
@@ -43,6 +51,16 @@ accessories. `SecondaryControlsData` adds exposure/focus modes and values,
 zoom, stabilization, false color, zebra, focus assist and multiple guides.
 These declarations are a discovery checklist, not confirmation that Swift
 implements each setting or that an iPhone supports the same hardware modes.
+The recorder's `VideoCodecFormat` enum names H.264, HEVC, AV1 and APV. Actual
+availability is device-dependent. The current iOS pipeline records a movie and
+then exports a graded movie; it does not yet expose or prove equivalent codec,
+profile, bitrate, bit-depth or color-space selection. Selecting an Apple codec
+with similar characteristics does not establish APV bitstream compatibility.
+
+The native CUBE parser recognizes per-channel `LUT_3D_INPUT_RANGE_R`, `_G`
+and `_B` directives as well as `DOMAIN_MIN` and `DOMAIN_MAX`. The current
+Swift parser rejects the former. Its normalization and interpolation must be
+traced and tested against actual APK output before claiming LUT import parity.
 
 For native analysis, the D: workspace includes dynamic-symbol inventories for
 all arm64 libraries, including cloud authentication/storage/chat/router,
@@ -56,12 +74,53 @@ The same process recovered 5 audio, 1 LUT parser, 49 remote-streaming and
 160 timecode-accessory JNI entry points; two accessory entries were unavailable.
 The results still need call-chain analysis and cannot be counted as a completed
 port simply because a decompiler produced C-like output.
+An additional Ghidra pass generated C-like output for 509 non-thunk functions
+in the cloud JNI library, with zero reported decompiler failures. This is a
+static decompilation count, not a guarantee that behavior is understood or
+that indirect calls, other libraries or external services are covered.
+The larger `libdavcloudclient.so` pass produced 22,236 function outputs; two
+initial timeouts produced output on a longer retry. The GCC exception-handler
+analyzer was disabled after it stalled; exception metadata and any affected
+control flow require separate review. Decompilation is not behavioral proof.
+Separate media-core passes produced 1,973 function outputs for
+`libdavstream.so` and 14,166 for `libdavstreamd.so`, with no reported
+decompiler failures. GCC exception analysis was disabled for those passes as
+well; call paths, exception handling and runtime behavior remain open.
 The remote-streaming JNI interface explicitly includes SDP offer/answer, ICE
 candidates, data-channel messages, video/audio buffers and stream lifecycle;
 its names indicate a WebRTC-style transport. Session signaling, protocol
 messages, authentication, negotiation and interoperation still need tracing.
 AVFoundation can supply camera and audio buffers but does not by itself provide
 the whole transport or establish interoperability with the Android app.
+The native wrapper also exposes a distinct `NativeSRTGstreamer` pipeline. Its
+transport configuration, latency, reconnect behavior and relationship to the
+live-stream UI still need method-level tracing.
+The decoded dependency provider registers Bonjour discovery for
+`_bmd-cam-control-android._tcp` and `_bmd-cam-control._tcp`, and the APK has
+WebSocket and TCP signaling components. These are discovery observations only;
+do not advertise or connect using guessed message formats or credentials.
+The v5 signaling code uses a 32-byte nonce from each peer and a 15-second
+authentication timeout. The recovered two-stage SHA-256 challenge calculation
+has a standalone CryptoKit implementation and a deterministic test vector;
+pairing, state transitions, secure nonce generation, transport, control messages
+and live interoperation are not implemented by that primitive alone.
+The decoded wire serializer uses a JSON envelope with `type` and `data`; its
+message types include hello request/response, connection request/response,
+bye, ICE candidate and SDP offer/answer. Participant fields include UUID,
+model, device and slate names, and major/minor protocol versions. The decoder
+accepts some fields that the shown encoder does not emit, so both sides and
+failure paths must be tested before implementing the state machine. An initial
+Swift JSON codec and tests are present locally; they are not a connection or an
+interoperability test.
+The client expects a hello response after its hello request, derives the
+challenge response, sends a connection request and transitions to authorized
+only after an authorized response. A Swift client handshake building block and
+ordered-message tests are present locally, without transport, timeout or
+hardware interoperability. The server's decompiled state checks have
+an asymmetry around connection requests and the initial password state; the
+same branch is present in smali. The surrounding runtime path and its security
+impact remain unverified. A port needs an explicit, tested handshake state
+machine rather than assuming the decompiler output proves end-to-end behavior.
 
 ## Initial monitoring port
 
@@ -108,6 +167,20 @@ movie export. GitHub Actions run 40432765227 passed a simulator round-trip test
 for reel, scene and take. This does not establish parity for the remaining
 metadata fields, timecode tracks, editing existing clips or physical devices.
 
+`TimeCode` exposes record-run, time-of-day and Tentacle sources. The APK's MOV
+timecode editor creates a `tmcd` track and, when adding a new track, writes a
+four-byte starting frame count calculated as `secondsOfDay * fps + startingFrame`.
+It uses a nanosecond timescale and integer fps in the shown method. This does
+not establish drop-frame or external-device synchronization behavior; those
+paths still require tracing and a round-trip timecode-track test.
+`BMCTimecode` implements the integer starting-frame calculation and big-endian
+sample bytes as a standalone building block. It does not yet write a track.
+Apple's AVAssetWriter supports a QuickTime timecode input, format description,
+sample and video-track association. The current exporter uses
+AVAssetExportSession and does not create such a track. A correct implementation
+needs an explicit writer path and reader-based verification rather than a
+display-only counter or a metadata string.
+
 ## Focus assist evidence
 
 `focus_assist_effect.glsl` applies a 5×5 Laplacian to the red camera channel,
@@ -130,3 +203,41 @@ device's legal range. The UI's ranges and the resulting camera color require
 physical-device comparison; matching Android's camera calibration is not yet
 established. The simulator can validate the bounds calculation but has no camera
 hardware for this test.
+The enum's static initializer in smali resolves the presets that JADX failed to
+reconstruct: Sunny 5600 K / tint 10, Tungsten 3200 / 0, Fluorescent 4000 / 15,
+Shady 4500 / 15 and Cloudy 6500 / 10. The Swift UI exposes these values; device
+gain conversion can still produce different results from Android calibration.
+
+## Exposure modes
+
+`AutoExposurePriority` distinguishes combined shutter/ISO, ISO-only and
+shutter-only automation. The current iOS camera UI exposes automatic exposure
+and a combined manual ISO/shutter setting; it does not yet reproduce these
+priority modes. Trace the Android control loop and determine how to implement
+the corresponding behavior with iOS capture-device exposure APIs and real
+hardware feedback before marking this capability complete.
+
+## Time lapse
+
+The APK's `TimelapseInterval` enumerates intervals of 2–10 source frames,
+1–10 seconds, 20/30/40/50 seconds and 1–10 minutes. The existing MotionCam
+implementation has a 0.25-second minimum, a 60-second UI maximum, and fixed
+24 fps playback. It therefore does not cover all recovered BMC intervals or
+necessarily match BMC's output timing. Trace frame selection and output rate
+before replacing that implementation; a simulator-only test cannot prove
+camera frame pacing or dropped-frame behavior.
+
+## Audio metering
+
+The APK exposes VU and PPM modes with -18 dBFS and -20 dBFS references.
+`AbstractC1048b` maps the meter's integer level and peak state to displayed
+values using a `20 * log10(32767)` reference. `C0728a` contains per-channel
+state, peak/hold timing and update constants; its processing lambda was not
+decompiled by the initial JADX pass. REA recovered a complete smali fallback
+for `C2.a.invoke`; its meter branch accumulates absolute 16-bit samples and
+per-window maxima, maintains a rolling sum and applies separate decay and
+peak-hold behavior. An initial Swift state translation, synthetic-sample tests
+and microphone callback integration are local. The callback currently handles
+only signed, interleaved 16-bit PCM and reports other formats as unavailable.
+The tests have not yet run in the simulator; Android sample-by-sample and real
+microphone comparisons are still needed.

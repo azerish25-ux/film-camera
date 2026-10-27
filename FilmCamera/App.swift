@@ -85,9 +85,11 @@ struct CameraScreen: View {
     @State private var slate = BMCSlate()
     @State private var guides = BMCGuideOptions()
     @State private var bmcFocus = BMCFocusOptions()
-    @State private var manualWhiteBalance = false
-    @State private var whiteBalanceTemperature = 5600.0
-    @State private var whiteBalanceTint = 0.0
+    @AppStorage("bmcAudioMeterEnabled") private var bmcAudioMeterEnabled = false
+    @State private var bmcAudioMeterMode: BMCAudioMeter.Mode = .vu18
+    @AppStorage("bmcManualWhiteBalance") private var manualWhiteBalance = false
+    @AppStorage("bmcWhiteBalanceTemperature") private var whiteBalanceTemperature = 5600.0
+    @AppStorage("bmcWhiteBalanceTint") private var whiteBalanceTint = 0.0
     @State private var rawWorkspace = false
     private var captureIsSequence: Bool {videoMode || motion.mode == .rawVideo || motion.mode == .timelapse || camera.rawRecording}
     var body: some View {
@@ -128,6 +130,8 @@ struct CameraScreen: View {
                 if let data = UserDefaults.standard.data(forKey:"bmcGuides"), let saved = try? JSONDecoder().decode(BMCGuideOptions.self,from:data) {guides = saved}
                 if let data = UserDefaults.standard.data(forKey:"bmcFocus"), let saved = try? JSONDecoder().decode(BMCFocusOptions.self,from:data) {bmcFocus = saved}
                 camera.updateBMCFocus(bmcFocus)
+                if let raw = UserDefaults.standard.string(forKey:"bmcAudioMeterMode"), let saved = BMCAudioMeter.Mode(rawValue:raw) {bmcAudioMeterMode = saved}
+                camera.updateBMCAudioMeter(enabled:bmcAudioMeterEnabled,mode:bmcAudioMeterMode)
                 camera.updateMonitor(monitor)
                 camera.onMedia = {_ in store.refresh()}
                 camera.onMovie = { url,settings,lut in
@@ -150,6 +154,8 @@ struct CameraScreen: View {
             .onChange(of:slate) {_,value in if let data = try? JSONEncoder().encode(value) {UserDefaults.standard.set(data,forKey:"bmcSlate")}}
             .onChange(of:guides) {_,value in if let data = try? JSONEncoder().encode(value) {UserDefaults.standard.set(data,forKey:"bmcGuides")}}
             .onChange(of:bmcFocus) {_,value in camera.updateBMCFocus(value); if let data = try? JSONEncoder().encode(value) {UserDefaults.standard.set(data,forKey:"bmcFocus")}}
+            .onChange(of:bmcAudioMeterEnabled) {_,value in camera.updateBMCAudioMeter(enabled:value,mode:bmcAudioMeterMode)}
+            .onChange(of:bmcAudioMeterMode) {_,value in camera.updateBMCAudioMeter(enabled:bmcAudioMeterEnabled,mode:value); UserDefaults.standard.set(value.rawValue,forKey:"bmcAudioMeterMode")}
             .onChange(of:store.state.settings) {_,value in camera.update(value,lut:store.selectedLUT)}
             .onChange(of:camera.ready) {_,ready in if ready {controls()} }
             .onChange(of:camera.availableLenses) {_,lenses in if !lenses.contains(lens) {lens = "Wide"} }
@@ -161,6 +167,15 @@ struct CameraScreen: View {
     private var cameraControls: some View {
         VStack(alignment:.leading) {
             Text("Hardware controls").font(.headline)
+            DisclosureGroup("Audio meter") {
+                Toggle("Show audio meter",isOn:$bmcAudioMeterEnabled)
+                if bmcAudioMeterEnabled {
+                    Picker("Meter type",selection:$bmcAudioMeterMode) {ForEach(BMCAudioMeter.Mode.allCases) {Text($0.title).tag($0)}}
+                    if !camera.audioEnabled {Text("Microphone access is unavailable.").font(.caption)}
+                    else if camera.bmcAudioUnavailable {Text("This microphone format is not supported by the meter.").font(.caption)}
+                    else {ForEach(Array(camera.bmcAudioReadings.enumerated()),id:\.offset) {index,reading in Text("Channel \(index + 1): \(reading.level, specifier:"%.1f") dB • peak \(reading.peak, specifier:"%.1f") dB").monospacedDigit().font(.caption)}}
+                }
+            }
             DisclosureGroup("Focus assist") {
                 Toggle("BMC focus assist",isOn:$bmcFocus.enabled)
                 if bmcFocus.enabled {
@@ -210,6 +225,11 @@ struct CameraScreen: View {
             Text("Exposure compensation"); Slider(value:$bias,in:-3...3,onEditingChanged:{_ in controls()})
             Toggle("Manual white balance",isOn:$manualWhiteBalance).onChange(of:manualWhiteBalance) {_,_ in controls()}
             if manualWhiteBalance {
+                Menu("White balance presets") {
+                    ForEach(BMCWhiteBalancePreset.allCases) { preset in
+                        Button(preset.rawValue.capitalized) {whiteBalanceTemperature = preset.value.temperature; whiteBalanceTint = preset.value.tint; controls()}
+                    }
+                }
                 Text("Temperature \(Int(whiteBalanceTemperature)) K")
                 Slider(value:$whiteBalanceTemperature,in:2500...10000,step:50,onEditingChanged:{_ in controls()}).accessibilityLabel("White balance temperature")
                 Text("Tint \(Int(whiteBalanceTint))")

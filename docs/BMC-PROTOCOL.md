@@ -30,13 +30,15 @@ stopping recording. Run 40450331698 verified both encoded fixtures with the
 generated Swift types. It is not connected to a session or camera UI, and does
 not yet handle responses, message ID allocation, timeouts, or peer behavior.
 
-`BMCWebSocketChannel` and `BMCSignalingAuthenticator` provide a text-channel
+`BMCWebSocketChannel` and `BMCSignalingAuthenticator` provide a WebSocket
 adapter and the client authorization exchange, with a 15-second timeout. A
-fake-peer Actions test (run 40451350634) passed ordered authorization, timeout,
-and unexpected-message cases; it substituted a fixed digest and did not test a
-real WebSocket peer. The existing CryptoKit challenge implementation is
-separate. Discovery, app UI, binary signaling frames, WebRTC, and camera control
-over the data channel are still unfinished.
+fake-peer Actions test (run 40452983221) passed ordered authorization, timeout,
+unexpected-message, unauthorized-send and authorized SDP/binary cases; it substituted a fixed
+digest and did not test a real WebSocket peer. The existing CryptoKit challenge
+implementation is separate. The channel exposes binary frames, and the session
+gates media and ICE/SDP sends on authorization, but no media-sync routing is
+connected. Discovery, app UI, WebRTC, and camera control over the data channel
+are still unfinished.
 
 With protoc and the matching SwiftProtobuf 1.29.0 plugin installed, regenerate
 the sources from the repository root with:

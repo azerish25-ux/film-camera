@@ -82,7 +82,7 @@ struct BMCParticipant: Codable, Equatable, Sendable {
         case major = "proto_major", minor = "proto_minor"
     }
 }
-struct BMCHello: Codable, Equatable {
+struct BMCHello: Codable, Equatable, Sendable {
     let nonce: String
     let info: BMCParticipant
     let controllerInfo: BMCParticipant?
@@ -97,7 +97,7 @@ struct BMCHello: Codable, Equatable {
     }
 }
 
-enum BMCSignalingMessage: Codable, Equatable {
+enum BMCSignalingMessage: Codable, Equatable, Sendable {
     case helloRequest(BMCHello), helloResponse(BMCHello)
     case connectionRequest(String), connectionResponse(String)
     case iceCandidate(String), sdpOffer(String), sdpAnswer(String), bye(String?)

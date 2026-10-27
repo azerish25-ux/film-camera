@@ -270,8 +270,9 @@ those conversions have not yet been ported or verified.
 Apple's AVAssetWriter supports a QuickTime timecode input, format description,
 sample and video-track association. The current exporter uses
 AVAssetExportSession and does not create such a track. An isolated AVAssetWriter
-remux path and reader-based round-trip test are now in progress locally. They
-are not connected to capture and have not yet passed simulator validation.
+remux path and reader-based round-trip test are present. Simulator run
+40452303237 passed the isolated round-trip after the reader skipped its initial
+zero-sample marker; the writer is not connected to capture.
 The Swift writer uses the recovered integer-fps nanosecond frame duration, but
 currently makes its single timecode sample span the movie as in Apple's writer
 guidance. The APK editor's shown sample table uses a one-frame duration; that

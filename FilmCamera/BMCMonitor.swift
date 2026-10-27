@@ -54,7 +54,7 @@ enum BMCMonitor {
         return rgba.withUnsafeBytes { Data($0) }
     }()
     private static let kernel = CIKernel(source: """
-    kernel vec4 bmcMonitor(sampler image, sampler luminance, float falseColor, float zebra, float threshold, float midGray, float shift) {
+    kernel vec4 bmcMonitor(sampler image, sampler luminance, float falseColor, float zebra, float threshold, float midGray, float shift, float minX, float maxY) {
         vec4 c = sample(image, samplerCoord(image));
         float l = sample(luminance, samplerTransform(luminance, destCoord())).r;
         vec3 result = c.rgb;
@@ -71,7 +71,7 @@ enum BMCMonitor {
             else result = vec3(1.0, 0.059, 1.0);
         }
         float middle = midGray < 0.5 ? 0.0 : (midGray < 1.5 ? step(0.39550781, l) * (1.0 - step(0.41894531, l)) : step(0.51171875, l) * (1.0 - step(0.53417969, l)));
-        float stripe = step(8.0, mod(destCoord().x + destCoord().y + shift, 16.0));
+        float stripe = step(8.0, mod(destCoord().x - minX + maxY - destCoord().y + shift, 16.0));
         if (zebra > 0.5 && stripe * max(step(threshold, l), middle) > 0.5) result = vec3(0.0);
         return vec4(result, c.a);
     }
@@ -80,7 +80,7 @@ enum BMCMonitor {
         guard options.falseColor || options.zebra else { return image }
         guard let luminanceCube, let kernel else { throw PortError.message("Exposure monitoring table is unavailable.") }
         let luminance = image.applyingFilter("CIColorCube", parameters: ["inputCubeDimension": 33, "inputCubeData": luminanceCube])
-        guard let result = kernel.apply(extent: image.extent, roiCallback: { _, rect in rect }, arguments: [image, luminance, options.falseColor ? 1.0 : 0.0, options.zebra ? 1.0 : 0.0, min(1, max(0, options.zebraThreshold)), options.midGray.code, zebraShift]) else {
+        guard let result = kernel.apply(extent: image.extent, roiCallback: { _, rect in rect }, arguments: [image, luminance, options.falseColor ? 1.0 : 0.0, options.zebra ? 1.0 : 0.0, min(1, max(0, options.zebraThreshold)), options.midGray.code, zebraShift, image.extent.minX, image.extent.maxY]) else {
             throw PortError.message("Exposure monitoring could not be compiled.")
         }
         return result

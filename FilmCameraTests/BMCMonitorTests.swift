@@ -50,4 +50,19 @@ final class BMCMonitorTests: XCTestCase {
         XCTAssertEqual(try pixel(shift: 0), 255)
         XCTAssertEqual(try pixel(shift: 8), 0)
     }
+
+    func testZebraStripePhaseUsesBitmapRowsForTranslatedExtent() throws {
+        let bounds = CGRect(x: 11, y: 23, width: 16, height: 16)
+        let input = CIImage(color: CIColor(red: 1, green: 1, blue: 1)).cropped(to: bounds)
+        var options = BMCMonitorOptions(); options.zebra = true
+        let output = try BMCMonitor.render(input, options: options)
+        let context = CIContext(options: [.workingColorSpace: NSNull(), .outputColorSpace: NSNull()])
+        var pixels = [UInt8](repeating: 0, count: 16 * 16 * 4)
+        context.render(output, toBitmap: &pixels, rowBytes: 16 * 4, bounds: bounds, format: .RGBA8, colorSpace: nil)
+        func pixel(_ x: Int, _ y: Int) -> UInt8 { pixels[(y * 16 + x) * 4] }
+        XCTAssertEqual(pixel(0, 0), 255)
+        XCTAssertEqual(pixel(7, 0), 0)
+        XCTAssertEqual(pixel(0, 7), 0)
+        XCTAssertEqual(pixel(8, 7), 255)
+    }
 }

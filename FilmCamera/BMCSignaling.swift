@@ -1,5 +1,38 @@
 import Foundation
 
+/// Framing used by the APK's TCP signaling socket. Network transport and
+/// message authentication are separate responsibilities.
+struct BMCTCPLineFramer {
+    private var pending = Data()
+    private var skipLineFeed = false
+
+    static func encode(_ message: String) -> Data { Data((message + "\n").utf8) }
+
+    mutating func receive(_ bytes: Data) -> [String] {
+        var lines: [String] = []
+        for byte in bytes {
+            if skipLineFeed {
+                skipLineFeed = false
+                if byte == 10 { continue }
+            }
+            if byte == 10 || byte == 13 {
+                lines.append(String(decoding: pending, as: UTF8.self))
+                pending.removeAll(keepingCapacity: true)
+                skipLineFeed = byte == 13
+            } else { pending.append(byte) }
+        }
+        return lines
+    }
+
+    mutating func finish() -> String? {
+        skipLineFeed = false
+        guard !pending.isEmpty else { return nil }
+        let line = String(decoding: pending, as: UTF8.self)
+        pending.removeAll(keepingCapacity: true)
+        return line
+    }
+}
+
 /// DNS-SD TXT data recovered from the legacy Android NSD resolve callback.
 /// This only parses advertisements; it does not browse or connect to a peer.
 struct BMCDiscoveryRecord: Equatable {

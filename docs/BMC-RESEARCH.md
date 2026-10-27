@@ -154,6 +154,15 @@ The decoded dependency provider registers Bonjour discovery for
 `_bmd-cam-control-android._tcp` and `_bmd-cam-control._tcp`, and the APK has
 WebSocket and TCP signaling components. These are discovery observations only;
 do not advertise or connect using guessed message formats or credentials.
+The Android NSD registration writes TXT keys `name`, `slate_name`,
+`model_name`, and `proto` (major and minor separated by a dot). Its legacy
+resolve callback interprets the service name as a UUID and requires the first
+three values, and it accepts optional controller information in `ctrl_uuid`,
+`ctrl_name`, `ctrl_slate_name`, `ctrl_model_name`, and `ctrl_proto`. The Swift
+record parser and portable tests cover these fields; no discovery transport or
+peer interoperability is established. The Android TCP signaling socket writes
+UTF-8 messages terminated by a newline and reads them with `readLine`; this
+does not establish framing for WebSocket or data-channel traffic.
 The v5 signaling code uses a 32-byte nonce from each peer and a 15-second
 authentication timeout. The recovered two-stage SHA-256 challenge calculation
 has a standalone CryptoKit implementation and a deterministic test vector;
@@ -279,6 +288,17 @@ algorithm. An initial Core Image implementation uses the recovered kernel and
 the rendered preview as its edge source; its simulator test and the APK's exact
 input range, camera-texture sampling, transform order and Android pixel output
 remain to be validated.
+
+The Android GLES reference run 40447045282 and its iOS simulator comparison
+executed recovered shaders on a synthetic 128×96 image. Focus matched in the
+tested interior; false color differed in 39 channel values at band boundaries
+and zebra differed in 4,584 channel values. Saved outputs showed Android's
+stripe phase follows bitmap-row `x + y + 1`, while the original Swift kernel
+followed `x - y` because Core Image destination coordinates are vertically
+reversed relative to bitmap rows. The Swift stripe calculation was changed to
+account for the image extent; that correction still needs another simulator
+comparison. Luminance-table interpolation and the false-color threshold
+differences remain open.
 
 ## Manual white balance
 

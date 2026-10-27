@@ -25,6 +25,7 @@ final class CameraController: NSObject, ObservableObject, AVCaptureVideoDataOutp
     var suggestedMergeCount = 12
     private var lastAnalysisTime = 0.0
     var motionOptions = MotionCaptureOptions()
+    private var monitorOptions = BMCMonitorOptions()
     let preRoll = MotionPreRoll()
     let motionLogger = MotionLogger()
     var logging = false
@@ -86,6 +87,8 @@ final class CameraController: NSObject, ObservableObject, AVCaptureVideoDataOutp
     }
     func update(_ settings: FilmSettings, lut: CubeLUT?) { lock.lock(); film = settings; self.lut = lut; lock.unlock() }
     func updateMotion(_ options: MotionCaptureOptions) {lock.lock(); motionOptions = options; lock.unlock()}
+    func updateMonitor(_ options: BMCMonitorOptions) {lock.lock(); monitorOptions = options; lock.unlock()}
+    private func monitor() -> BMCMonitorOptions {lock.lock(); defer {lock.unlock()}; return monitorOptions}
     func setRawAudioWriter(_ writer:RawSequenceWriter?) {lock.lock(); rawAudioWriter = writer; lock.unlock()}
     func rawAudioWriterSnapshot() -> RawSequenceWriter? {lock.lock(); defer {lock.unlock()}; return rawAudioWriter}
     func options() -> MotionCaptureOptions {lock.lock(); defer {lock.unlock()}; return motionOptions}
@@ -308,7 +311,8 @@ final class CameraController: NSObject, ObservableObject, AVCaptureVideoDataOutp
         let small = image.transformed(by:CGAffineTransform(scaleX:scale,y:scale))
         let bins = needsHistogram() ? FilmHistogram.values(image) : []
         let toneMapped = opts.gradedViewfinder ? try MotionViewfinder.render(small,shadows:state.0.motion.shadows,contrast:state.0.motion.contrast,saturation:state.0.motion.saturation) : small
-        let display = try MotionProcessing.aids(toneMapped,clipping:opts.clipping,peaking:opts.peaking,sensitivity:opts.sensitivity)
+        let aids = try MotionProcessing.aids(toneMapped,clipping:opts.clipping,peaking:opts.peaking,sensitivity:opts.sensitivity)
+        let display = try BMCMonitor.render(aids,options:monitor())
         let stats = timelapse.map {"\($0.count) frames • \($0.dropped) dropped"} ?? statsText
         if let cg = renderer.context.createCGImage(display,from:display.extent) { DispatchQueue.main.async { self.preview = UIImage(cgImage:cg); self.histogram = bins; if !self.rawRecording {self.captureStats = stats} } }
         } catch {if timelapseTarget != nil {finishTimelapse()}; report(error)}

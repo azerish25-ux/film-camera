@@ -84,7 +84,8 @@ analyzer was disabled after it stalled; exception metadata and any affected
 control flow require separate review. Decompilation is not behavioral proof.
 Separate media-core passes produced 1,973 function outputs for
 `libdavstream.so` and 14,166 for `libdavstreamd.so`, with no reported
-decompiler failures. GCC exception analysis was disabled for those passes as
+decompiler failures. A pass over `libnativeplayer.so` produced 6,218 outputs
+with no reported failures. GCC exception analysis was disabled for these passes as
 well; call paths, exception handling and runtime behavior remain open.
 The remote-streaming JNI interface explicitly includes SDP offer/answer, ICE
 candidates, data-channel messages, video/audio buffers and stream lifecycle;
@@ -174,12 +175,12 @@ It uses a nanosecond timescale and integer fps in the shown method. This does
 not establish drop-frame or external-device synchronization behavior; those
 paths still require tracing and a round-trip timecode-track test.
 `BMCTimecode` implements the integer starting-frame calculation and big-endian
-sample bytes as a standalone building block. It does not yet write a track.
+sample bytes as a standalone building block.
 Apple's AVAssetWriter supports a QuickTime timecode input, format description,
 sample and video-track association. The current exporter uses
-AVAssetExportSession and does not create such a track. A correct implementation
-needs an explicit writer path and reader-based verification rather than a
-display-only counter or a metadata string.
+AVAssetExportSession and does not create such a track. An isolated AVAssetWriter
+remux path and reader-based round-trip test are now in progress locally. They
+are not connected to capture and have not yet passed simulator validation.
 
 ## Focus assist evidence
 

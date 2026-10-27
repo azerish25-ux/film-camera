@@ -5,6 +5,9 @@ on:
   workflow_dispatch:
 permissions:
   contents: read
+concurrency:
+  group: bmc-validation-${{ github.ref }}
+  cancel-in-progress: true
 jobs:
   simulator:
     runs-on: macos-15

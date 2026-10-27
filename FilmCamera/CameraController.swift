@@ -101,7 +101,13 @@ final class CameraController: NSObject, ObservableObject, AVCaptureVideoDataOutp
     private func monitor() -> BMCMonitorOptions {lock.lock(); defer {lock.unlock()}; return monitorOptions}
     func updateBMCFocus(_ options: BMCFocusOptions) {lock.lock(); bmcFocusOptions = options; lock.unlock()}
     private func bmcFocus() -> BMCFocusOptions {lock.lock(); defer {lock.unlock()}; return bmcFocusOptions}
-    func updateBMCAudioMeter(enabled: Bool, mode: BMCAudioMeter.Mode) {lock.lock(); meterEnabled = enabled; meterMode = mode; lock.unlock()}
+    func updateBMCAudioMeter(enabled: Bool, mode: BMCAudioMeter.Mode) {
+        lock.lock(); let changed = meterEnabled != enabled || meterMode != mode; meterEnabled = enabled; meterMode = mode; lock.unlock()
+        if changed {
+            frames.async {self.bmcMeter = nil; self.bmcMeterFormat = ""; self.bmcMeterLastUpdate = 0}
+            DispatchQueue.main.async {self.bmcAudioReadings = []}
+        }
+    }
     func bmcAudioMeterOptions() -> (Bool, BMCAudioMeter.Mode) {lock.lock(); defer {lock.unlock()}; return (meterEnabled,meterMode)}
     func setRawAudioWriter(_ writer:RawSequenceWriter?) {lock.lock(); rawAudioWriter = writer; lock.unlock()}
     func rawAudioWriterSnapshot() -> RawSequenceWriter? {lock.lock(); defer {lock.unlock()}; return rawAudioWriter}

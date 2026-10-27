@@ -35,8 +35,9 @@ struct BMCAudioMeter {
     init(sampleRate: Int, channels: Int, mode: Mode) throws {
         guard (1...384_000).contains(sampleRate), (1...8).contains(channels) else { throw PortError.message("Invalid audio meter format.") }
         self.mode = mode
-        rollingCount = Int((165.0 / 10.0).rounded())
-        let interval = (mode == .vu18 || mode == .vu20) ? 165.0 / Double(rollingCount) : 10.0
+        let numberOfWindows = Int((165.0 / 10.0).rounded())
+        rollingCount = numberOfWindows
+        let interval = (mode == .vu18 || mode == .vu20) ? 165.0 / Double(numberOfWindows) : 10.0
         windowSize = max(1, Int((Double(sampleRate) * interval / 1000).rounded()))
         levelDecay = Int((2000 / (1700 / interval)).rounded())
         peakDecay = levelDecay

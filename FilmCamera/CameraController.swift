@@ -191,7 +191,7 @@ final class CameraController: NSObject, ObservableObject, AVCaptureVideoDataOutp
             else {self.report(PortError.message("This camera does not support the selected resolution."))}
         }
     }
-    func controls(zoom: Double, bias: Double, focus: Double?, iso: Double?, shutter: Double?, torch: Bool, fps: Double) {
+    func controls(zoom: Double, bias: Double, focus: Double?, iso: Double?, shutter: Double?, torch: Bool, fps: Double, whiteBalance: BMCWhiteBalance? = nil) {
         queue.async {
             guard let d = self.device else { return }
             do {
@@ -208,7 +208,8 @@ final class CameraController: NSObject, ObservableObject, AVCaptureVideoDataOutp
                 let opts = self.options()
                 for connection in [self.movie.connection(with:.video),self.video.connection(with:.video)].compactMap({$0}) where connection.isVideoStabilizationSupported {connection.preferredVideoStabilizationMode = opts.stabilization ? .standard : .off}
                 if opts.aeLock,d.isExposureModeSupported(.locked) {d.exposureMode = .locked}
-                if d.isWhiteBalanceModeSupported(opts.awbLock ? .locked : .continuousAutoWhiteBalance) {d.whiteBalanceMode = opts.awbLock ? .locked : .continuousAutoWhiteBalance}
+                if let whiteBalance { try whiteBalance.apply(to:d) }
+                else if d.isWhiteBalanceModeSupported(opts.awbLock ? .locked : .continuousAutoWhiteBalance) {d.whiteBalanceMode = opts.awbLock ? .locked : .continuousAutoWhiteBalance}
                 if opts.shutterAngle > 0,d.isExposureModeSupported(.custom) {
                     let seconds = Double(MotionExposure.shutterNanoseconds(fps:Int(fps),angle:opts.shutterAngle))/1e9
                     d.setExposureModeCustom(duration:CMTime(seconds:min(d.activeFormat.maxExposureDuration.seconds,max(d.activeFormat.minExposureDuration.seconds,seconds)),preferredTimescale:1_000_000_000),iso:AVCaptureDevice.currentISO)

@@ -56,6 +56,12 @@ The same process recovered 5 audio, 1 LUT parser, 49 remote-streaming and
 160 timecode-accessory JNI entry points; two accessory entries were unavailable.
 The results still need call-chain analysis and cannot be counted as a completed
 port simply because a decompiler produced C-like output.
+The remote-streaming JNI interface explicitly includes SDP offer/answer, ICE
+candidates, data-channel messages, video/audio buffers and stream lifecycle;
+its names indicate a WebRTC-style transport. Session signaling, protocol
+messages, authentication, negotiation and interoperation still need tracing.
+AVFoundation can supply camera and audio buffers but does not by itself provide
+the whole transport or establish interoperability with the Android app.
 
 ## Initial monitoring port
 
@@ -113,3 +119,14 @@ algorithm. An initial Core Image implementation uses the recovered kernel and
 the rendered preview as its edge source; its simulator test and the APK's exact
 input range, camera-texture sampling, transform order and Android pixel output
 remain to be validated.
+
+## Manual white balance
+
+The APK's `CameraManager$setManualWhiteBalance` clamps temperature and tint to
+the Android camera's reported ranges before applying them. The initial iOS
+control converts temperature and tint to device-specific gains with
+AVFoundation, verifies custom-gain support and clamps every channel to the
+device's legal range. The UI's ranges and the resulting camera color require
+physical-device comparison; matching Android's camera calibration is not yet
+established. The simulator can validate the bounds calculation but has no camera
+hardware for this test.

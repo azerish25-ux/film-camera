@@ -85,6 +85,9 @@ struct CameraScreen: View {
     @State private var slate = BMCSlate()
     @State private var guides = BMCGuideOptions()
     @State private var bmcFocus = BMCFocusOptions()
+    @State private var manualWhiteBalance = false
+    @State private var whiteBalanceTemperature = 5600.0
+    @State private var whiteBalanceTint = 0.0
     @State private var rawWorkspace = false
     private var captureIsSequence: Bool {videoMode || motion.mode == .rawVideo || motion.mode == .timelapse || camera.rawRecording}
     var body: some View {
@@ -205,6 +208,13 @@ struct CameraScreen: View {
             Text("Available ranges depend on the selected camera.").font(.caption).foregroundStyle(.secondary)
             Text("Zoom"); Slider(value:$zoom,in:1...8,onEditingChanged:{_ in controls()})
             Text("Exposure compensation"); Slider(value:$bias,in:-3...3,onEditingChanged:{_ in controls()})
+            Toggle("Manual white balance",isOn:$manualWhiteBalance).onChange(of:manualWhiteBalance) {_,_ in controls()}
+            if manualWhiteBalance {
+                Text("Temperature \(Int(whiteBalanceTemperature)) K")
+                Slider(value:$whiteBalanceTemperature,in:2500...10000,step:50,onEditingChanged:{_ in controls()}).accessibilityLabel("White balance temperature")
+                Text("Tint \(Int(whiteBalanceTint))")
+                Slider(value:$whiteBalanceTint,in:-150...150,step:1,onEditingChanged:{_ in controls()}).accessibilityLabel("White balance tint")
+            }
             Toggle("Manual focus",isOn:$manualFocus).onChange(of:manualFocus) {_,_ in controls()}
             if manualFocus {Slider(value:$focus,in:0...1,onEditingChanged:{_ in controls()}).accessibilityLabel("Focus")}
             Toggle("Manual exposure",isOn:$manualExposure).onChange(of:manualExposure) {_,_ in controls()}
@@ -216,7 +226,7 @@ struct CameraScreen: View {
             Picker("Frame rate",selection:$fps) {ForEach(camera.availableFrameRates,id:\.self) {Text("\(Int($0)) fps").tag($0)}}.onChange(of:fps) {_,_ in controls()}
         }.disabled(camera.recording)
     }
-    private func controls() {camera.controls(zoom:zoom,bias:bias,focus:manualFocus ? focus : nil,iso:manualExposure ? iso : nil,shutter:manualExposure ? shutter : nil,torch:torch,fps:fps)}
+    private func controls() {camera.controls(zoom:zoom,bias:bias,focus:manualFocus ? focus : nil,iso:manualExposure ? iso : nil,shutter:manualExposure ? shutter : nil,torch:torch,fps:fps,whiteBalance:manualWhiteBalance ? BMCWhiteBalance(temperature:whiteBalanceTemperature,tint:whiteBalanceTint) : nil)}
     private func capture() {
         if camera.rawRecording {camera.stopRawSequence()}
         else if motion.mode == .rawVideo {camera.toggleRawSequence(to:store.destination("rawseq"))}

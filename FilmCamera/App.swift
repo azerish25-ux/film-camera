@@ -83,6 +83,7 @@ struct CameraScreen: View {
     @State private var motion = MotionCaptureOptions()
     @State private var monitor = BMCMonitorOptions()
     @State private var slate = BMCSlate()
+    @State private var guides = BMCGuideOptions()
     @State private var rawWorkspace = false
     private var captureIsSequence: Bool {videoMode || motion.mode == .rawVideo || motion.mode == .timelapse || camera.rawRecording}
     var body: some View {
@@ -91,7 +92,7 @@ struct CameraScreen: View {
                 VStack(spacing:16) {
                     ZStack {
                         Color.black
-                        if let image = camera.preview { Image(uiImage:image).resizable().scaledToFit().overlay {CameraFocusOverlay(size:image.size) {point in manualFocus = false; camera.focus(at:point)}} }
+                        if let image = camera.preview { Image(uiImage:image).resizable().scaledToFit().overlay {BMCGuideOverlay(imageSize:image.size,options:guides)}.overlay {CameraFocusOverlay(size:image.size) {point in manualFocus = false; camera.focus(at:point)}} }
                         else { VStack(spacing:12) {Image(systemName:"camera.aperture").font(.system(size:48)); Text(camera.message ?? "Opening camera…").multilineTextAlignment(.center); Button("Open Settings") { if let url = URL(string:UIApplication.openSettingsURLString) {UIApplication.shared.open(url)} } }.padding() }
                         if camera.recording { VStack {Label("REC",systemImage:"record.circle.fill").foregroundStyle(.red).padding(); Spacer()} }
                     }.frame(height:360).clipShape(RoundedRectangle(cornerRadius:8))
@@ -120,6 +121,7 @@ struct CameraScreen: View {
                 camera.updateMotion(motion)
                 if let data = UserDefaults.standard.data(forKey:"bmcMonitorOptions"), let saved = try? JSONDecoder().decode(BMCMonitorOptions.self,from:data) {monitor = saved}
                 if let data = UserDefaults.standard.data(forKey:"bmcSlate"), let saved = try? JSONDecoder().decode(BMCSlate.self,from:data) {slate = saved}
+                if let data = UserDefaults.standard.data(forKey:"bmcGuides"), let saved = try? JSONDecoder().decode(BMCGuideOptions.self,from:data) {guides = saved}
                 camera.updateMonitor(monitor)
                 camera.onMedia = {_ in store.refresh()}
                 camera.onMovie = { url,settings,lut in
@@ -140,6 +142,7 @@ struct CameraScreen: View {
             .onChange(of:motion) {_,value in camera.updateMotion(value); controls(); if let data = try? JSONEncoder().encode(value) {UserDefaults.standard.set(data,forKey:"motionCaptureOptions")}}
             .onChange(of:monitor) {_,value in camera.updateMonitor(value); if let data = try? JSONEncoder().encode(value) {UserDefaults.standard.set(data,forKey:"bmcMonitorOptions")}}
             .onChange(of:slate) {_,value in if let data = try? JSONEncoder().encode(value) {UserDefaults.standard.set(data,forKey:"bmcSlate")}}
+            .onChange(of:guides) {_,value in if let data = try? JSONEncoder().encode(value) {UserDefaults.standard.set(data,forKey:"bmcGuides")}}
             .onChange(of:store.state.settings) {_,value in camera.update(value,lut:store.selectedLUT)}
             .onChange(of:camera.ready) {_,ready in if ready {controls()} }
             .onChange(of:camera.availableLenses) {_,lenses in if !lenses.contains(lens) {lens = "Wide"} }
@@ -151,6 +154,15 @@ struct CameraScreen: View {
     private var cameraControls: some View {
         VStack(alignment:.leading) {
             Text("Hardware controls").font(.headline)
+            DisclosureGroup("Framing guides") {
+                Toggle("Frame guide",isOn:$guides.framing)
+                if guides.framing {Picker("Aspect ratio",selection:$guides.ratio) {ForEach(BMCGuideRatio.allCases) {Text($0.rawValue).tag($0)}}}
+                Toggle("Thirds",isOn:$guides.thirds)
+                Toggle("Crosshairs",isOn:$guides.crosshairs)
+                Toggle("Center dot",isOn:$guides.centerDot)
+                Text("Opacity \(Int(guides.opacity * 100))%")
+                Slider(value:$guides.opacity,in:0.25...1,step:0.25).accessibilityLabel("Guide opacity")
+            }
             DisclosureGroup("Clip slate") {
                 TextField("Project",text:$slate.project)
                 TextField("Reel",text:$slate.reel)

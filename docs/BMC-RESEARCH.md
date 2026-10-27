@@ -39,6 +39,12 @@ spaces and interaction with other aids need reference validation. Neither
 overlay is applied to recorded media. The initial Swift implementation and
 simulator tests are a starting point, not proof of visual parity.
 
+The APK's `EftGuideState` lists eleven frame ratios from 2.76:1 through
+9:16. Its secondary settings also list thirds, crosshairs, center dot, level,
+safe area and separate colors and opacity. The initial Swift preview includes
+the ratios, thirds, crosshairs and dot. Its geometry and appearance still need
+comparison against an Android device; level, safe area and color remain open.
+
 ## Open work
 
 Trace each family above to its settings, state transitions, media pipeline and
@@ -57,3 +63,5 @@ properties, and Apple ProApps keys for reel, scene, shot and log notes.
 separate MOV timecode editor. A future AVFoundation port must preserve existing
 metadata and timecode, handle non-MOV inputs deliberately, and verify exported
 files by reading their actual metadata; matching labels alone is insufficient.
+The initial Swift slate writes a subset of those keys using AVFoundation during
+movie export; its round-trip simulator test is pending.

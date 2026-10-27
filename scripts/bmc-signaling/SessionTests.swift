@@ -5,16 +5,20 @@ import Foundation
 private actor FakeSignalingChannel: BMCSignalingChannel {
     var responses: [String]
     var sent: [String] = []
+    var sentBinary: [Data] = []
     var closed = false
     init(responses: [String]) { self.responses = responses }
     func send(text: String) async throws { sent.append(text) }
+    func send(binary: Data) async throws { sentBinary.append(binary) }
     func receiveText() async throws -> String {
         if !responses.isEmpty { return responses.removeFirst() }
         try await Task.sleep(nanoseconds: 60_000_000_000)
         throw PortError.message("Fake channel did not receive a response.")
     }
+    func receiveFrame() async throws -> BMCWebSocketFrame { .text(try await receiveText()) }
     func close() async { closed = true }
     func snapshot() -> ([String], Bool) { (sent, closed) }
+    func binarySnapshot() -> [Data] { sentBinary }
 }
 
 final class BMCSignalingSessionTests: XCTestCase {
@@ -52,6 +56,22 @@ final class BMCSignalingSessionTests: XCTestCase {
         let (sent, closed) = await channel.snapshot()
         XCTAssertTrue(closed)
         XCTAssertEqual(sent.count, 1)
+    }
+
+    func testBinaryMessagesRequireAuthorization() async throws {
+        let nonce = (0..<64).map { String(format: "%02x", $0) }.joined()
+        let hello = #"{"type":"hello_response","data":{"nonce":"\#(nonce)","info":{"uuid":"00000000-0000-0000-0000-000000000001","model_name":"phone","device_name":"Camera","slate_name":"A","proto_major":5,"proto_minor":0},"status":"ready"}}"#
+        let channel = FakeSignalingChannel(responses: [hello, #"{"type":"conn_response","data":{"status":"authorized"}}"#])
+        let session = BMCRemoteSignalingSession(channel: channel)
+        do {
+            try await session.sendBinary(Data([1, 2, 3]))
+            XCTFail("Expected authorization to be required")
+        } catch { }
+        try await session.authorize(participant: participant, password: "test", nonce: Data(repeating: 1, count: 32))
+        try await session.sendBinary(Data([1, 2, 3]))
+        let sent = await channel.binarySnapshot()
+        XCTAssertEqual(sent, [Data([1, 2, 3])])
+        await session.close()
     }
 }
 

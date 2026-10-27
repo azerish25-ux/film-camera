@@ -6,7 +6,9 @@ import FoundationNetworking
 /// Text frames for the APK's app-camera WebSocket signaling handshake.
 protocol BMCSignalingChannel: Sendable {
     func send(text: String) async throws
+    func send(binary: Data) async throws
     func receiveText() async throws -> String
+    func receiveFrame() async throws -> BMCWebSocketFrame
     func close() async
 }
 
@@ -87,6 +89,51 @@ enum BMCSignalingAuthenticator {
                 throw error
             }
         }
+    }
+}
+
+/// Owns authorization state for post-pairing signaling and media-sync frames.
+/// Camera control still requires its separate WebRTC data channel.
+actor BMCRemoteSignalingSession {
+    private enum State { case idle, authorizing, authorized, closed }
+    private let channel: any BMCSignalingChannel
+    private var state: State = .idle
+    private var sending = false
+    private var receiving = false
+
+    init(channel: any BMCSignalingChannel) { self.channel = channel }
+
+    func authorize(participant: BMCParticipant, password: String, nonce: Data, timeoutNanoseconds: UInt64 = 15_000_000_000) async throws {
+        guard state == .idle else { throw PortError.message("Remote session is not ready to pair.") }
+        state = .authorizing
+        do {
+            try await BMCSignalingAuthenticator.authenticate(channel: channel, participant: participant, password: password, nonce: nonce, timeoutNanoseconds: timeoutNanoseconds)
+            guard state == .authorizing else { throw PortError.message("Remote session was closed during pairing.") }
+            state = .authorized
+        } catch {
+            state = .closed
+            await channel.close()
+            throw error
+        }
+    }
+
+    func sendBinary(_ data: Data) async throws {
+        guard state == .authorized, !sending else { throw PortError.message("Remote session cannot send media data.") }
+        sending = true
+        defer { sending = false }
+        try await channel.send(binary: data)
+    }
+
+    func receiveFrame() async throws -> BMCWebSocketFrame {
+        guard state == .authorized, !receiving else { throw PortError.message("Remote session cannot receive data.") }
+        receiving = true
+        defer { receiving = false }
+        return try await channel.receiveFrame()
+    }
+
+    func close() async {
+        state = .closed
+        await channel.close()
     }
 }
 

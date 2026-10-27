@@ -102,138 +102,115 @@ struct CameraScreen: View {
     @State private var rawWorkspace = false
     private var captureIsSequence: Bool {videoMode || motion.mode == .rawVideo || motion.mode == .timelapse || camera.rawRecording}
     var body: some View {
-        NavigationStack {
-            ScrollView {
-                VStack(spacing:16) {
-                    ZStack {
-                        Color.black
-                        if let image = camera.preview { Image(uiImage:image).resizable().scaledToFit().overlay {BMCGuideOverlay(imageSize:image.size,options:guides)}.overlay {CameraFocusOverlay(size:image.size) {point in manualFocus = false; camera.focus(at:point)}} }
-                        else { VStack(spacing:12) {Image(systemName:"camera.aperture").font(.system(size:48)); Text(camera.message ?? "Opening camera…").multilineTextAlignment(.center); Button("Open Settings") { if let url = URL(string:UIApplication.openSettingsURLString) {UIApplication.shared.open(url)} } }.padding() }
-                        if camera.recording { VStack {Label("REC",systemImage:"record.circle.fill").foregroundStyle(.red).padding(); Spacer()} }
-                    }.frame(height:360).clipShape(RoundedRectangle(cornerRadius:8))
-                    Picker("Capture mode",selection:$videoMode) {Text("Photo").tag(false); Text("Video").tag(true)}.pickerStyle(.segmented).disabled(camera.recording || exporter.busy)
-                    DisclosureGroup("MotionCam capture") {MotionCaptureControls(options:$motion,rawSupported:camera.rawSupported)}.disabled(camera.recording || camera.processing)
-                    Button("RAW workspace") {rawWorkspace = true}.accessibilityIdentifier("rawWorkspace").disabled(camera.recording || camera.processing)
-                    if !camera.captureStats.isEmpty {Text(camera.captureStats).monospacedDigit()}
-                    if motion.autoNight || motion.mode == .night || motion.mode == .zsl {
-                        Text("Scene EV \(camera.sceneEV,specifier:"%.1f") • shadows ×\(camera.sceneShadows,specifier:"%.1f")").font(.caption)
-                        Button("Use scene development estimate") {store.state.settings.motion.enabled = true; store.state.settings.motion.shadows = camera.sceneShadows; store.state.settings.motion.exposure = camera.sceneExposure; store.persist()}
-                    }
-                    HStack(spacing:44) {
-                        Button {camera.flip(); controls()} label: {Image(systemName:"arrow.triangle.2.circlepath.camera").font(.title2)}.accessibilityLabel("Switch camera").disabled(camera.recording)
-                        Button(action:capture) {Image(systemName:camera.recording ? "stop.circle.fill" : captureIsSequence ? "record.circle" : "circle.inset.filled").font(.system(size:66)).foregroundStyle(captureIsSequence ? .red : .white)}.accessibilityLabel(camera.recording ? "Stop recording" : motion.mode == .rawVideo ? "Record RAW sequence" : captureIsSequence ? "Record video" : "Take photo").disabled(!camera.ready || exporter.busy || camera.processing)
-                        Button {tools.toggle()} label: {Image(systemName:"slider.horizontal.3").font(.title2)}.accessibilityLabel("Camera controls")
-                    }
+        NavigationStack { cameraObserved }
+    }
+    private var cameraObserved: some View {
+        cameraStored
+        .onChange(of:store.state.settings) {_,value in camera.update(value,lut:store.selectedLUT)}
+        .onChange(of:camera.ready) {_,ready in if ready {controls()} }
+        .onChange(of:camera.availableLenses) {_,lenses in if !lenses.contains(lens) {lens = "Wide"} }
+        .onChange(of:camera.availableFrameRates) {_,rates in if !rates.contains(fps),let first = rates.first {fps = first; controls()} }
+        .onChange(of:camera.availableMovieCodecs) {_,codecs in if !codecs.contains(where:{$0.rawValue == movieCodec}), let first = codecs.first {movieCodec = first.rawValue; camera.selectMovieCodec(first)} }
+        .onChange(of:movieCodec) {_,value in camera.selectMovieCodec(BMCMovieCodec(rawValue:value) ?? .h264)}
+        .onChange(of:displayLUT) {_,value in camera.updatePreviewLUT(enabled:value)}
+        .onChange(of:recordLUT) {_,value in camera.updateRecordLUT(enabled:value)}
+        .onChange(of:scenePhase) {_,phase in if phase == .active {camera.start()} else {camera.stop()} }
+        .onChange(of:camera.message) {_,value in if camera.ready {store.error = value} }
+    }
+    private var cameraStored: some View {
+        cameraContent
+        .onAppear(perform: configureCamera)
+        .onDisappear {camera.stop()}
+        .sheet(isPresented:$rawWorkspace) {MotionWorkspaceScreen().environmentObject(store)}
+        .onChange(of:motion) {_,value in camera.updateMotion(value); controls(); if let data = try? JSONEncoder().encode(value) {UserDefaults.standard.set(data,forKey:"motionCaptureOptions")}}
+        .onChange(of:monitor) {_,value in camera.updateMonitor(value); if let data = try? JSONEncoder().encode(value) {UserDefaults.standard.set(data,forKey:"bmcMonitorOptions")}}
+        .onChange(of:slate) {_,value in if let data = try? JSONEncoder().encode(value) {UserDefaults.standard.set(data,forKey:"bmcSlate")}}
+        .onChange(of:guides) {_,value in if let data = try? JSONEncoder().encode(value) {UserDefaults.standard.set(data,forKey:"bmcGuides")}}
+        .onChange(of:bmcFocus) {_,value in camera.updateBMCFocus(value); if let data = try? JSONEncoder().encode(value) {UserDefaults.standard.set(data,forKey:"bmcFocus")}}
+        .onChange(of:bmcAudioMeterEnabled) {_,value in camera.updateBMCAudioMeter(enabled:value,mode:bmcAudioMeterMode)}
+        .onChange(of:bmcAudioMeterMode) {_,value in camera.updateBMCAudioMeter(enabled:bmcAudioMeterEnabled,mode:value); UserDefaults.standard.set(value.rawValue,forKey:"bmcAudioMeterMode")}
+    }
+    private var cameraContent: some View {
+        ScrollView {
+            VStack(spacing:16) {
+                ZStack {
+                    Color.black
+                    if let image = camera.preview { Image(uiImage:image).resizable().scaledToFit().overlay {BMCGuideOverlay(imageSize:image.size,options:guides)}.overlay {CameraFocusOverlay(size:image.size) {point in manualFocus = false; camera.focus(at:point)}} }
+                    else { VStack(spacing:12) {Image(systemName:"camera.aperture").font(.system(size:48)); Text(camera.message ?? "Opening camera…").multilineTextAlignment(.center); Button("Open Settings") { if let url = URL(string:UIApplication.openSettingsURLString) {UIApplication.shared.open(url)} } }.padding() }
+                    if camera.recording { VStack {Label("REC",systemImage:"record.circle.fill").foregroundStyle(.red).padding(); Spacer()} }
+                }.frame(height:360).clipShape(RoundedRectangle(cornerRadius:8))
+                Picker("Capture mode",selection:$videoMode) {Text("Photo").tag(false); Text("Video").tag(true)}.pickerStyle(.segmented).disabled(camera.recording || exporter.busy)
+                DisclosureGroup("MotionCam capture") {MotionCaptureControls(options:$motion,rawSupported:camera.rawSupported)}.disabled(camera.recording || camera.processing)
+                Button("RAW workspace") {rawWorkspace = true}.accessibilityIdentifier("rawWorkspace").disabled(camera.recording || camera.processing)
+                if !camera.captureStats.isEmpty {Text(camera.captureStats).monospacedDigit()}
+                if motion.autoNight || motion.mode == .night || motion.mode == .zsl {
+                    Text("Scene EV \(camera.sceneEV,specifier:"%.1f") • shadows ×\(camera.sceneShadows,specifier:"%.1f")").font(.caption)
+                    Button("Use scene development estimate") {store.state.settings.motion.enabled = true; store.state.settings.motion.shadows = camera.sceneShadows; store.state.settings.motion.exposure = camera.sceneExposure; store.persist()}
+                }
+                HStack(spacing:44) {
+                    Button {camera.flip(); controls()} label: {Image(systemName:"arrow.triangle.2.circlepath.camera").font(.title2)}.accessibilityLabel("Switch camera").disabled(camera.recording)
+                    Button(action:capture) {Image(systemName:camera.recording ? "stop.circle.fill" : captureIsSequence ? "record.circle" : "circle.inset.filled").font(.system(size:66)).foregroundStyle(captureIsSequence ? .red : .white)}.accessibilityLabel(camera.recording ? "Stop recording" : motion.mode == .rawVideo ? "Record RAW sequence" : captureIsSequence ? "Record video" : "Take photo").disabled(!camera.ready || exporter.busy || camera.processing)
+                    Button {tools.toggle()} label: {Image(systemName:"slider.horizontal.3").font(.title2)}.accessibilityLabel("Camera controls")
+                }
+                Group {
                     if camera.processing {ProgressView("Developing photo")}
                     if exporter.busy {ProgressView("Processing film",value:exporter.progress); Button("Cancel export") {exporter.cancel()}}
                     if tools {cameraControls}
                     DisclosureGroup("Film adjustments") {AdjustmentsView().padding(.top)}.disabled(camera.recording)
-                }.padding()
-            }.navigationTitle("SUPER 16").navigationBarTitleDisplayMode(.inline)
-            .onAppear {
-                camera.update(store.state.settings,lut:store.selectedLUT)
-                if let data = UserDefaults.standard.data(forKey:"motionCaptureOptions"),let saved = try? JSONDecoder().decode(MotionCaptureOptions.self,from:data) {motion = saved}
-                camera.updateMotion(motion)
-                if let data = UserDefaults.standard.data(forKey:"bmcMonitorOptions"), let saved = try? JSONDecoder().decode(BMCMonitorOptions.self,from:data) {monitor = saved}
-                if let data = UserDefaults.standard.data(forKey:"bmcSlate"), let saved = try? JSONDecoder().decode(BMCSlate.self,from:data) {slate = saved}
-                if let data = UserDefaults.standard.data(forKey:"bmcGuides"), let saved = try? JSONDecoder().decode(BMCGuideOptions.self,from:data) {guides = saved}
-                if let data = UserDefaults.standard.data(forKey:"bmcFocus"), let saved = try? JSONDecoder().decode(BMCFocusOptions.self,from:data) {bmcFocus = saved}
-                camera.updateBMCFocus(bmcFocus)
-                if let raw = UserDefaults.standard.string(forKey:"bmcAudioMeterMode"), let saved = BMCAudioMeter.Mode(rawValue:raw) {bmcAudioMeterMode = saved}
-                camera.updateBMCAudioMeter(enabled:bmcAudioMeterEnabled,mode:bmcAudioMeterMode)
-                camera.updatePreviewLUT(enabled:displayLUT)
-                camera.updateRecordLUT(enabled:recordLUT)
-                camera.selectMovieCodec(BMCMovieCodec(rawValue:movieCodec) ?? .h264)
-                camera.updateMonitor(monitor)
-                camera.onMedia = {_ in store.refresh()}
-                camera.onMovie = { url,settings,lut in
-                    Task { @MainActor in
-                        defer {try? FileManager.default.removeItem(at:url)}
-                        do {
-                            let destination = store.destination("mov")
-                            let codec = BMCMovieCodec(rawValue:movieCodec) ?? .h264
-                            try await exporter.exportVideo(source:url,destination:destination,settings:settings,lut:recordLUT ? lut : nil,slate:slate,resolution:codec.exportPreset(fourK:fourK))
-                            let sidecar = url.deletingPathExtension().appendingPathExtension("gcsv")
-                            if FileManager.default.fileExists(atPath:sidecar.path) {try FileManager.default.moveItem(at:sidecar,to:destination.deletingPathExtension().appendingPathExtension("gcsv"))}
-                            store.refresh()
-                        } catch {store.error = error.localizedDescription}
-                    }
                 }
-                camera.start()
-            }.onDisappear {camera.stop()}
-            .sheet(isPresented:$rawWorkspace) {MotionWorkspaceScreen().environmentObject(store)}
-            .onChange(of:motion) {_,value in camera.updateMotion(value); controls(); if let data = try? JSONEncoder().encode(value) {UserDefaults.standard.set(data,forKey:"motionCaptureOptions")}}
-            .onChange(of:monitor) {_,value in camera.updateMonitor(value); if let data = try? JSONEncoder().encode(value) {UserDefaults.standard.set(data,forKey:"bmcMonitorOptions")}}
-            .onChange(of:slate) {_,value in if let data = try? JSONEncoder().encode(value) {UserDefaults.standard.set(data,forKey:"bmcSlate")}}
-            .onChange(of:guides) {_,value in if let data = try? JSONEncoder().encode(value) {UserDefaults.standard.set(data,forKey:"bmcGuides")}}
-            .onChange(of:bmcFocus) {_,value in camera.updateBMCFocus(value); if let data = try? JSONEncoder().encode(value) {UserDefaults.standard.set(data,forKey:"bmcFocus")}}
-            .onChange(of:bmcAudioMeterEnabled) {_,value in camera.updateBMCAudioMeter(enabled:value,mode:bmcAudioMeterMode)}
-            .onChange(of:bmcAudioMeterMode) {_,value in camera.updateBMCAudioMeter(enabled:bmcAudioMeterEnabled,mode:value); UserDefaults.standard.set(value.rawValue,forKey:"bmcAudioMeterMode")}
-            .onChange(of:store.state.settings) {_,value in camera.update(value,lut:store.selectedLUT)}
-            .onChange(of:camera.ready) {_,ready in if ready {controls()} }
-            .onChange(of:camera.availableLenses) {_,lenses in if !lenses.contains(lens) {lens = "Wide"} }
-            .onChange(of:camera.availableFrameRates) {_,rates in if !rates.contains(fps),let first = rates.first {fps = first; controls()} }
-            .onChange(of:camera.availableMovieCodecs) {_,codecs in if !codecs.contains(where:{$0.rawValue == movieCodec}), let first = codecs.first {movieCodec = first.rawValue; camera.selectMovieCodec(first)} }
-            .onChange(of:movieCodec) {_,value in camera.selectMovieCodec(BMCMovieCodec(rawValue:value) ?? .h264)}
-            .onChange(of:displayLUT) {_,value in camera.updatePreviewLUT(enabled:value)}
-            .onChange(of:recordLUT) {_,value in camera.updateRecordLUT(enabled:value)}
-            .onChange(of:scenePhase) {_,phase in if phase == .active {camera.start()} else {camera.stop()} }
-            .onChange(of:camera.message) {_,value in if camera.ready {store.error = value} }
+            }.padding()
+        }.navigationTitle("SUPER 16").navigationBarTitleDisplayMode(.inline)
+    }
+    private func configureCamera() {
+        camera.update(store.state.settings,lut:store.selectedLUT)
+        if let data = UserDefaults.standard.data(forKey:"motionCaptureOptions"),let saved = try? JSONDecoder().decode(MotionCaptureOptions.self,from:data) {motion = saved}
+        camera.updateMotion(motion)
+        if let data = UserDefaults.standard.data(forKey:"bmcMonitorOptions"), let saved = try? JSONDecoder().decode(BMCMonitorOptions.self,from:data) {monitor = saved}
+        if let data = UserDefaults.standard.data(forKey:"bmcSlate"), let saved = try? JSONDecoder().decode(BMCSlate.self,from:data) {slate = saved}
+        if let data = UserDefaults.standard.data(forKey:"bmcGuides"), let saved = try? JSONDecoder().decode(BMCGuideOptions.self,from:data) {guides = saved}
+        if let data = UserDefaults.standard.data(forKey:"bmcFocus"), let saved = try? JSONDecoder().decode(BMCFocusOptions.self,from:data) {bmcFocus = saved}
+        camera.updateBMCFocus(bmcFocus)
+        if let raw = UserDefaults.standard.string(forKey:"bmcAudioMeterMode"), let saved = BMCAudioMeter.Mode(rawValue:raw) {bmcAudioMeterMode = saved}
+        camera.updateBMCAudioMeter(enabled:bmcAudioMeterEnabled,mode:bmcAudioMeterMode)
+        camera.updatePreviewLUT(enabled:displayLUT)
+        camera.updateRecordLUT(enabled:recordLUT)
+        camera.selectMovieCodec(BMCMovieCodec(rawValue:movieCodec) ?? .h264)
+        camera.updateMonitor(monitor)
+        camera.onMedia = {_ in store.refresh()}
+        camera.onMovie = { url,settings,lut in
+            Task { @MainActor in
+                defer {try? FileManager.default.removeItem(at:url)}
+                do {
+                    let destination = store.destination("mov")
+                    let codec = BMCMovieCodec(rawValue:movieCodec) ?? .h264
+                    try await exporter.exportVideo(source:url,destination:destination,settings:settings,lut:recordLUT ? lut : nil,slate:slate,resolution:codec.exportPreset(fourK:fourK))
+                    let sidecar = url.deletingPathExtension().appendingPathExtension("gcsv")
+                    if FileManager.default.fileExists(atPath:sidecar.path) {try FileManager.default.moveItem(at:sidecar,to:destination.deletingPathExtension().appendingPathExtension("gcsv"))}
+                    store.refresh()
+                } catch {store.error = error.localizedDescription}
+            }
         }
+        camera.start()
     }
     private var cameraControls: some View {
         VStack(alignment:.leading) {
             Text("Hardware controls").font(.headline)
             Toggle("Display selected LUT in viewfinder",isOn:$displayLUT)
             Toggle("Record selected LUT in movie",isOn:$recordLUT).disabled(camera.recording || exporter.busy)
-            DisclosureGroup("Audio meter") {
-                Toggle("Show audio meter",isOn:$bmcAudioMeterEnabled)
-                if bmcAudioMeterEnabled {
-                    Picker("Meter type",selection:$bmcAudioMeterMode) {ForEach(BMCAudioMeter.Mode.allCases) {Text($0.title).tag($0)}}
-                    if !camera.audioEnabled {Text("Microphone access is unavailable.").font(.caption)}
-                    else if camera.bmcAudioUnavailable {Text("This microphone format is not supported by the meter.").font(.caption)}
-                    else {ForEach(Array(camera.bmcAudioReadings.enumerated()),id:\.offset) {index,reading in Text("Channel \(index + 1): \(reading.level, specifier:"%.1f") dB • peak \(reading.peak, specifier:"%.1f") dB").monospacedDigit().font(.caption)}}
-                }
+            Group {
+                audioMeterControls
+                focusAssistControls
+                framingGuideControls
+                slateControls
+                exposureMonitorControls
             }
-            DisclosureGroup("Focus assist") {
-                Toggle("BMC focus assist",isOn:$bmcFocus.enabled)
-                if bmcFocus.enabled {
-                    Toggle("Colored lines",isOn:$bmcFocus.coloredLines)
-                    if bmcFocus.coloredLines {Picker("Line color",selection:$bmcFocus.color) {ForEach(BMCFocusColor.allCases) {Text($0.rawValue.capitalized).tag($0)}}}
-                    Text("Sensitivity \(Int(bmcFocus.value))")
-                    Slider(value:$bmcFocus.value,in:0...100,step:1).accessibilityLabel("Focus assist sensitivity")
-                }
-            }
-            DisclosureGroup("Framing guides") {
-                Toggle("Frame guide",isOn:$guides.framing)
-                if guides.framing {Picker("Aspect ratio",selection:$guides.ratio) {ForEach(BMCGuideRatio.allCases) {Text($0.rawValue).tag($0)}}}
-                Toggle("Thirds",isOn:$guides.thirds)
-                Toggle("Crosshairs",isOn:$guides.crosshairs)
-                Toggle("Center dot",isOn:$guides.centerDot)
-                Text("Opacity \(Int(guides.opacity * 100))%")
-                Slider(value:$guides.opacity,in:0.25...1,step:0.25).accessibilityLabel("Guide opacity")
-            }
-            DisclosureGroup("Clip slate") {
-                TextField("Project",text:$slate.project)
-                TextField("Reel",text:$slate.reel)
-                TextField("Scene",text:$slate.scene)
-                TextField("Take",text:$slate.take)
-                TextField("Camera",text:$slate.camera)
-                TextField("Director",text:$slate.director)
-                TextField("Camera operator",text:$slate.cameraOperator)
-                TextField("Notes",text:$slate.notes)
-                Text("Slate fields are written to recorded movies after export.").font(.caption).foregroundStyle(.secondary)
-            }.disabled(camera.recording)
-            DisclosureGroup("Exposure monitoring") {
-                Toggle("False color",isOn:$monitor.falseColor)
-                Toggle("Zebra",isOn:$monitor.zebra)
-                if monitor.zebra {
-                    Text("Zebra threshold \(Int(monitor.zebraThreshold * 100))%")
-                    Slider(value:$monitor.zebraThreshold,in:0...1,step:0.01).accessibilityLabel("Zebra threshold")
-                    Picker("Middle gray stripes",selection:$monitor.midGray) {ForEach(BMCMonitor.MidGray.allCases) {Text($0.title).tag($0)}}
-                }
-                Text("Monitoring affects the preview only.").font(.caption).foregroundStyle(.secondary)
-            }
+            cameraFormatControls
+            cameraExposureSliders
+            manualCameraControls
+        }.disabled(camera.recording)
+    }
+    private var cameraFormatControls: some View {
+        Group {
             Toggle("RGB histogram",isOn:$showHistogram).onChange(of:showHistogram) {_,value in camera.enableHistogram(value)}
             if showHistogram {HistogramPlot(values:camera.histogram)}
             Picker("Lens",selection:$lens) {ForEach(camera.availableLenses,id:\.self) {Text($0).tag($0)}}.onChange(of:lens) {_,value in camera.selectLens(value); controls()}
@@ -247,8 +224,16 @@ struct CameraScreen: View {
             }
             if camera.ready && !camera.audioEnabled {Label("Microphone access is disabled. Video will have no sound.",systemImage:"mic.slash").font(.caption)}
             Text("Available ranges depend on the selected camera.").font(.caption).foregroundStyle(.secondary)
+        }
+    }
+    private var cameraExposureSliders: some View {
+        Group {
             Text("Zoom"); Slider(value:$zoom,in:1...8,onEditingChanged:{_ in controls()})
             Text("Exposure compensation"); Slider(value:$bias,in:-3...3,onEditingChanged:{_ in controls()})
+        }
+    }
+    private var manualCameraControls: some View {
+        Group {
             Toggle("Manual white balance",isOn:$manualWhiteBalance).onChange(of:manualWhiteBalance) {_,_ in controls()}
             if manualWhiteBalance {
                 Menu("White balance presets") {
@@ -270,7 +255,65 @@ struct CameraScreen: View {
             }
             Toggle("Torch",isOn:$torch).onChange(of:torch) {_,_ in controls()}
             Picker("Frame rate",selection:$fps) {ForEach(camera.availableFrameRates,id:\.self) {Text("\(Int($0)) fps").tag($0)}}.onChange(of:fps) {_,_ in controls()}
+        }
+    }
+    private var audioMeterControls: some View {
+        DisclosureGroup("Audio meter") {
+            Toggle("Show audio meter",isOn:$bmcAudioMeterEnabled)
+            if bmcAudioMeterEnabled {
+                Picker("Meter type",selection:$bmcAudioMeterMode) {ForEach(BMCAudioMeter.Mode.allCases) {Text($0.title).tag($0)}}
+                if !camera.audioEnabled {Text("Microphone access is unavailable.").font(.caption)}
+                else if camera.bmcAudioUnavailable {Text("This microphone format is not supported by the meter.").font(.caption)}
+                else {ForEach(Array(camera.bmcAudioReadings.enumerated()),id:\.offset) {index,reading in Text("Channel \(index + 1): \(reading.level, specifier:"%.1f") dB • peak \(reading.peak, specifier:"%.1f") dB").monospacedDigit().font(.caption)}}
+            }
+        }
+    }
+    private var focusAssistControls: some View {
+        DisclosureGroup("Focus assist") {
+            Toggle("BMC focus assist",isOn:$bmcFocus.enabled)
+            if bmcFocus.enabled {
+                Toggle("Colored lines",isOn:$bmcFocus.coloredLines)
+                if bmcFocus.coloredLines {Picker("Line color",selection:$bmcFocus.color) {ForEach(BMCFocusColor.allCases) {Text($0.rawValue.capitalized).tag($0)}}}
+                Text("Sensitivity \(Int(bmcFocus.value))")
+                Slider(value:$bmcFocus.value,in:0...100,step:1).accessibilityLabel("Focus assist sensitivity")
+            }
+        }
+    }
+    private var framingGuideControls: some View {
+        DisclosureGroup("Framing guides") {
+            Toggle("Frame guide",isOn:$guides.framing)
+            if guides.framing {Picker("Aspect ratio",selection:$guides.ratio) {ForEach(BMCGuideRatio.allCases) {Text($0.rawValue).tag($0)}}}
+            Toggle("Thirds",isOn:$guides.thirds)
+            Toggle("Crosshairs",isOn:$guides.crosshairs)
+            Toggle("Center dot",isOn:$guides.centerDot)
+            Text("Opacity \(Int(guides.opacity * 100))%")
+            Slider(value:$guides.opacity,in:0.25...1,step:0.25).accessibilityLabel("Guide opacity")
+        }
+    }
+    private var slateControls: some View {
+        DisclosureGroup("Clip slate") {
+            TextField("Project",text:$slate.project)
+            TextField("Reel",text:$slate.reel)
+            TextField("Scene",text:$slate.scene)
+            TextField("Take",text:$slate.take)
+            TextField("Camera",text:$slate.camera)
+            TextField("Director",text:$slate.director)
+            TextField("Camera operator",text:$slate.cameraOperator)
+            TextField("Notes",text:$slate.notes)
+            Text("Slate fields are written to recorded movies after export.").font(.caption).foregroundStyle(.secondary)
         }.disabled(camera.recording)
+    }
+    private var exposureMonitorControls: some View {
+        DisclosureGroup("Exposure monitoring") {
+            Toggle("False color",isOn:$monitor.falseColor)
+            Toggle("Zebra",isOn:$monitor.zebra)
+            if monitor.zebra {
+                Text("Zebra threshold \(Int(monitor.zebraThreshold * 100))%")
+                Slider(value:$monitor.zebraThreshold,in:0...1,step:0.01).accessibilityLabel("Zebra threshold")
+                Picker("Middle gray stripes",selection:$monitor.midGray) {ForEach(BMCMonitor.MidGray.allCases) {Text($0.title).tag($0)}}
+            }
+            Text("Monitoring affects the preview only.").font(.caption).foregroundStyle(.secondary)
+        }
     }
     private func controls() {camera.controls(zoom:zoom,bias:bias,focus:manualFocus ? focus : nil,iso:manualExposure ? iso : nil,shutter:manualExposure ? shutter : nil,torch:torch,fps:fps,whiteBalance:manualWhiteBalance ? BMCWhiteBalance(temperature:whiteBalanceTemperature,tint:whiteBalanceTint) : nil)}
     private func capture() {

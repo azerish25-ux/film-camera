@@ -129,6 +129,11 @@ The D: workspace also contains `readelf` section and frame-information output
 for the cloud library. Its `.gcc_except_table` and `.eh_frame` sections are
 present; their existence or a frame dump does not resolve the skipped
 exception-handler control flow.
+Static cross-references found the cloud API URL format at `0039f2d3` with a
+reference from `00656e10`, which Ghidra did not associate with a function.
+The `wss://` literal is referenced from `sio::client_impl::connect_impl`.
+These observations do not identify the complete authentication or service
+contract.
 Separate media-core passes produced 1,973 function outputs for
 `libdavstream.so` and 14,166 for `libdavstreamd.so`, with no reported
 decompiler failures. A pass over `libnativeplayer.so` produced 6,218 outputs
@@ -249,6 +254,10 @@ frame zero for both `RECORD_RUN` and `TIME_OF_DAY` in this track-generation
 path; the Tentacle branch instead queries the synchronized device and may
 return an unavailable sentinel. This does not by itself establish how the
 display counter behaves or how recording transitions are synchronized.
+The native Tentacle library exposes conversions between timecode, elapsed
+seconds and a received timestamp, with a separate drop-frame branch. Ghidra's
+current C-like output has uncertain ARM floating-point argument recovery, so
+those conversions have not yet been ported or verified.
 Apple's AVAssetWriter supports a QuickTime timecode input, format description,
 sample and video-track association. The current exporter uses
 AVAssetExportSession and does not create such a track. An isolated AVAssetWriter

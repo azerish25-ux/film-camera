@@ -17,6 +17,11 @@ do not provide discovery, transport, authentication, remote control, or
 interoperability by themselves. Field semantics and session behavior still
 need to be traced and tested against a peer.
 
+`BMCControlMessages` builds the recovered controller envelopes for starting and
+stopping recording. Run 40450331698 verified both encoded fixtures with the
+generated Swift types. It is not connected to a session or camera UI, and does
+not yet handle responses, message ID allocation, timeouts, or peer behavior.
+
 With protoc and the matching SwiftProtobuf 1.29.0 plugin installed, regenerate
 the sources from the repository root with:
 

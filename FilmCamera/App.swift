@@ -82,6 +82,7 @@ struct CameraScreen: View {
     @State private var showHistogram = false
     @State private var motion = MotionCaptureOptions()
     @State private var monitor = BMCMonitorOptions()
+    @State private var slate = BMCSlate()
     @State private var rawWorkspace = false
     private var captureIsSequence: Bool {videoMode || motion.mode == .rawVideo || motion.mode == .timelapse || camera.rawRecording}
     var body: some View {
@@ -118,6 +119,7 @@ struct CameraScreen: View {
                 if let data = UserDefaults.standard.data(forKey:"motionCaptureOptions"),let saved = try? JSONDecoder().decode(MotionCaptureOptions.self,from:data) {motion = saved}
                 camera.updateMotion(motion)
                 if let data = UserDefaults.standard.data(forKey:"bmcMonitorOptions"), let saved = try? JSONDecoder().decode(BMCMonitorOptions.self,from:data) {monitor = saved}
+                if let data = UserDefaults.standard.data(forKey:"bmcSlate"), let saved = try? JSONDecoder().decode(BMCSlate.self,from:data) {slate = saved}
                 camera.updateMonitor(monitor)
                 camera.onMedia = {_ in store.refresh()}
                 camera.onMovie = { url,settings,lut in
@@ -125,7 +127,7 @@ struct CameraScreen: View {
                         defer {try? FileManager.default.removeItem(at:url)}
                         do {
                             let destination = store.destination("mov")
-                            try await exporter.exportVideo(source:url,destination:destination,settings:settings,lut:lut,resolution:fourK ? AVAssetExportPreset3840x2160 : AVAssetExportPreset1920x1080)
+                            try await exporter.exportVideo(source:url,destination:destination,settings:settings,lut:lut,slate:slate,resolution:fourK ? AVAssetExportPreset3840x2160 : AVAssetExportPreset1920x1080)
                             let sidecar = url.deletingPathExtension().appendingPathExtension("gcsv")
                             if FileManager.default.fileExists(atPath:sidecar.path) {try FileManager.default.moveItem(at:sidecar,to:destination.deletingPathExtension().appendingPathExtension("gcsv"))}
                             store.refresh()
@@ -137,6 +139,7 @@ struct CameraScreen: View {
             .sheet(isPresented:$rawWorkspace) {MotionWorkspaceScreen().environmentObject(store)}
             .onChange(of:motion) {_,value in camera.updateMotion(value); controls(); if let data = try? JSONEncoder().encode(value) {UserDefaults.standard.set(data,forKey:"motionCaptureOptions")}}
             .onChange(of:monitor) {_,value in camera.updateMonitor(value); if let data = try? JSONEncoder().encode(value) {UserDefaults.standard.set(data,forKey:"bmcMonitorOptions")}}
+            .onChange(of:slate) {_,value in if let data = try? JSONEncoder().encode(value) {UserDefaults.standard.set(data,forKey:"bmcSlate")}}
             .onChange(of:store.state.settings) {_,value in camera.update(value,lut:store.selectedLUT)}
             .onChange(of:camera.ready) {_,ready in if ready {controls()} }
             .onChange(of:camera.availableLenses) {_,lenses in if !lenses.contains(lens) {lens = "Wide"} }
@@ -148,6 +151,17 @@ struct CameraScreen: View {
     private var cameraControls: some View {
         VStack(alignment:.leading) {
             Text("Hardware controls").font(.headline)
+            DisclosureGroup("Clip slate") {
+                TextField("Project",text:$slate.project)
+                TextField("Reel",text:$slate.reel)
+                TextField("Scene",text:$slate.scene)
+                TextField("Take",text:$slate.take)
+                TextField("Camera",text:$slate.camera)
+                TextField("Director",text:$slate.director)
+                TextField("Camera operator",text:$slate.cameraOperator)
+                TextField("Notes",text:$slate.notes)
+                Text("Slate fields are written to recorded movies after export.").font(.caption).foregroundStyle(.secondary)
+            }.disabled(camera.recording)
             DisclosureGroup("Exposure monitoring") {
                 Toggle("False color",isOn:$monitor.falseColor)
                 Toggle("Zebra",isOn:$monitor.zebra)

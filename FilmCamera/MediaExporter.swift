@@ -7,7 +7,7 @@ final class MediaExporter: ObservableObject {
     @Published var busy = false
     private var session: AVAssetExportSession?
     private let renderer = FilmRenderer()
-    @MainActor func exportVideo(source: URL, destination: URL, settings: FilmSettings, lut: CubeLUT?, start: Double = 0, end: Double? = nil, resolution: String = AVAssetExportPreset1920x1080) async throws {
+    @MainActor func exportVideo(source: URL, destination: URL, settings: FilmSettings, lut: CubeLUT?, slate: BMCSlate? = nil, start: Double = 0, end: Double? = nil, resolution: String = AVAssetExportPreset1920x1080) async throws {
         guard !busy else { throw PortError.message("An export is already running.") }
         busy = true; progress = 0
         defer { busy = false; session = nil }
@@ -18,6 +18,7 @@ final class MediaExporter: ObservableObject {
         session = export
         export.outputURL = destination
         export.outputFileType = .mov
+        if let slate, !slate.fields.isEmpty { export.metadata = slate.merging(with: try await asset.load(.metadata)) }
         export.shouldOptimizeForNetworkUse = false
         let begin = max(0,min(start,duration.seconds-0.01)), finish = max(begin+0.01,min(end ?? duration.seconds,duration.seconds))
         export.timeRange = CMTimeRange(start:CMTime(seconds:begin,preferredTimescale:600),end:CMTime(seconds:finish,preferredTimescale:600))

@@ -296,6 +296,19 @@ struct CameraScreen: View {
             TextField("Reel",text:$slate.reel)
             TextField("Scene",text:$slate.scene)
             TextField("Take",text:$slate.take)
+            Picker("Time of day",selection:$slate.dayNight) {
+                Text("Not specified").tag(BMCSlateDayNight?.none)
+                ForEach(BMCSlateDayNight.allCases) { value in Text(value.rawValue).tag(Optional(value)) }
+            }
+            Picker("Environment",selection:$slate.environment) {
+                Text("Not specified").tag(BMCSlateEnvironment?.none)
+                ForEach(BMCSlateEnvironment.allCases) { value in Text(value.rawValue).tag(Optional(value)) }
+            }
+            Picker("Good take",selection:$slate.goodTake) {
+                Text("Not specified").tag(Bool?.none)
+                Text("No").tag(Optional(false))
+                Text("Yes").tag(Optional(true))
+            }
             TextField("Camera",text:$slate.camera)
             TextField("Director",text:$slate.director)
             TextField("Camera operator",text:$slate.cameraOperator)

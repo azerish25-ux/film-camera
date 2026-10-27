@@ -84,6 +84,7 @@ struct CameraScreen: View {
     @State private var monitor = BMCMonitorOptions()
     @State private var slate = BMCSlate()
     @State private var guides = BMCGuideOptions()
+    @State private var bmcFocus = BMCFocusOptions()
     @State private var rawWorkspace = false
     private var captureIsSequence: Bool {videoMode || motion.mode == .rawVideo || motion.mode == .timelapse || camera.rawRecording}
     var body: some View {
@@ -122,6 +123,8 @@ struct CameraScreen: View {
                 if let data = UserDefaults.standard.data(forKey:"bmcMonitorOptions"), let saved = try? JSONDecoder().decode(BMCMonitorOptions.self,from:data) {monitor = saved}
                 if let data = UserDefaults.standard.data(forKey:"bmcSlate"), let saved = try? JSONDecoder().decode(BMCSlate.self,from:data) {slate = saved}
                 if let data = UserDefaults.standard.data(forKey:"bmcGuides"), let saved = try? JSONDecoder().decode(BMCGuideOptions.self,from:data) {guides = saved}
+                if let data = UserDefaults.standard.data(forKey:"bmcFocus"), let saved = try? JSONDecoder().decode(BMCFocusOptions.self,from:data) {bmcFocus = saved}
+                camera.updateBMCFocus(bmcFocus)
                 camera.updateMonitor(monitor)
                 camera.onMedia = {_ in store.refresh()}
                 camera.onMovie = { url,settings,lut in
@@ -143,6 +146,7 @@ struct CameraScreen: View {
             .onChange(of:monitor) {_,value in camera.updateMonitor(value); if let data = try? JSONEncoder().encode(value) {UserDefaults.standard.set(data,forKey:"bmcMonitorOptions")}}
             .onChange(of:slate) {_,value in if let data = try? JSONEncoder().encode(value) {UserDefaults.standard.set(data,forKey:"bmcSlate")}}
             .onChange(of:guides) {_,value in if let data = try? JSONEncoder().encode(value) {UserDefaults.standard.set(data,forKey:"bmcGuides")}}
+            .onChange(of:bmcFocus) {_,value in camera.updateBMCFocus(value); if let data = try? JSONEncoder().encode(value) {UserDefaults.standard.set(data,forKey:"bmcFocus")}}
             .onChange(of:store.state.settings) {_,value in camera.update(value,lut:store.selectedLUT)}
             .onChange(of:camera.ready) {_,ready in if ready {controls()} }
             .onChange(of:camera.availableLenses) {_,lenses in if !lenses.contains(lens) {lens = "Wide"} }
@@ -154,6 +158,15 @@ struct CameraScreen: View {
     private var cameraControls: some View {
         VStack(alignment:.leading) {
             Text("Hardware controls").font(.headline)
+            DisclosureGroup("Focus assist") {
+                Toggle("BMC focus assist",isOn:$bmcFocus.enabled)
+                if bmcFocus.enabled {
+                    Toggle("Colored lines",isOn:$bmcFocus.coloredLines)
+                    if bmcFocus.coloredLines {Picker("Line color",selection:$bmcFocus.color) {ForEach(BMCFocusColor.allCases) {Text($0.rawValue.capitalized).tag($0)}}}
+                    Text("Sensitivity \(Int(bmcFocus.value))")
+                    Slider(value:$bmcFocus.value,in:0...100,step:1).accessibilityLabel("Focus assist sensitivity")
+                }
+            }
             DisclosureGroup("Framing guides") {
                 Toggle("Frame guide",isOn:$guides.framing)
                 if guides.framing {Picker("Aspect ratio",selection:$guides.ratio) {ForEach(BMCGuideRatio.allCases) {Text($0.rawValue).tag($0)}}}

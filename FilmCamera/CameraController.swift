@@ -26,6 +26,7 @@ final class CameraController: NSObject, ObservableObject, AVCaptureVideoDataOutp
     private var lastAnalysisTime = 0.0
     var motionOptions = MotionCaptureOptions()
     private var monitorOptions = BMCMonitorOptions()
+    private var bmcFocusOptions = BMCFocusOptions()
     let preRoll = MotionPreRoll()
     let motionLogger = MotionLogger()
     var logging = false
@@ -90,6 +91,8 @@ final class CameraController: NSObject, ObservableObject, AVCaptureVideoDataOutp
     func updateMotion(_ options: MotionCaptureOptions) {lock.lock(); motionOptions = options; lock.unlock()}
     func updateMonitor(_ options: BMCMonitorOptions) {lock.lock(); monitorOptions = options; lock.unlock()}
     private func monitor() -> BMCMonitorOptions {lock.lock(); defer {lock.unlock()}; return monitorOptions}
+    func updateBMCFocus(_ options: BMCFocusOptions) {lock.lock(); bmcFocusOptions = options; lock.unlock()}
+    private func bmcFocus() -> BMCFocusOptions {lock.lock(); defer {lock.unlock()}; return bmcFocusOptions}
     func setRawAudioWriter(_ writer:RawSequenceWriter?) {lock.lock(); rawAudioWriter = writer; lock.unlock()}
     func rawAudioWriterSnapshot() -> RawSequenceWriter? {lock.lock(); defer {lock.unlock()}; return rawAudioWriter}
     func options() -> MotionCaptureOptions {lock.lock(); defer {lock.unlock()}; return motionOptions}
@@ -315,7 +318,8 @@ final class CameraController: NSObject, ObservableObject, AVCaptureVideoDataOutp
         let aids = try MotionProcessing.aids(toneMapped,clipping:opts.clipping,peaking:opts.peaking,sensitivity:opts.sensitivity)
         let monitorOptions = monitor()
         if monitorOptions.zebra { zebraShift = zebraShift >= 16 ? 0 : zebraShift + 1 }
-        let display = try BMCMonitor.render(aids,options:monitorOptions,zebraShift:Double(zebraShift))
+        let monitored = try BMCMonitor.render(aids,options:monitorOptions,zebraShift:Double(zebraShift))
+        let display = try BMCFocus.render(monitored,source:small,options:bmcFocus())
         let stats = timelapse.map {"\($0.count) frames • \($0.dropped) dropped"} ?? statsText
         if let cg = renderer.context.createCGImage(display,from:display.extent) { DispatchQueue.main.async { self.preview = UIImage(cgImage:cg); self.histogram = bins; if !self.rawRecording {self.captureStats = stats} } }
         } catch {if timelapseTarget != nil {finishTimelapse()}; report(error)}

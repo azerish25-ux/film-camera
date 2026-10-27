@@ -48,6 +48,14 @@ For native analysis, the D: workspace includes dynamic-symbol inventories for
 all arm64 libraries, including cloud authentication/storage/chat/router,
 streaming, USB, timecode accessories and audio. Exported symbols identify API
 boundaries but are not a decompilation of their implementations.
+Ghidra additionally produced a D:-local decompilation of 52 JNI entries from
+`libbmddavcloudclient.so`; one entry was unavailable. These wrappers call into
+the larger native cloud library, which still requires analysis and service-level
+validation.
+The same process recovered 5 audio, 1 LUT parser, 49 remote-streaming and
+160 timecode-accessory JNI entry points; two accessory entries were unavailable.
+The results still need call-chain analysis and cannot be counted as a completed
+port simply because a decompiler produced C-like output.
 
 ## Initial monitoring port
 
@@ -101,5 +109,7 @@ with separate colored-line and peaking branches. `C8949c` scales the configured
 focus-assist value by 0.04 before passing it to the shader; `FocusAssist`
 selects colored lines or peaking, and `FocusAssistColor` lists white, black,
 red, green and blue. The existing MotionCam focus peaking is a different
-algorithm. Trace the input range, edge sampling, transform order and visual
-output before treating either implementation as equivalent.
+algorithm. An initial Core Image implementation uses the recovered kernel and
+the rendered preview as its edge source; its simulator test and the APK's exact
+input range, camera-texture sampling, transform order and Android pixel output
+remain to be validated.

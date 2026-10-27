@@ -17,6 +17,7 @@ struct BMCDiscoveredCamera: Identifiable {
 
     @Published private(set) var cameras: [BMCDiscoveredCamera] = []
     @Published private(set) var statusMessage: String?
+    @Published private(set) var isBrowsing = false
     private let queue = DispatchQueue(label: "BMCDiscoveryBrowser")
     private var browsers: [String: NWBrowser] = [:]
     private var resultsByType: [String: [UUID: BMCDiscoveredCamera]] = [:]
@@ -26,6 +27,7 @@ struct BMCDiscoveredCamera: Identifiable {
     func start() {
         guard browsers.isEmpty else { return }
         generation = UUID()
+        isBrowsing = true
         let token = generation
         for type in Self.serviceTypes {
             let browser = NWBrowser(for: .bonjourWithTXTRecord(type: type, domain: nil), using: .tcp)
@@ -44,7 +46,7 @@ struct BMCDiscoveredCamera: Identifiable {
         generation = UUID()
         for browser in browsers.values { browser.cancel() }
         browsers.removeAll(); resultsByType.removeAll(); errors.removeAll()
-        cameras = []; statusMessage = nil
+        cameras = []; statusMessage = nil; isBrowsing = false
     }
 
     private func apply(_ results: Set<NWBrowser.Result>, type: String, token: UUID) {

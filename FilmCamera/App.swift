@@ -72,6 +72,7 @@ struct CameraScreen: View {
     @Environment(\.scenePhase) private var scenePhase
     @StateObject private var camera = CameraController()
     @StateObject private var exporter = MediaExporter()
+    @StateObject private var bmcDiscovery = BMCDiscoveryBrowser()
     @State private var videoMode = false
     @State private var tools = false
     @State private var zoom = 1.0
@@ -115,13 +116,13 @@ struct CameraScreen: View {
         .onChange(of:movieCodec) {_,value in camera.selectMovieCodec(BMCMovieCodec(rawValue:value) ?? .h264)}
         .onChange(of:displayLUT) {_,value in camera.updatePreviewLUT(enabled:value)}
         .onChange(of:recordLUT) {_,value in camera.updateRecordLUT(enabled:value)}
-        .onChange(of:scenePhase) {_,phase in if phase == .active {camera.start()} else {camera.stop()} }
+        .onChange(of:scenePhase) {_,phase in if phase == .active {camera.start()} else {camera.stop(); bmcDiscovery.stop()} }
         .onChange(of:camera.message) {_,value in if camera.ready {store.error = value} }
     }
     private var cameraStored: some View {
         cameraContent
         .onAppear(perform: configureCamera)
-        .onDisappear {camera.stop()}
+        .onDisappear {camera.stop(); bmcDiscovery.stop()}
         .sheet(isPresented:$rawWorkspace) {MotionWorkspaceScreen().environmentObject(store)}
         .onChange(of:motion) {_,value in camera.updateMotion(value); controls(); if let data = try? JSONEncoder().encode(value) {UserDefaults.standard.set(data,forKey:"motionCaptureOptions")}}
         .onChange(of:monitor) {_,value in camera.updateMonitor(value); if let data = try? JSONEncoder().encode(value) {UserDefaults.standard.set(data,forKey:"bmcMonitorOptions")}}
@@ -217,6 +218,7 @@ struct CameraScreen: View {
                 framingGuideControls
                 slateControls
                 exposureMonitorControls
+                remoteDiscoveryControls
             }
             cameraFormatControls
             cameraExposureSliders
@@ -342,6 +344,24 @@ struct CameraScreen: View {
                 Picker("Middle gray stripes",selection:$monitor.midGray) {ForEach(BMCMonitor.MidGray.allCases) {Text($0.title).tag($0)}}
             }
             Text("Monitoring affects the preview only.").font(.caption).foregroundStyle(.secondary)
+        }
+    }
+    private var remoteDiscoveryControls: some View {
+        DisclosureGroup("Remote cameras") {
+            if bmcDiscovery.isBrowsing {
+                Button("Stop searching") {bmcDiscovery.stop()}
+                if bmcDiscovery.cameras.isEmpty {Text("No cameras found yet.").font(.caption).foregroundStyle(.secondary)}
+                ForEach(bmcDiscovery.cameras) {camera in
+                    VStack(alignment:.leading) {
+                        Text(camera.record.name)
+                        Text("\(camera.record.modelName) • \(camera.record.slateName)").font(.caption).foregroundStyle(.secondary)
+                    }
+                }
+                if !bmcDiscovery.cameras.isEmpty {Text("Camera connection is not available yet.").font(.caption).foregroundStyle(.secondary)}
+            } else {
+                Button("Find nearby cameras") {bmcDiscovery.start()}.accessibilityIdentifier("findRemoteCameras")
+            }
+            if let message = bmcDiscovery.statusMessage {Text(message).font(.caption).foregroundStyle(.secondary)}
         }
     }
     private func controls() {camera.controls(zoom:zoom,bias:bias,focus:manualFocus ? focus : nil,iso:manualExposure ? iso : nil,shutter:manualExposure ? shutter : nil,torch:torch,fps:fps,whiteBalance:manualWhiteBalance ? BMCWhiteBalance(temperature:whiteBalanceTemperature,tint:whiteBalanceTint) : nil)}
@@ -486,3 +506,4 @@ struct EditorScreen: View {
         }
     }
 }
+

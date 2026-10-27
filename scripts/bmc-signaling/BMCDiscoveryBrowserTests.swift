@@ -15,6 +15,7 @@ import XCTest
 
         let browser = BMCDiscoveryBrowser()
         browser.start()
+        XCTAssertTrue(browser.isBrowsing)
         defer { browser.stop() }
         for _ in 0..<150 {
             if browser.cameras.contains(where: { $0.id.uuidString.lowercased() == id }) { break }
@@ -25,6 +26,7 @@ import XCTest
         XCTAssertEqual(camera.record.major, 5)
         browser.stop()
         XCTAssertTrue(browser.cameras.isEmpty)
+        XCTAssertFalse(browser.isBrowsing)
     }
 }
 

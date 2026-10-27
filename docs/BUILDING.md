@@ -23,3 +23,17 @@ Camera, microphone and Photos permissions are requested when needed. Photos/File
 The committed Xcode project includes the complete test-resource inventory. Expected Android pixels are in FilmCameraTests/Resources, not in the shipped application.
 
 The Swift workflow accepts all, processing, functional, or integration verification scopes. The default all scope runs the complete suite. processing checks every shader fixture, full color-pipeline oracle, preset expectations, export colors and numerical regressions; functional adds adjustment visibility and UI flows. The full workflow can also generate references only with its reference_only input; its normal push/default behavior builds and tests the complete iOS port.
+
+
+## MotionCam validation
+
+`.github/workflows/motioncam.yml` builds the unsigned iPhone application, runs
+the focused MotionCam model/RAW/export/UI suite, checks ZIP64 fixtures using
+Python, and runs the original film regressions. A successful integration-branch
+run saves its generated Xcode project. The normal `ios.yml` workflow also runs
+the complete suite and regenerates Android references after merging to main.
+
+Native RAW capture uses public AVCapturePhotoOutput APIs. Simulator fixtures
+validate development, file formats, timing and navigation; physical capture,
+RAW cadence, microphones and motion sensors require an iPhone. Import a `.rawseq`
+folder as a folder so its journal, DNGs and sidecars remain together.

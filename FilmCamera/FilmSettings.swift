@@ -55,6 +55,7 @@ struct Adjustment: Identifiable {
     ]
 }
 struct FilmSettings: Codable, Equatable {
+    var motion = MotionGrade()
     var values: [String: Double] = [:]
     var frame: FilmFrame = .original
     var look = "Normal Mode"
@@ -69,6 +70,19 @@ struct FilmSettings: Codable, Equatable {
         }
     }
     static var looks: [String] {OriginalFilm.all.map(\.name)}
+    enum CodingKeys: String, CodingKey {case motion,values,frame,look,lutID,curveX,curveY}
+    init() {}
+    init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy:CodingKeys.self)
+        motion = try c.decodeIfPresent(MotionGrade.self,forKey:.motion) ?? MotionGrade()
+        values = try c.decodeIfPresent([String:Double].self,forKey:.values) ?? [:]
+        frame = try c.decodeIfPresent(FilmFrame.self,forKey:.frame) ?? .original
+        look = try c.decodeIfPresent(String.self,forKey:.look) ?? "Normal Mode"
+        lutID = try c.decodeIfPresent(UUID.self,forKey:.lutID)
+        curveX = try c.decodeIfPresent([Double].self,forKey:.curveX) ?? [0,50,100,150,200,255]
+        curveY = try c.decodeIfPresent([Double].self,forKey:.curveY) ?? [30,50,100,150,200,255]
+        motion.validate()
+    }
 }
 struct FilmPreset: Codable, Identifiable {
     var id = UUID()
@@ -139,6 +153,7 @@ extension CubeLUT {
 }
 extension FilmSettings {
     mutating func validate() {
+        motion.validate()
         let saved = values; values = [:]
         for (key,value) in saved {self[key] = value}
         let validCurve = curveX.count == 6 && curveY.count == 6 && curveX.first == 0 && curveX.last == 255 && curveX.allSatisfy({$0.isFinite}) && curveY.allSatisfy({$0.isFinite}) && zip(curveX,curveX.dropFirst()).allSatisfy({$0 < $1})

@@ -33,6 +33,7 @@ jobs:
           mkdir -p /tmp/bmc-check/Tests
           cp scripts/bmc-protobuf/ProtocolTests.swift /tmp/bmc-check/Tests/
           cp scripts/bmc-protobuf/BMCControlMessages.swift /tmp/bmc-check/Generated/
+          cp scripts/bmc-protobuf/BMCMediaChecksum.swift /tmp/bmc-check/Generated/
           cd /tmp/bmc-check
           swift test
           cp -R Generated "$GITHUB_WORKSPACE/bmc-protobuf-generated"

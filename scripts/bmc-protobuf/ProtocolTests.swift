@@ -42,5 +42,13 @@ final class BMCProtocolTests: XCTestCase {
         XCTAssertEqual(decoded.messages.first?.clipDataStartRequest.size, 4)
     }
 
+    func testMediaCRC32Fixture() {
+        var crc = BMCMediaChecksum()
+        XCTAssertEqual(crc.value, 0)
+        crc.update(Data("1234".utf8))
+        crc.update(Data("56789".utf8))
+        XCTAssertEqual(crc.value, 0xcbf43926)
+    }
+
 }
 

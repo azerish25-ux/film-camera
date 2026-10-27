@@ -1,0 +1,40 @@
+name: BMC protobuf generation diagnostic
+on:
+  push:
+    branches: [diagnostics/bmc-protobuf]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  generate:
+    runs-on: ubuntu-latest
+    container: swift:6.0
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install protoc and build the pinned Swift generator
+        run: |
+          apt-get update -qq
+          apt-get install -y -qq protobuf-compiler
+          git clone --quiet https://github.com/apple/swift-protobuf.git /tmp/swift-protobuf
+          git -C /tmp/swift-protobuf checkout --quiet d72aed98f8253ec1aa9ea1141e28150f408cf17f
+          cd /tmp/swift-protobuf
+          swift build -c release --product protoc-gen-swift
+      - name: Generate and compile recovered messages
+        run: |
+          mkdir -p /tmp/bmc-check/Generated
+          protoc --descriptor_set_in=Reference/BMC/bmc-v5.pb --plugin=protoc-gen-swift=/tmp/swift-protobuf/.build/release/protoc-gen-swift --swift_out=/tmp/bmc-check/Generated common.proto camera_control.proto settings.proto main_messages.proto
+          cat > /tmp/bmc-check/Package.swift <<'EOF'
+          // swift-tools-version: 5.9
+          import PackageDescription
+          let package = Package(name: "BMCProtocolCheck", dependencies: [.package(path: "../swift-protobuf")], targets: [.target(name: "BMCProtocolCheck", dependencies: [.product(name: "SwiftProtobuf", package: "swift-protobuf")], path: "Generated")])
+          EOF
+          cd /tmp/bmc-check
+          swift build
+          cp -R Generated "$GITHUB_WORKSPACE/bmc-protobuf-generated"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: bmc-protobuf-generated
+          path: bmc-protobuf-generated/
+          if-no-files-found: warn

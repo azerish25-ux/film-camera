@@ -70,7 +70,7 @@ struct BMCDiscoveryRecord: Equatable {
     }
 }
 
-struct BMCParticipant: Codable, Equatable {
+struct BMCParticipant: Codable, Equatable, Sendable {
     let uuid: String
     let modelName: String
     let deviceName: String
@@ -147,3 +147,4 @@ enum BMCSignalingMessage: Codable, Equatable {
         }
     }
 }
+

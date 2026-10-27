@@ -1,0 +1,45 @@
+name: BMC signaling diagnostic
+on:
+  push:
+    branches: [diagnostics/bmc-signaling]
+permissions:
+  contents: read
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    container: swift:6.0
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - name: Compile and test signaling with a fake peer
+        run: |
+          mkdir -p /tmp/bmc-signaling/Sources/BMCSignalingCheck /tmp/bmc-signaling/Tests
+          cp FilmCamera/BMCSignaling.swift FilmCamera/BMCSignalingSession.swift FilmCamera/BMCClientHandshake.swift /tmp/bmc-signaling/Sources/BMCSignalingCheck/
+          cp scripts/bmc-signaling/SessionTests.swift /tmp/bmc-signaling/Tests/
+          cat > /tmp/bmc-signaling/Sources/BMCSignalingCheck/Stub.swift <<'EOF'
+          import Foundation
+          enum PortError: Error { case message(String) }
+          enum BMCRemoteAuthentication {
+              static func decodeHex(_ text: String) throws -> Data {
+                  var result = Data()
+                  var current = text.startIndex
+                  while current < text.endIndex {
+                      let end = text.index(current, offsetBy: 2, limitedBy: text.endIndex) ?? text.endIndex
+                      guard let byte = UInt8(text[current..<end], radix: 16) else { throw PortError.message("Bad hex") }
+                      result.append(byte); current = end
+                  }
+                  return result
+              }
+              static func response(password: String, nonce: Data) throws -> String {
+                  guard password == "test", nonce.count == 64 else { throw PortError.message("Unexpected fixture") }
+                  return "6df18b13090db32b14b0e54842a4a2f1b7c94c2b411d86f250aa0b37443a61f1"
+              }
+          }
+          EOF
+          cat > /tmp/bmc-signaling/Package.swift <<'EOF'
+          // swift-tools-version: 5.9
+          import PackageDescription
+          let package = Package(name: "BMCSignalingCheck", targets: [.target(name: "BMCSignalingCheck"), .testTarget(name: "BMCSignalingTests", dependencies: ["BMCSignalingCheck"], path: "Tests")])
+          EOF
+          cd /tmp/bmc-signaling
+          swift test

@@ -1,4 +1,7 @@
+import Foundation
+#if canImport(AVFoundation)
 import AVFoundation
+#endif
 
 enum BMCSlateDayNight: String, Codable, CaseIterable, Identifiable {
     case day = "Day", night = "Night"
@@ -42,6 +45,7 @@ struct BMCSlate: Codable, Equatable {
         return values.filter { !$0.value.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty }
     }
 
+    #if canImport(AVFoundation)
     func merging(with existing: [AVMetadataItem]) -> [AVMetadataItem] {
         let fields = fields
         let preserved = existing.filter { item in
@@ -58,4 +62,5 @@ struct BMCSlate: Codable, Equatable {
         }
         return preserved + additions
     }
+    #endif
 }

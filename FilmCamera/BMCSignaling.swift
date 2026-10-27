@@ -1,5 +1,42 @@
 import Foundation
 
+/// DNS-SD TXT data recovered from the legacy Android NSD resolve callback.
+/// This only parses advertisements; it does not browse or connect to a peer.
+struct BMCDiscoveryRecord: Equatable {
+    let uuid: UUID
+    let name: String
+    let slateName: String
+    let modelName: String
+    let major: Int
+    let minor: Int
+    let controllerUUID: String?
+    let controllerName: String?
+    let controllerSlateName: String?
+    let controllerModelName: String?
+    let controllerMajor: Int?
+    let controllerMinor: Int?
+
+    init?(serviceName: String, attributes: [String: Data]) {
+        func text(_ key: String) -> String? {
+            attributes[key].map { String(decoding: $0, as: UTF8.self) }
+        }
+        func version(_ text: String?) -> (Int?, Int?) {
+            guard let text else { return (nil, nil) }
+            let parts = text.components(separatedBy: ".")
+            return (parts.first.flatMap { Int32($0).map { Int($0) } }, parts.last.flatMap { Int32($0).map { Int($0) } })
+        }
+        guard let uuid = UUID(uuidString: serviceName), let name = text("name"),
+              let slateName = text("slate_name"), let modelName = text("model_name") else { return nil }
+        let cameraVersion = version(text("proto"))
+        let controllerVersion = version(text("ctrl_proto"))
+        self.uuid = uuid; self.name = name; self.slateName = slateName; self.modelName = modelName
+        major = cameraVersion.0 ?? -1; minor = cameraVersion.1 ?? -1
+        controllerUUID = text("ctrl_uuid"); controllerName = text("ctrl_name")
+        controllerSlateName = text("ctrl_slate_name"); controllerModelName = text("ctrl_model_name")
+        controllerMajor = controllerVersion.0; controllerMinor = controllerVersion.1
+    }
+}
+
 struct BMCParticipant: Codable, Equatable {
     let uuid: String
     let modelName: String

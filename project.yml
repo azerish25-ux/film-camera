@@ -12,7 +12,11 @@ targets:
   FilmCamera:
     type: application
     platform: iOS
-    sources: [FilmCamera]
+    sources:
+      - path: FilmCamera
+        excludes: [Resources/BMC/rec709-luminance.bin]
+      - path: FilmCamera/Resources/BMC/rec709-luminance.bin
+        buildPhase: resources
     settings:
       base:
         ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon

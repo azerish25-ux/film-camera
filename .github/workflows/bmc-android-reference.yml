@@ -2,7 +2,7 @@ name: BMC Android shader reference
 on:
   push:
     branches: [bmc-integration]
-    paths: ['Reference/BMC/**', 'scripts/bmc-reference/**', 'FilmCamera/BMCMonitor.swift', 'FilmCamera/BMCFocus.swift', 'FilmCamera/Resources/BMC/**', '.github/workflows/bmc-android-reference.yml']
+    paths: ['Reference/BMC/**', 'scripts/bmc-reference/**', 'FilmCamera/BMCMonitor.swift', 'FilmCamera/BMCFocus.swift', 'FilmCamera/Resources/BMC/**', 'project.yml', '.github/workflows/bmc-android-reference.yml']
   workflow_dispatch:
 permissions:
   contents: read

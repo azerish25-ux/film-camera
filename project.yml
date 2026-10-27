@@ -16,6 +16,13 @@ targets:
   FilmCamera:
     type: application
     platform: iOS
+    info:
+      path: FilmCamera/BonjourProbeInfo.plist
+      properties:
+        NSLocalNetworkUsageDescription: Discover nearby test cameras.
+        NSBonjourServices:
+          - _bmd-cam-control._tcp
+          - _bmd-cam-control-android._tcp
     sources:
       - path: FilmCamera
         excludes: [Resources/BMC/rec709-luminance.bin, Resources/BMCLUTs/**]

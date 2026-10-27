@@ -1,0 +1,33 @@
+name: BMC Bonjour diagnostic
+on:
+  push:
+    branches: [diagnostics/bmc-bonjour]
+permissions:
+  contents: read
+jobs:
+  simulator:
+    runs-on: macos-15
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - name: Generate project and probe Bonjour
+        run: |
+          set -o pipefail
+          cp scripts/bmc-signaling/BMCBonjourProbeTests.swift FilmCameraTests/
+          brew install xcodegen
+          xcodegen generate
+          DEVICE=$(xcrun simctl list devices available -j | python3 -c 'import json,sys; d=json.load(sys.stdin); print(next(x["udid"] for group in d["devices"].values() for x in group if "iPhone" in x["name"]))')
+          xcrun simctl boot "$DEVICE" || true
+          xcrun simctl bootstatus "$DEVICE" -b
+          xcodebuild -quiet -parallel-testing-enabled NO -scheme FilmCamera -destination "platform=iOS Simulator,id=$DEVICE" -derivedDataPath build/bonjour -resultBundlePath build/Bonjour.xcresult -only-testing:FilmCameraTests/BMCBonjourProbeTests CODE_SIGNING_ALLOWED=NO test 2>&1 | tee bonjour-test.log
+      - name: Show test summary
+        if: always()
+        run: |
+          if [ -d build/Bonjour.xcresult ]; then xcrun xcresulttool get test-results summary --path build/Bonjour.xcresult || true; fi
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: bmc-bonjour-probe
+          path: |
+            bonjour-test.log
+            build/Bonjour.xcresult

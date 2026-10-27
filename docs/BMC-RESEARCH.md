@@ -129,11 +129,16 @@ machine rather than assuming the decompiler output proves end-to-end behavior.
 lightness and the color bands implemented by `BMCMonitor`. The APK also contains
 HLG and P3 paths and precomputed luminance LUTs. `zebra_effect.glsl` specifies
 the two middle-gray intervals, threshold comparison and diagonal stripes.
-The current preview uses a Rec. 709 equation instead of the APK's selected
-luminance LUT; color management, stripe geometry, animation, other color
-spaces and interaction with other aids need reference validation. Neither
+The current preview now uses the recovered Rec. 709 luminance LUT; color
+management, stripe geometry, animation, other color spaces and interaction
+with other aids need reference validation. Neither
 overlay is applied to recorded media. The initial Swift implementation and
 simulator tests are a starting point, not proof of visual parity.
+For the synthetic 128×96 gradient, a local CPU model found that analytic
+luminance and trilinear sampling of the 8-bit APK table chose different
+false-color bands at 43 pixels and different zebra thresholds at 9 pixels. The
+model is not a GPU measurement; the Android/iOS workflow will test the actual
+renderers.
 
 `Reference/BMC` holds the APK's four monitoring shader snippets and its
 33-cubed Rec. 709 luminance byte table extracted from Java serialization. The

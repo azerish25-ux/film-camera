@@ -44,16 +44,19 @@ enum BMCMonitor {
         }
     }
 
-    // The Android shader uses a color-space-specific luminance LUT. This first
-    // implementation uses its documented Rec. 709 equation for the preview.
+    // The APK's 33³ Rec. 709 luminance table is a single byte per voxel, with
+    // red varying fastest. CIColorCube interpolates the same normalized grid.
+    private static let luminanceCube: Data? = {
+        guard let url = Bundle.main.url(forResource: "rec709-luminance", withExtension: "bin"),
+              let bytes = try? Data(contentsOf: url), bytes.count == 33 * 33 * 33 else { return nil }
+        var rgba = [Float](); rgba.reserveCapacity(bytes.count * 4)
+        for byte in bytes { let value = Float(byte) / 255; rgba.append(contentsOf: [value, value, value, 1]) }
+        return rgba.withUnsafeBytes { Data($0) }
+    }()
     private static let kernel = CIKernel(source: """
-    float linear709(float v) {
-        return v <= 0.081 ? v / 4.5 : pow((v + 0.099) / 1.099, 1.0 / 0.45);
-    }
-    kernel vec4 bmcMonitor(sampler image, float falseColor, float zebra, float threshold, float midGray, float shift) {
+    kernel vec4 bmcMonitor(sampler image, sampler luminance, float falseColor, float zebra, float threshold, float midGray, float shift) {
         vec4 c = sample(image, samplerCoord(image));
-        float y = dot(vec3(linear709(c.r), linear709(c.g), linear709(c.b)), vec3(0.212639, 0.715169, 0.072192));
-        float l = (y <= 0.008856451679036 ? y * 903.2962962962963 : pow(y, 1.0 / 3.0) * 116.0 - 16.0) / 100.0;
+        float l = sample(luminance, samplerTransform(luminance, destCoord())).r;
         vec3 result = c.rgb;
         if (falseColor > 0.5) {
             result = vec3(l);
@@ -75,7 +78,9 @@ enum BMCMonitor {
     """)
     static func render(_ image: CIImage, options: BMCMonitorOptions, zebraShift: Double = 0) throws -> CIImage {
         guard options.falseColor || options.zebra else { return image }
-        guard let kernel, let result = kernel.apply(extent: image.extent, roiCallback: { _, rect in rect }, arguments: [image, options.falseColor ? 1.0 : 0.0, options.zebra ? 1.0 : 0.0, min(1, max(0, options.zebraThreshold)), options.midGray.code, zebraShift]) else {
+        guard let luminanceCube, let kernel else { throw PortError.message("Exposure monitoring table is unavailable.") }
+        let luminance = image.applyingFilter("CIColorCube", parameters: ["inputCubeDimension": 33, "inputCubeData": luminanceCube])
+        guard let result = kernel.apply(extent: image.extent, roiCallback: { _, rect in rect }, arguments: [image, luminance, options.falseColor ? 1.0 : 0.0, options.zebra ? 1.0 : 0.0, min(1, max(0, options.zebraThreshold)), options.midGray.code, zebraShift]) else {
             throw PortError.message("Exposure monitoring could not be compiled.")
         }
         return result

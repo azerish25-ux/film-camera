@@ -296,9 +296,12 @@ and zebra differed in 4,584 channel values. Saved outputs showed Android's
 stripe phase follows bitmap-row `x + y + 1`, while the original Swift kernel
 followed `x - y` because Core Image destination coordinates are vertically
 reversed relative to bitmap rows. The Swift stripe calculation was changed to
-account for the image extent; that correction still needs another simulator
-comparison. Luminance-table interpolation and the false-color threshold
-differences remain open.
+account for the image extent. Diagnostic run 40449059896 reduced zebra
+differences to six channel values, while false color still differed in 39.
+Its float fixtures showed a maximum interior luminance difference of about
+0.0004 between the iOS simulator and Android SwiftShader. Those measurements
+come from emulators, not physical camera GPUs. Luminance-table interpolation
+and the remaining threshold differences remain open.
 
 ## Manual white balance
 

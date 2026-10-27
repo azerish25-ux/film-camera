@@ -1,20 +1,34 @@
-# Verified delivery
+# Delivery inventory
 
-- FilmCamera.xcodeproj: complete ready-to-open Xcode project, identical to the final generated/tested project.
-- FilmCamera/: native Swift application and all original runtime film assets.
-- FilmCameraTests/Resources/: 1,528 pinned Android reference images and source-derived original preset expectations; these resources are excluded from the application target.
-- FilmCameraTests/ and FilmCameraUITests/: 32 passing automated tests.
-- .github/workflows/ios.yml and swift-check.yml: macOS full verification and focused diagnostics.
-- Reference/: preserved Android shader/Java provenance and original compressed texture data.
-- scripts/verify_android_assets.py and verify_original_presets.py: original-source audits.
+The repository contains the native iOS application, original film assets, MotionCam
+integration, generated Xcode project, test fixtures, workflows and provenance.
 
-Latest local applications:
-- artifacts/verified-port/build/deliverables/FilmCamera-unsigned.ipa
-- artifacts/verified-port/build/deliverables/FilmCamera-simulator.zip
+- `FilmCamera/`: original film processing plus RAW development/capture/workspace.
+- `FilmCameraTests/` and `FilmCameraUITests/`: original film and added MotionCam tests.
+- `FilmCameraTests/Resources/`: pinned Android references, excluded from the app.
+- `docs/MOTIONCAM-INTEGRATION.md`: workflows, source map and platform/format limits.
+- `docs/motioncam/REVERSE-ENGINEERING-SPEC.md`: supplied APK logic specification.
+- `docs/motioncam/METADATA-AUDIT.md`: additional Ghidra checks and metadata provenance.
+- `.github/workflows/motioncam.yml`: unsigned iPhone build, focused simulator tests,
+  independent Python ZIP64 validation, original film regressions and packaging.
+- `.github/workflows/ios.yml`: fresh Android references and complete iOS validation.
+- `Reference/`: original film shader/Java provenance and compressed texture data.
 
-The same applications and test evidence are available in the successful final workflow:
-https://github.com/azerish25-ux/film-camera/actions/runs/40045800863
+## Applications and evidence
 
-artifacts/verified-port contains the full test result bundle, logs, screenshots, raw reference/comparison data and SHA256 verification manifests. Generated artifacts are excluded from Git. All source, runtime assets, test fixtures, project files and workflows are committed. The older artifacts/final directory is the initial delivery, preserved as history; verified-port is the current delivery.
+[Successful MotionCam validation](https://github.com/azerish25-ux/film-camera/actions/runs/40419151881)
+built the iPhone target and passed all 62 simulator tests plus independent ZIP64
+validation. The tested generated project was committed as
+`615e75fd7e35bd9c5186831753da73341e30dc07`.
+Artifacts contain the simulator application, unsigned IPA, generated Xcode project,
+xcresult bundles, logs, summaries and exported screenshots. GitHub retains artifacts
+for 14 days; source and workflows remain committed for reproducible builds.
 
-Temporary C staging was deleted only after per-file D backup verification. The supplied original Android directory was not changed. See BUILDING.md for Xcode and signing instructions.
+An unsigned IPA requires your Apple development team/provisioning before installation.
+See [building instructions](BUILDING.md), [validation](VALIDATION.md) and
+[MotionCam limits](MOTIONCAM-INTEGRATION.md). Simulator tests do not verify physical
+camera capture, RAW cadence, microphones or IMU sensors.
+
+The original pre-MotionCam delivery remains historical evidence in
+`artifacts/verified-port` and [its successful workflow](https://github.com/azerish25-ux/film-camera/actions/runs/40045800863).
+New local work and downloaded evidence stay on D: inside this workspace.

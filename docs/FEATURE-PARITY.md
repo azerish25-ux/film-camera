@@ -22,3 +22,17 @@ The working Android build's disabled account/cloud features stay disabled. Andro
 Verification covers the iPhone build, iPhone Simulator processing, original assets, local persistence, photo/video export, audio/trim/container dimensions, UI navigation/export, and Android/iOS shader comparisons. Physical camera ranges and lens availability are queried from the device; simulator checks cannot validate a real sensor or Apple provisioning. The image processor bounds individual frames to 16 megapixels and supported texture dimensions to avoid unbounded allocations.
 
 See PROCESSING-PROVENANCE.md for the narrowly documented GPU color-key tie behavior and VALIDATION.md for the final run evidence.
+
+
+## MotionCam extension
+
+The original film pipeline remains available with MotionCam development disabled.
+The integrated RAW workspace adds mcraw v2/v3 codec-6 decoding, original DNG
+sequences, sensor-time audio/video, grading, frame trim, sharpness scans,
+CinemaDNG/ZIP64/JPEG/MOV exports and a persistent serial queue. Capture adds
+native RAW still/sequence/burst/timelapse, processed ZSL/night/burst, focus aids,
+manual exposure and Gyroflow sidecars.
+
+See [the implementation map and exact platform limits](MOTIONCAM-INTEGRATION.md).
+RAW photo cadence depends on the device; high-frame-rate sensor RAW and Android
+native ISP pixel parity are not claimed.

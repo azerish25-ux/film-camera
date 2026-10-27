@@ -16,4 +16,4 @@ The iOS renderer executes the recovered film algorithms with the original 88 col
 
 CI uses no signing secrets. The unsigned IPA requires your Apple development team/provisioning before installation on a physical iPhone. All application media and presets stay local.
 
-[Final verification](docs/VALIDATION.md): the complete macOS workflow passed all 32 tests, including 1,528 Android/iOS shader cases, all 88 complete color pipelines and 2,112 film/frame/orientation combinations. See the [feature map](docs/FEATURE-PARITY.md) and [delivery inventory](docs/DELIVERY.md).
+[Verification](docs/VALIDATION.md): the MotionCam integration workflow built the iPhone app and passed all 62 simulator tests plus independent ZIP64 validation. This includes the original 1,528 Android/iOS shader cases, all 88 complete color pipelines and 2,112 film/frame/orientation combinations. See the [feature map](docs/FEATURE-PARITY.md) and [delivery inventory](docs/DELIVERY.md).

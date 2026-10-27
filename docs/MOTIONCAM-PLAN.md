@@ -19,18 +19,18 @@ Core Image, or device capture validation from a simulator.
 
 ## Implementation and verification
 
-- [ ] Recover constants, exposure ramp, frame-merge thresholds, grading equations,
+- [x] Recover constants, exposure ramp, frame-merge thresholds, grading equations,
   focus state machine, histogram estimation and orientation hysteresis as Swift models.
-- [ ] Add tests for boundary conditions, serialization/migration and corrupt inputs.
+- [x] Add tests for boundary conditions, serialization/migration and corrupt inputs.
   Execute tests on GitHub Actions macOS, including a failing baseline before implementation.
-- [ ] Integrate grade-before-film processing across preview, stills and video export.
+- [x] Integrate grade-before-film processing across preview, stills and video export.
   Add live clipping/focus peaking and RAW still capture with capability checks.
-- [ ] Add bounded burst/night capture and timelapse recording with cancellation,
+- [x] Add bounded burst/night capture and timelapse recording with cancellation,
   storage/memory limits and Core Motion/Gyroflow sidecars.
-- [ ] Add checked container reading, RAW unpacking, DNG output, scrub/trim,
+- [x] Add checked container reading, RAW unpacking, DNG output, scrub/trim,
   photo-from-video and video export through a RAW workspace.
-- [ ] Document exact logic, native adaptations and unsupported operations honestly.
-- [ ] Review changes and run device build, simulator unit/UI tests and original film
+- [x] Document exact logic, native adaptations and unsupported operations honestly.
+- [x] Review changes and run device build, simulator unit/UI tests and original film
   parity regression tests in GitHub Actions. Fix failures and record final run evidence.
 - [ ] Merge verified integration into the repository default branch.
 

@@ -1,4 +1,33 @@
-# Expanded validation
+# Validation
+
+## MotionCam integration
+
+Verified source: `9d96bebba9db79ad8c7b69c6ea64bb4c4789a6b3`.
+[Integration Actions run](https://github.com/azerish25-ux/film-camera/actions/runs/40419151881).
+
+Succeeded: unsigned iPhone build, all **30 focused tests**, independent Python
+ZIP64 validation and all **32 original film regressions** (62 simulator tests,
+zero failures). The workflow saved its tested Xcode project in commit
+`615e75fd7e35bd9c5186831753da73341e30dc07` and uploaded the application/test artifacts.
+The automatic main-branch workflow will additionally regenerate Android references.
+
+The focused suite covers recovered exposure/slider/focus/orientation/Gyroflow logic,
+all codec-6 modes and packed RAW, malformed containers, DNG development, saved jobs,
+RAW journals, original DNG identity, sensor-time movies/PCM trim and two workspace UI
+flows. The large 4032x3024 RAW/de-squeeze regression exercises 4K movie export.
+The selected output bounds are applied before film GPU allocation at both frame paths.
+
+Independent Python validation opens the CinemaDNG ZIP64 fixture and checks its DNG
+entries, checksums and PCM sidecar. Simulator screenshots of mcraw frame development
+and native sequence export were visually inspected.
+
+Review found geometry-budget and malformed gyro-origin cases; both have fixes and
+regressions. The exact final fix was independently reviewed with no actionable issues.
+Physical camera capture/cadence, microphones and IMU sensors are outside simulator
+coverage. [Implementation fidelity and limits](MOTIONCAM-INTEGRATION.md) distinguish
+recovered equations from Apple processing adaptations.
+
+## Original film port baseline
 
 Verified runtime/test/project commit: 869c9534e7a062ec3fd32fe0568be9f7f2b690a5. Later documentation-only commits preserve that tested source.
 

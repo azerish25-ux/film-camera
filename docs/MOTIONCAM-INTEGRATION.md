@@ -127,3 +127,10 @@ The [published decoder](https://github.com/mirsadm/motioncam-decoder) was consul
 for packing and metadata; its C++ is not bundled or linked.
 The [additional Ghidra audit](motioncam/METADATA-AUDIT.md) verifies actual APK
 illuminant labels and RAW level accessors.
+
+
+[Verified integration run](https://github.com/azerish25-ux/film-camera/actions/runs/40419151881):
+unsigned iPhone build, 30 focused simulator tests, independent Python ZIP64 validation
+and 32 original film regressions passed with zero failures. The generated tested
+project is committed. Workspace/export simulator screenshots were visually inspected.
+See [validation evidence](VALIDATION.md) and [delivery inventory](DELIVERY.md).

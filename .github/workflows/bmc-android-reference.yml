@@ -1,7 +1,7 @@
 name: BMC Android shader reference
 on:
   push:
-    branches: [bmc-integration]
+    branches: [bmc-integration, diagnostics/bmc-luminance]
     paths: ['Reference/BMC/**', 'scripts/bmc-reference/**', 'FilmCamera/App.swift', 'FilmCamera/BMCMonitor.swift', 'FilmCamera/BMCFocus.swift', 'FilmCamera/Resources/BMC/**', 'project.yml', '.github/workflows/bmc-android-reference.yml']
   workflow_dispatch:
 permissions:
@@ -63,6 +63,12 @@ jobs:
           xcrun simctl boot "$DEVICE" || true
           xcrun simctl bootstatus "$DEVICE" -b
           xcodebuild -quiet -parallel-testing-enabled NO -scheme FilmCamera -destination "platform=iOS Simulator,id=$DEVICE" -derivedDataPath build/bmc-comparison -resultBundlePath build/BMCComparison.xcresult -only-testing:FilmCameraTests/BMCReferenceTests CODE_SIGNING_ALLOWED=NO test 2>&1 | tee bmc-comparison.log
+      - name: Show comparison test summary
+        if: always()
+        run: |
+          if [ -d build/BMCComparison.xcresult ]; then
+            xcrun xcresulttool get test-results summary --path build/BMCComparison.xcresult || true
+          fi
       - uses: actions/upload-artifact@v4
         if: always()
         with:
@@ -71,3 +77,4 @@ jobs:
             build/BMCComparison.xcresult
             bmc-comparison.log
           retention-days: 14
+

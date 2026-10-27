@@ -150,8 +150,22 @@ actor BMCRemoteSignalingSession {
     }
 
     func close() async {
+        let shouldSendBye = state == .authorized && !sending
         state = .closed
-        await channel.close()
+        if shouldSendBye,
+           let data = try? JSONEncoder().encode(BMCSignalingMessage.bye("app_suspended")),
+           let text = String(data: data, encoding: .utf8) {
+            let channel = self.channel
+            await withTaskGroup(of: Void.self) { group in
+                group.addTask { _ = try? await channel.send(text: text) }
+                group.addTask { _ = try? await Task.sleep(nanoseconds: 1_000_000_000) }
+                _ = await group.next()
+                group.cancelAll()
+                await channel.close()
+            }
+        } else {
+            await channel.close()
+        }
     }
 }
 

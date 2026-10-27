@@ -5,6 +5,9 @@ private struct CatalogEntry: Decodable { let id: UUID; let dimension: Int; let f
 
 @main struct PureLogicMain {
     static func main() throws {
+        var checksum = BMCMediaChecksum()
+        checksum.update(Data("1234".utf8)); checksum.update(Data("56789".utf8))
+        precondition(checksum.value == 0xcbf43926)
         let oldSlate = Data(#"{"project":"P","reel":"","scene":"","take":"","camera":"","director":"","cameraOperator":"","notes":""}"#.utf8)
         var slate = try JSONDecoder().decode(BMCSlate.self, from: oldSlate)
         precondition(slate.project == "P" && slate.dayNight == nil && slate.goodTake == nil)

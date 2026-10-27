@@ -2,7 +2,7 @@ name: BMC portable Swift validation
 on:
   push:
     branches: [bmc-integration]
-    paths: ['FilmCamera/App.swift', 'FilmCamera/BMCSlate.swift', 'FilmCamera/BMCAudioMeter.swift', 'FilmCamera/BMCTimecode.swift', 'FilmCamera/BMCSignaling.swift', 'FilmCamera/Resources/BMCLUTs/**', 'scripts/bmc-pure/PureLogicMain.swift', '.github/workflows/bmc-pure-validation.yml']
+    paths: ['FilmCamera/App.swift', 'FilmCamera/BMCSlate.swift', 'FilmCamera/BMCMediaChecksum.swift', 'FilmCamera/BMCAudioMeter.swift', 'FilmCamera/BMCTimecode.swift', 'FilmCamera/BMCSignaling.swift', 'FilmCamera/Resources/BMCLUTs/**', 'scripts/bmc-pure/PureLogicMain.swift', '.github/workflows/bmc-pure-validation.yml']
   workflow_dispatch:
 permissions:
   contents: read
@@ -19,5 +19,5 @@ jobs:
       - name: Compile and exercise portable logic
         run: |
           swiftc -frontend -parse FilmCamera/App.swift
-          swiftc -swift-version 5 FilmCamera/BMCSlate.swift FilmCamera/BMCAudioMeter.swift FilmCamera/BMCTimecode.swift FilmCamera/BMCSignaling.swift scripts/bmc-pure/PureLogicMain.swift -o /tmp/bmc-pure-check
+          swiftc -swift-version 5 FilmCamera/BMCSlate.swift FilmCamera/BMCMediaChecksum.swift FilmCamera/BMCAudioMeter.swift FilmCamera/BMCTimecode.swift FilmCamera/BMCSignaling.swift scripts/bmc-pure/PureLogicMain.swift -o /tmp/bmc-pure-check
           /tmp/bmc-pure-check

@@ -1,0 +1,40 @@
+name: BMC WebSocket loopback diagnostic
+on:
+  push:
+    branches: [diagnostics/bmc-websocket-loopback]
+permissions:
+  contents: read
+jobs:
+  simulator:
+    runs-on: macos-15
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - name: Generate project and run loopback test
+        run: |
+          set -o pipefail
+          cp scripts/bmc-signaling/BMCWebSocketLoopbackTests.swift FilmCameraTests/
+          brew install xcodegen
+          xcodegen generate
+          python3 scripts/bmc-signaling/loopback.py > loopback.log 2>&1 &
+          SERVER_PID=$!
+          trap 'kill "$SERVER_PID" 2>/dev/null || true' EXIT
+          for i in $(seq 1 30); do grep -q ready loopback.log && break; sleep 1; done
+          grep -q ready loopback.log
+          DEVICE=$(xcrun simctl list devices available -j | python3 -c 'import json,sys; d=json.load(sys.stdin); print(next(x["udid"] for group in d["devices"].values() for x in group if "iPhone" in x["name"]))')
+          xcrun simctl boot "$DEVICE" || true
+          xcrun simctl bootstatus "$DEVICE" -b
+          xcodebuild -quiet -parallel-testing-enabled NO -scheme FilmCamera -destination "platform=iOS Simulator,id=$DEVICE" -derivedDataPath build/loopback -resultBundlePath build/Loopback.xcresult -only-testing:FilmCameraTests/BMCWebSocketLoopbackTests CODE_SIGNING_ALLOWED=NO test 2>&1 | tee loopback-test.log
+      - name: Show diagnostics
+        if: always()
+        run: |
+          cat loopback.log || true
+          if [ -d build/Loopback.xcresult ]; then xcrun xcresulttool get test-results summary --path build/Loopback.xcresult || true; fi
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: bmc-websocket-loopback
+          path: |
+            loopback.log
+            loopback-test.log
+            build/Loopback.xcresult

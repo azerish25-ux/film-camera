@@ -16,6 +16,11 @@ targets:
   FilmCamera:
     type: application
     platform: iOS
+    info:
+      path: FilmCamera/LoopbackInfo.plist
+      properties:
+        NSAppTransportSecurity:
+          NSAllowsLocalNetworking: true
     sources:
       - path: FilmCamera
         excludes: [Resources/BMC/rec709-luminance.bin, Resources/BMCLUTs/**]

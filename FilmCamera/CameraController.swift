@@ -67,7 +67,8 @@ final class CameraController: NSObject, ObservableObject, AVCaptureVideoDataOutp
     private var lut: CubeLUT?
     private var snapshot: (FilmSettings,CubeLUT?) = (FilmSettings(),nil)
     private var onPhoto: ((UIImage) -> Void)?
-    var onMovie: ((URL,FilmSettings,CubeLUT?) -> Void)?
+    var onMovie: ((URL,FilmSettings,CubeLUT?,Date?) -> Void)?
+    private var recordingStartDates: [URL: Date] = [:]
     private var lastFrame = CMTime.zero
     private var zebraShift = 0
     private var statistics = MotionStatistics()
@@ -302,14 +303,19 @@ final class CameraController: NSObject, ObservableObject, AVCaptureVideoDataOutp
     func photoOutput(_ output: AVCapturePhotoOutput,didFinishCaptureFor resolvedSettings:AVCaptureResolvedPhotoSettings,error:Error?) {
         queue.async {if self.handleRawCaptureFinished(resolvedSettings,error:error) {return}; self.photoInFlight = false; self.rawDestination = nil; self.onPhoto = nil; if let error {self.report(error)}; DispatchQueue.main.async {self.processing = false}}
     }
+    func fileOutput(_ output: AVCaptureFileOutput, didStartRecordingTo fileURL: URL, from connections: [AVCaptureConnection]) {
+        let started = Date()
+        lock.lock(); recordingStartDates[fileURL] = started; lock.unlock()
+    }
     func fileOutput(_ output: AVCaptureFileOutput, didFinishRecordingTo outputFileURL: URL, from connections: [AVCaptureConnection], error: Error?) {
         queue.async {
         if self.logging {self.logging = false; do {try self.motionLogger.finish(to:outputFileURL.deletingPathExtension().appendingPathExtension("gcsv"))} catch {self.report(error)}}
         let saved = self.snapshot
+        self.lock.lock(); let started = self.recordingStartDates.removeValue(forKey: outputFileURL); self.lock.unlock()
         DispatchQueue.main.async {
             self.recording = false
             if let error, (error as NSError).userInfo[AVErrorRecordingSuccessfullyFinishedKey] as? Bool != true { self.message = error.localizedDescription; try? FileManager.default.removeItem(at:outputFileURL) }
-            else { self.onMovie?(outputFileURL,saved.0,saved.1) }
+            else { self.onMovie?(outputFileURL,saved.0,saved.1,started) }
         }
         }
     }
@@ -395,3 +401,4 @@ final class CameraController: NSObject, ObservableObject, AVCaptureVideoDataOutp
         }
     }
 }
+

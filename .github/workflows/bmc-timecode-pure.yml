@@ -1,0 +1,17 @@
+name: BMC timecode portable diagnostic
+on:
+  push:
+    branches: [diagnostics/bmc-timecode-pure]
+permissions:
+  contents: read
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    container: swift:6.0
+    steps:
+      - uses: actions/checkout@v4
+      - name: Parse capture source and test time calculation
+        run: |
+          swiftc -frontend -parse FilmCamera/App.swift FilmCamera/CameraController.swift
+          swiftc -swift-version 5 FilmCamera/BMCTimecode.swift scripts/bmc-timecode/Check.swift -o /tmp/bmc-timecode-check
+          /tmp/bmc-timecode-check

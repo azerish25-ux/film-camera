@@ -723,6 +723,7 @@
 		6203512AF2CD60BB39564592 /* film-32-grain.rgba in Resources */ = {isa = PBXBuildFile; fileRef = A16DE01288990FEC7DD4A047 /* film-32-grain.rgba */; };
 		6238240F9ACC683115835D0E /* film-36-p1-s0.rgba in Resources */ = {isa = PBXBuildFile; fileRef = E6C139E5EDF1F036AF2E9F2D /* film-36-p1-s0.rgba */; };
 		6262D0F11B94E18E3614CCD9 /* film-47-p2-s0.7.rgba in Resources */ = {isa = PBXBuildFile; fileRef = F14AF44FCF96555939E76D66 /* film-47-p2-s0.7.rgba */; };
+		627400B85F434F55875EFBFA /* BMCMediaChecksum.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9457F96E214763456C29A723 /* BMCMediaChecksum.swift */; };
 		62CA9CEF5CC59B423E52EE1E /* film-48-grain.rgba in Resources */ = {isa = PBXBuildFile; fileRef = 3CA9030C3732EC8392EF894C /* film-48-grain.rgba */; };
 		62EEC7245143B2B3607769A5 /* grain-size-step-026.rgba in Resources */ = {isa = PBXBuildFile; fileRef = 5293198E2FECB94CDD7FE2B0 /* grain-size-step-026.rgba */; };
 		62F7F30BED6DFF30C1057B49 /* e712beaec05294da.rgba in Resources */ = {isa = PBXBuildFile; fileRef = 0BA7001C9DBC383397610BFD /* e712beaec05294da.rgba */; };
@@ -1613,6 +1614,7 @@
 		DE39A77FE188149BDDFEE830 /* film-45-grain.rgba in Resources */ = {isa = PBXBuildFile; fileRef = B2EF94E458B96E396CAC383C /* film-45-grain.rgba */; };
 		DE55CEFD2E84EFD4F4006360 /* gate-arri-frame.rgba in Resources */ = {isa = PBXBuildFile; fileRef = A449B9FDDF35DB202669646F /* gate-arri-frame.rgba */; };
 		DEA628EF451D85929646BDF5 /* film-33-p1-s1.rgba in Resources */ = {isa = PBXBuildFile; fileRef = 1F688450F1557BBA04B30B2B /* film-33-p1-s1.rgba */; };
+		DEB4C08E06F03EC6D1385BDF /* media_sync.pb.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3B5148ABE0001FF166D1DAAB /* media_sync.pb.swift */; };
 		DED6CC7324240D634D7624EC /* film-13-p2-s0.7.rgba in Resources */ = {isa = PBXBuildFile; fileRef = 6CA80B88B93642B587B5AD9F /* film-13-p2-s0.7.rgba */; };
 		DEDA0DDE9B07FCF16114D004 /* actual-mask-super16-0.rgba in Resources */ = {isa = PBXBuildFile; fileRef = 444E7F679FC451907F73F154 /* actual-mask-super16-0.rgba */; };
 		DF66D0631DF0A9E2EBCD0671 /* film-59-p1-s0.7.rgba in Resources */ = {isa = PBXBuildFile; fileRef = E94377C075153AE2BEF4F7ED /* film-59-p1-s0.7.rgba */; };
@@ -1646,6 +1648,7 @@
 		E361E2D2D62F23DC0A654EDE /* film-27-p1-s1.rgba in Resources */ = {isa = PBXBuildFile; fileRef = 0DDC59BE5327F2E4F8496B9F /* film-27-p1-s1.rgba */; };
 		E3B90A8BBC7CB47D08A46F6B /* BMCLUTCatalog.swift in Sources */ = {isa = PBXBuildFile; fileRef = 94AB97B0EF4673AF2B6F6EA0 /* BMCLUTCatalog.swift */; };
 		E3C17C8EAEBB6885B5EDC875 /* film-01-p1-s0.rgba in Resources */ = {isa = PBXBuildFile; fileRef = 37BC431303153E8844A7BBCA /* film-01-p1-s0.rgba */; };
+		E3D8E12A25F6ECF760489ACC /* BMCMediaChecksumTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7FF8276E3DE42958F32F6425 /* BMCMediaChecksumTests.swift */; };
 		E425BEC6E62E7FB309EBEE90 /* 21ab28122f7a85d43efeef59a8aeb7dba37ca68c.lut in Resources */ = {isa = PBXBuildFile; fileRef = CB836BAA3242F3A9A4D9B2CE /* 21ab28122f7a85d43efeef59a8aeb7dba37ca68c.lut */; };
 		E441316502116A13F2D26AF4 /* film-43-p0-s1.rgba in Resources */ = {isa = PBXBuildFile; fileRef = 88E3131C1BEBB7B8C47AE66C /* film-43-p0-s1.rgba */; };
 		E44A6D910AC4A58875DA999F /* film-56-p1-s2.rgba in Resources */ = {isa = PBXBuildFile; fileRef = B298054F13ECC1C7B51C68C6 /* film-56-p1-s2.rgba */; };
@@ -2310,6 +2313,7 @@
 		3B3F5EBC5E7F4229E504B54E /* film-86-p1-s0.rgba */ = {isa = PBXFileReference; path = "film-86-p1-s0.rgba"; sourceTree = "<group>"; };
 		3B44A09B865876F90343DF79 /* film-26-p1-s1.rgba */ = {isa = PBXFileReference; path = "film-26-p1-s1.rgba"; sourceTree = "<group>"; };
 		3B50FEC5E4EE503C03F35ABA /* film-72-p2-s0.rgba */ = {isa = PBXFileReference; path = "film-72-p2-s0.rgba"; sourceTree = "<group>"; };
+		3B5148ABE0001FF166D1DAAB /* media_sync.pb.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = media_sync.pb.swift; sourceTree = "<group>"; };
 		3B6D9BB4E34F03BABC855228 /* film-32-p0-s1.rgba */ = {isa = PBXFileReference; path = "film-32-p0-s1.rgba"; sourceTree = "<group>"; };
 		3BB5D9504A446EF78AB926F3 /* chain-film-49.rgba */ = {isa = PBXFileReference; path = "chain-film-49.rgba"; sourceTree = "<group>"; };
 		3BD362F84EB7A631922E3521 /* c_f25852e.glsl */ = {isa = PBXFileReference; path = c_f25852e.glsl; sourceTree = "<group>"; };
@@ -2813,6 +2817,7 @@
 		7FC4AEE3906B9FB1D2B76DC5 /* film-76-scene.rgba */ = {isa = PBXFileReference; path = "film-76-scene.rgba"; sourceTree = "<group>"; };
 		7FE156876D7CF4267F932C33 /* grain-size-step-049.rgba */ = {isa = PBXFileReference; path = "grain-size-step-049.rgba"; sourceTree = "<group>"; };
 		7FEB458088843BDCE62B689B /* film-52-p0-s1.rgba */ = {isa = PBXFileReference; path = "film-52-p0-s1.rgba"; sourceTree = "<group>"; };
+		7FF8276E3DE42958F32F6425 /* BMCMediaChecksumTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BMCMediaChecksumTests.swift; sourceTree = "<group>"; };
 		803AB2FAC3034C3DCE9037D9 /* film-09-p2-s2.rgba */ = {isa = PBXFileReference; path = "film-09-p2-s2.rgba"; sourceTree = "<group>"; };
 		804FA7C8CA4C34555E9B2861 /* film-36-p1-s0.7.rgba */ = {isa = PBXFileReference; path = "film-36-p1-s0.7.rgba"; sourceTree = "<group>"; };
 		8061293C18AA8E26C38A2447 /* film-76-p0-s0.7.rgba */ = {isa = PBXFileReference; path = "film-76-p0-s0.7.rgba"; sourceTree = "<group>"; };
@@ -2960,6 +2965,7 @@
 		94124720C30B5C4BE6F83616 /* film-77-grain.rgba */ = {isa = PBXFileReference; path = "film-77-grain.rgba"; sourceTree = "<group>"; };
 		9414479CF568CF1B0480C0ED /* halation-intensity-0.rgba */ = {isa = PBXFileReference; path = "halation-intensity-0.rgba"; sourceTree = "<group>"; };
 		9453E546CAABA3824E3A8CFF /* film-57-p2-s2.rgba */ = {isa = PBXFileReference; path = "film-57-p2-s2.rgba"; sourceTree = "<group>"; };
+		9457F96E214763456C29A723 /* BMCMediaChecksum.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BMCMediaChecksum.swift; sourceTree = "<group>"; };
 		945C06E9C78651416BD07338 /* chain-film-57.rgba */ = {isa = PBXFileReference; path = "chain-film-57.rgba"; sourceTree = "<group>"; };
 		9462AA2AE75C201D523FAC87 /* film-74-grain.rgba */ = {isa = PBXFileReference; path = "film-74-grain.rgba"; sourceTree = "<group>"; };
 		9481E7FB4B1D9BB74ECDA43B /* chain-film-39.rgba */ = {isa = PBXFileReference; path = "chain-film-39.rgba"; sourceTree = "<group>"; };
@@ -3827,6 +3833,7 @@
 				D4ECFF90280BFFBD3FAD1F93 /* BMCGuideTests.swift */,
 				8B3B11FB62029EB0F95E2504 /* BMCHandshakeTests.swift */,
 				E4C6105589C5161BC5604A5C /* BMCLUTTests.swift */,
+				7FF8276E3DE42958F32F6425 /* BMCMediaChecksumTests.swift */,
 				50A87C4AC007DA1DD7A57B30 /* BMCMonitorTests.swift */,
 				29528825ABC287357DF0A5FF /* BMCMovieCodecTests.swift */,
 				013F99253035B3AE5C039AD5 /* BMCProtocolTests.swift */,
@@ -3973,6 +3980,7 @@
 				2BC2390DBA26EA87DC05ACBB /* camera_control.pb.swift */,
 				058D57DEE57A03E1E919653F /* common.pb.swift */,
 				6958C6E6D605A6ED2885C74E /* main_messages.pb.swift */,
+				3B5148ABE0001FF166D1DAAB /* media_sync.pb.swift */,
 				AE61E1BDAA11F2CD4B3866B5 /* settings.pb.swift */,
 			);
 			path = BMCProtocol;
@@ -4001,6 +4009,7 @@
 				DA5CCF3E86F429203EC06FC1 /* BMCFocus.swift */,
 				ABCF90137E1D22451093BD0F /* BMCGuides.swift */,
 				94AB97B0EF4673AF2B6F6EA0 /* BMCLUTCatalog.swift */,
+				9457F96E214763456C29A723 /* BMCMediaChecksum.swift */,
 				C820AE9B838CCBEBB27BAD8B /* BMCMonitor.swift */,
 				C5020E7F6B4C42373F7AA8C7 /* BMCMovieCodec.swift */,
 				9C02DED520F0B4A642D50C80 /* BMCRemoteAuthentication.swift */,
@@ -7570,6 +7579,7 @@
 				3820B8EF3BF0790090E9871B /* BMCGuideTests.swift in Sources */,
 				8FA5863327E60DECB92099C4 /* BMCHandshakeTests.swift in Sources */,
 				F4EBE5F968FA1604E9353E4C /* BMCLUTTests.swift in Sources */,
+				E3D8E12A25F6ECF760489ACC /* BMCMediaChecksumTests.swift in Sources */,
 				CD8D70DCCC1AAD193C563168 /* BMCMonitorTests.swift in Sources */,
 				84DC197459B65899410DAD0D /* BMCMovieCodecTests.swift in Sources */,
 				D8EB98142CAFAAB46A097304 /* BMCProtocolTests.swift in Sources */,
@@ -7600,6 +7610,7 @@
 				FC81189B950D7E74ADDDBC5B /* BMCFocus.swift in Sources */,
 				E20AA045E3E20EAD266ABDB7 /* BMCGuides.swift in Sources */,
 				E3B90A8BBC7CB47D08A46F6B /* BMCLUTCatalog.swift in Sources */,
+				627400B85F434F55875EFBFA /* BMCMediaChecksum.swift in Sources */,
 				0470F434D0E403682CF5B858 /* BMCMonitor.swift in Sources */,
 				459818701FEE0A761984BA75 /* BMCMovieCodec.swift in Sources */,
 				375531B039531FC567FD389B /* BMCRemoteAuthentication.swift in Sources */,
@@ -7656,6 +7667,7 @@
 				C52A8B8E76586FF1B1E2EFA1 /* camera_control.pb.swift in Sources */,
 				A86CA8069E94664A64FC5CB3 /* common.pb.swift in Sources */,
 				226D8C118D895DF9056AA5EA /* main_messages.pb.swift in Sources */,
+				DEB4C08E06F03EC6D1385BDF /* media_sync.pb.swift in Sources */,
 				7E58A07DCFF029813482B60D /* settings.pb.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

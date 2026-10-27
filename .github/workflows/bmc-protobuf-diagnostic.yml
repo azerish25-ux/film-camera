@@ -27,10 +27,12 @@ jobs:
           cat > /tmp/bmc-check/Package.swift <<'EOF'
           // swift-tools-version: 5.9
           import PackageDescription
-          let package = Package(name: "BMCProtocolCheck", dependencies: [.package(path: "../swift-protobuf")], targets: [.target(name: "BMCProtocolCheck", dependencies: [.product(name: "SwiftProtobuf", package: "swift-protobuf")], path: "Generated")])
+          let package = Package(name: "BMCProtocolCheck", dependencies: [.package(path: "../swift-protobuf")], targets: [.target(name: "BMCProtocolCheck", dependencies: [.product(name: "SwiftProtobuf", package: "swift-protobuf")], path: "Generated"), .testTarget(name: "BMCProtocolTests", dependencies: ["BMCProtocolCheck", .product(name: "SwiftProtobuf", package: "swift-protobuf")], path: "Tests")])
           EOF
+          mkdir -p /tmp/bmc-check/Tests
+          cp scripts/bmc-protobuf/ProtocolTests.swift /tmp/bmc-check/Tests/
           cd /tmp/bmc-check
-          swift build
+          swift test
           cp -R Generated "$GITHUB_WORKSPACE/bmc-protobuf-generated"
       - uses: actions/upload-artifact@v4
         if: always()

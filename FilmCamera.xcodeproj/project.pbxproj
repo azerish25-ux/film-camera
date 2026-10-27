@@ -132,6 +132,7 @@
 		1247A3AD2456F2E15B75B938 /* film-52-p2-s2.rgba in Resources */ = {isa = PBXBuildFile; fileRef = 84B89D551A67980FDA72BC0D /* film-52-p2-s2.rgba */; };
 		126BEE82F118FF8367A4BFF7 /* film-12-p2-s2.rgba in Resources */ = {isa = PBXBuildFile; fileRef = 3FFA2B69CFAC48098BC2B47C /* film-12-p2-s2.rgba */; };
 		12B01AA8DA245F98E45934CB /* film-41-p0-s0.7.rgba in Resources */ = {isa = PBXBuildFile; fileRef = AD93FC8C2C2A97CB455318B8 /* film-41-p0-s0.7.rgba */; };
+		12CBE0EE9EC81F7F8BC69EA6 /* BMCControlMessages.swift in Sources */ = {isa = PBXBuildFile; fileRef = 09A5F7EFEE367DA0583D12E9 /* BMCControlMessages.swift */; };
 		135E03E574F6A25EB8B94395 /* MotionExportTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 651F926015851C2DE35EABD4 /* MotionExportTests.swift */; };
 		1360D515E54920AE10A4DB70 /* film-34-p0-s0.7.rgba in Resources */ = {isa = PBXBuildFile; fileRef = E067535DB7B87885A581C418 /* film-34-p0-s0.7.rgba */; };
 		137B2C001FF2F6384DB3D9CC /* b833133329414f5181a511f19291c26e44c122f9.lut in Resources */ = {isa = PBXBuildFile; fileRef = 71D28F83900E322EE9C43A5D /* b833133329414f5181a511f19291c26e44c122f9.lut */; };
@@ -1923,6 +1924,7 @@
 		09548DDAF2C3EF62ED69ED79 /* e1df43b69de5065e2768a70e512f2d2df0b19e6f.lut */ = {isa = PBXFileReference; path = e1df43b69de5065e2768a70e512f2d2df0b19e6f.lut; sourceTree = "<group>"; };
 		0991947030D0A99163351FF0 /* a_unassigned9.glsl */ = {isa = PBXFileReference; path = a_unassigned9.glsl; sourceTree = "<group>"; };
 		0991CBFEC3A534F2368DF6EF /* 7c36d183a92f169de2b8266740d1f4ce82b6a848.lut */ = {isa = PBXFileReference; path = 7c36d183a92f169de2b8266740d1f4ce82b6a848.lut; sourceTree = "<group>"; };
+		09A5F7EFEE367DA0583D12E9 /* BMCControlMessages.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BMCControlMessages.swift; sourceTree = "<group>"; };
 		09DA4A6B50CDEC753A24ABF7 /* film-87-p2-s0.7.rgba */ = {isa = PBXFileReference; path = "film-87-p2-s0.7.rgba"; sourceTree = "<group>"; };
 		09E0E0E55F9F8569BEDF56D4 /* halation-radius-10.5.rgba */ = {isa = PBXFileReference; path = "halation-radius-10.5.rgba"; sourceTree = "<group>"; };
 		0A0638D935DBBEFD3152BF8A /* film-42-p2-s0.rgba */ = {isa = PBXFileReference; path = "film-42-p2-s0.rgba"; sourceTree = "<group>"; };
@@ -3990,6 +3992,7 @@
 				A155560A613FEF522BE01C70 /* Assets.xcassets */,
 				E3A9A7FE7C4A5D59151ED064 /* BMCAudioMeter.swift */,
 				8C16219D3F15A964CE57E7AB /* BMCClientHandshake.swift */,
+				09A5F7EFEE367DA0583D12E9 /* BMCControlMessages.swift */,
 				DA5CCF3E86F429203EC06FC1 /* BMCFocus.swift */,
 				ABCF90137E1D22451093BD0F /* BMCGuides.swift */,
 				94AB97B0EF4673AF2B6F6EA0 /* BMCLUTCatalog.swift */,
@@ -7586,6 +7589,7 @@
 				9DD73E14E7D3D6787B5E97FE /* App.swift in Sources */,
 				94A0A02D156985D6301396AD /* BMCAudioMeter.swift in Sources */,
 				90C7C16ED5F34E0B985B2FFC /* BMCClientHandshake.swift in Sources */,
+				12CBE0EE9EC81F7F8BC69EA6 /* BMCControlMessages.swift in Sources */,
 				FC81189B950D7E74ADDDBC5B /* BMCFocus.swift in Sources */,
 				E20AA045E3E20EAD266ABDB7 /* BMCGuides.swift in Sources */,
 				E3B90A8BBC7CB47D08A46F6B /* BMCLUTCatalog.swift in Sources */,

@@ -14,8 +14,10 @@ targets:
     platform: iOS
     sources:
       - path: FilmCamera
-        excludes: [Resources/BMC/rec709-luminance.bin]
+        excludes: [Resources/BMC/rec709-luminance.bin, Resources/BMCLUTs/**]
       - path: FilmCamera/Resources/BMC/rec709-luminance.bin
+        buildPhase: resources
+      - path: FilmCamera/Resources/BMCLUTs
         buildPhase: resources
     settings:
       base:

@@ -31,7 +31,13 @@ struct AdjustmentsView: View {
             Picker("LUT",selection:$store.state.settings.lutID) {
                 Text("None").tag(nil as UUID?)
                 ForEach(store.state.luts) {Text($0.name).tag(Optional($0.id))}
+                ForEach(BMCLUTCatalog.profiles,id:\.self) { profile in
+                    Section("BMC \(profile)") {
+                        ForEach(BMCLUTCatalog.all.filter { $0.profile == profile }) {Text($0.name).tag(Optional($0.id))}
+                    }
+                }
             }
+            Text("BMC LUT profile conversion is not automatic; choose a table suited to your source.").font(.caption).foregroundStyle(.secondary)
             DisclosureGroup("Characteristic curve") {
                 CurvePlot(x:store.state.settings.curveX,y:store.state.settings.curveY)
                 ForEach(0..<6,id:\.self) {index in

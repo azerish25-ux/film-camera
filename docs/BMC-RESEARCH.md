@@ -77,6 +77,15 @@ and `_B` directives as well as `DOMAIN_MIN` and `DOMAIN_MAX`. The current
 Swift parser rejects the former. Its normalization and interpolation must be
 traced and tested against actual APK output before claiming LUT import parity.
 
+The APK bundles 41 named 33³ RGBA lookup tables: 10 each for Rec. 709, P3 D65
+and Rec. 2020, plus 11 for Samsung Log HDR. Their serialized records declare no
+1D table and no input/output video-range flag. A local Swift catalog now exposes
+the extracted tables with stable IDs and SHA-256 checks, without serializing
+the cube data into user settings. The existing film renderer resamples custom
+tables to 64³ and does not automatically convert the selected profile, so
+this integration is not yet a pixel-identical BMC LUT pipeline. Catalog and
+restoration tests are awaiting simulator validation.
+
 For native analysis, the D: workspace includes dynamic-symbol inventories for
 all arm64 libraries, including cloud authentication/storage/chat/router,
 streaming, USB, timecode accessories and audio. Exported symbols identify API
@@ -215,6 +224,9 @@ not establish drop-frame or external-device synchronization behavior; those
 paths still require tracing and a round-trip timecode-track test.
 `BMCTimecode` implements the integer starting-frame calculation and big-endian
 sample bytes as a standalone building block.
+Portable Swift workflow 40441277432 passed its calculation, audio-meter and
+signaling-codec checks on Linux. This does not validate the iOS media writer or
+Android interoperability.
 The recorder's `C1170b.m2182a` returns local time-of-day in milliseconds and
 frame zero for both `RECORD_RUN` and `TIME_OF_DAY` in this track-generation
 path; the Tentacle branch instead queries the synchronized device and may

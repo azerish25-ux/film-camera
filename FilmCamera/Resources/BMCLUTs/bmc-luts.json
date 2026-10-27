@@ -1,0 +1,330 @@
+[
+  {
+    "id": "50f3e7f8-c995-3277-2e32-c4100cdf1816",
+    "profile": "P3_D65",
+    "name": "Cinema Teal",
+    "file": "50f3e7f8c9953277.rgba",
+    "dimension": 33,
+    "sha256": "6d6519cb659594e27d0401a4e3959846c64894532764a2f729de066fb2634f33"
+  },
+  {
+    "id": "50d2e9e3-c58f-ab6c-d688-13c6b6ffbae4",
+    "profile": "P3_D65",
+    "name": "Day Night",
+    "file": "50d2e9e3c58fab6c.rgba",
+    "dimension": 33,
+    "sha256": "ca92deee9af1c6bba0320f17efc6c8d5deebaa9d7c78f1c05693d9872786d550"
+  },
+  {
+    "id": "5c2cdba9-3452-4035-9637-c38b57932aab",
+    "profile": "P3_D65",
+    "name": "Dusty",
+    "file": "5c2cdba934524035.rgba",
+    "dimension": 33,
+    "sha256": "ad72bb80ce205b4efbf992778fa2d1b8d6a3ab9adcae40e5d1eb8630ee1428e1"
+  },
+  {
+    "id": "d2c53d35-c394-b2f5-3d4e-caf762014db3",
+    "profile": "P3_D65",
+    "name": "Monochrome",
+    "file": "d2c53d35c394b2f5.rgba",
+    "dimension": 33,
+    "sha256": "aa8ba87a2d576309cae562e6da5b3698f60d3a1cec28054ae49a5a5de111721d"
+  },
+  {
+    "id": "8ec52818-9437-ae33-719f-99bba405ca4d",
+    "profile": "P3_D65",
+    "name": "Nature",
+    "file": "8ec528189437ae33.rgba",
+    "dimension": 33,
+    "sha256": "c9d0fbe30acc4105ede6277b358db04931f742091abf77aa268016f272bda3b5"
+  },
+  {
+    "id": "a7d51b83-1905-5d0e-09e0-f4b23c075235",
+    "profile": "P3_D65",
+    "name": "Nostalgic",
+    "file": "a7d51b8319055d0e.rgba",
+    "dimension": 33,
+    "sha256": "20ed3621aacd3a51a24851f575c26425b7a34f87e43e33e17cb0c94d23ca75c0"
+  },
+  {
+    "id": "813b71e4-ea1f-1d5d-516b-a626b4da0aec",
+    "profile": "P3_D65",
+    "name": "Paloma",
+    "file": "813b71e4ea1f1d5d.rgba",
+    "dimension": 33,
+    "sha256": "61b78bd4ce8bbc492f2f8ac4258bc85a66a198a7c8f8dc0d38d03123f6df5216"
+  },
+  {
+    "id": "03095a7f-ecdb-99d5-c44b-153cd3843127",
+    "profile": "P3_D65",
+    "name": "Rift",
+    "file": "03095a7fecdb99d5.rgba",
+    "dimension": 33,
+    "sha256": "bd8580423072b5aa9c2bec33bfb88583d39c5f82f6ce430255429617c1b80595"
+  },
+  {
+    "id": "21e05d4e-318e-1c56-257a-86c4819181e5",
+    "profile": "P3_D65",
+    "name": "Vivid",
+    "file": "21e05d4e318e1c56.rgba",
+    "dimension": 33,
+    "sha256": "cda00127811e64183e74e31844994084f74316ffb0e1bbbba534ccc20ce8fe2f"
+  },
+  {
+    "id": "eb441d0f-ecd9-998c-87ee-6beb8ca201a4",
+    "profile": "P3_D65",
+    "name": "Warm Fade",
+    "file": "eb441d0fecd9998c.rgba",
+    "dimension": 33,
+    "sha256": "4d40d10fd29dac97fa2a61cb941774ee96eb24838cef3e788d21b14b29dcb331"
+  },
+  {
+    "id": "36d0cbe1-ff17-4072-41e0-e20e28c576ac",
+    "profile": "Rec.2020",
+    "name": "Cinema Teal",
+    "file": "36d0cbe1ff174072.rgba",
+    "dimension": 33,
+    "sha256": "6ea86ab02d7abdead62ec48b3a329f9776d3d84cbffd339ee6062487768f95f3"
+  },
+  {
+    "id": "5e7899a7-01fa-9064-9c7c-63e9838187aa",
+    "profile": "Rec.2020",
+    "name": "Day Night",
+    "file": "5e7899a701fa9064.rgba",
+    "dimension": 33,
+    "sha256": "ff6f3165402d4bea0e5553d92ef632bc31d9742645e0b6c44f6c37a7c996ca5c"
+  },
+  {
+    "id": "fbaa1536-03b4-3c9d-85ab-5a09b1d2f584",
+    "profile": "Rec.2020",
+    "name": "Dusty",
+    "file": "fbaa153603b43c9d.rgba",
+    "dimension": 33,
+    "sha256": "8eb949bd737bd36c9c37c02c5787c48d83a4fff3022601b86899e763dfcad2c8"
+  },
+  {
+    "id": "08aef0a4-5ed9-1b69-074d-6c617985b8d0",
+    "profile": "Rec.2020",
+    "name": "Monochrome",
+    "file": "08aef0a45ed91b69.rgba",
+    "dimension": 33,
+    "sha256": "56ab73f287648c94ab40f746aa7999f908d8d7516e58031e375b89c3d4ce1698"
+  },
+  {
+    "id": "6d6fd406-65ae-4ec5-3d06-22afcdbce0a8",
+    "profile": "Rec.2020",
+    "name": "Nature",
+    "file": "6d6fd40665ae4ec5.rgba",
+    "dimension": 33,
+    "sha256": "2992f419eac969ae1f98ebdd9c34f96427843587c7aacc8c6bbc5e8ae4f9664c"
+  },
+  {
+    "id": "9ea7d8c0-9d8f-205b-192d-adc961d3c69b",
+    "profile": "Rec.2020",
+    "name": "Nostalgic",
+    "file": "9ea7d8c09d8f205b.rgba",
+    "dimension": 33,
+    "sha256": "cb7c0124bbbed0bbd358cbf2a45531e0aa6be3daa68b43ee68c4c0503c09890a"
+  },
+  {
+    "id": "21341965-596e-7c50-7118-e8c535e9b5c1",
+    "profile": "Rec.2020",
+    "name": "Paloma",
+    "file": "21341965596e7c50.rgba",
+    "dimension": 33,
+    "sha256": "36ff32326312a6db1c2e9b0c0208998ec5e5dcc3c711816cb1bc3e6f5d9e4735"
+  },
+  {
+    "id": "ac11804b-0da4-8a85-23a2-409b03e7ec0c",
+    "profile": "Rec.2020",
+    "name": "Rift",
+    "file": "ac11804b0da48a85.rgba",
+    "dimension": 33,
+    "sha256": "36e6e5ad9dcc1915ae7d10a85bec327fcafc523f3acbbaecfa1f10897e1f35be"
+  },
+  {
+    "id": "126487ec-9887-9c03-7a32-f04788c85ad2",
+    "profile": "Rec.2020",
+    "name": "Vivid",
+    "file": "126487ec98879c03.rgba",
+    "dimension": 33,
+    "sha256": "40d65d0e08b04f1d57a053e4436b36b196501c9d29d3d72ce57002445b3162d0"
+  },
+  {
+    "id": "e712beae-c052-94da-177d-357e6f5b2660",
+    "profile": "Rec.2020",
+    "name": "Warm Fade",
+    "file": "e712beaec05294da.rgba",
+    "dimension": 33,
+    "sha256": "2ce11c88023a8012137ebf1b3ae00999b00cf48b115541645596f06785380100"
+  },
+  {
+    "id": "9276cd79-2804-9827-f690-42bf4cbaaf96",
+    "profile": "Rec.709",
+    "name": "Cinema Teal",
+    "file": "9276cd7928049827.rgba",
+    "dimension": 33,
+    "sha256": "aef9158b7a3292ca7c163c8494519d7083f88f1b1b35a0abb2e54cfaa080b09e"
+  },
+  {
+    "id": "c9db1a76-3a8f-a18d-a8f6-ac534d182fbd",
+    "profile": "Rec.709",
+    "name": "Day Night",
+    "file": "c9db1a763a8fa18d.rgba",
+    "dimension": 33,
+    "sha256": "c01637e3355313a786db278b17b59594b97ad980eb6979470ae28efcc5787a24"
+  },
+  {
+    "id": "f27f3799-bad7-3477-de45-0ea334f22cb0",
+    "profile": "Rec.709",
+    "name": "Dusty",
+    "file": "f27f3799bad73477.rgba",
+    "dimension": 33,
+    "sha256": "3a3b8faf86187bd837699a68849c523f70f15d54aba7a3e74eb6494428186319"
+  },
+  {
+    "id": "d35e91c8-9881-7b49-40d7-b2cddd4ce49a",
+    "profile": "Rec.709",
+    "name": "Monochrome",
+    "file": "d35e91c898817b49.rgba",
+    "dimension": 33,
+    "sha256": "5054c4d8ebd41f1a111760bdb2f9a99e59ce997d9401dde2975ac79e76af1911"
+  },
+  {
+    "id": "9747b983-7b34-0450-ec7c-1935fb6c2f62",
+    "profile": "Rec.709",
+    "name": "Nature",
+    "file": "9747b9837b340450.rgba",
+    "dimension": 33,
+    "sha256": "cd4a64fed6d420db97cf67fdab27dcb86c41ec31547b97913d58a9b3816914e3"
+  },
+  {
+    "id": "c5ab69b0-e41b-b302-fb4c-8363e0ad46b0",
+    "profile": "Rec.709",
+    "name": "Nostalgic",
+    "file": "c5ab69b0e41bb302.rgba",
+    "dimension": 33,
+    "sha256": "c5e22fd08f876ba454bd3276f37201dd2ec9d8c5122f0b1f7d0197f9dd63414c"
+  },
+  {
+    "id": "cbcf92e8-baea-fad1-47c0-1da29c96ebe9",
+    "profile": "Rec.709",
+    "name": "Paloma",
+    "file": "cbcf92e8baeafad1.rgba",
+    "dimension": 33,
+    "sha256": "7919b92df693915d9750551a7e74fa763140bdccfbf829f7a64bb9ea178822e3"
+  },
+  {
+    "id": "77d43ffe-ab9f-877c-e032-1eba319e01fa",
+    "profile": "Rec.709",
+    "name": "Rift",
+    "file": "77d43ffeab9f877c.rgba",
+    "dimension": 33,
+    "sha256": "0980e56177b980bfb6742f54f317babec402d403924a11000b2dbd95784aa289"
+  },
+  {
+    "id": "346fe166-4024-d676-1786-64529dae461c",
+    "profile": "Rec.709",
+    "name": "Vivid",
+    "file": "346fe1664024d676.rgba",
+    "dimension": 33,
+    "sha256": "85d4a305f3dd9c48d80b19c1958bf435a5cd762a133f5829f5f0e94989db39ee"
+  },
+  {
+    "id": "50d1d31a-243c-7f05-d720-e45af4075aaa",
+    "profile": "Rec.709",
+    "name": "Warm Fade",
+    "file": "50d1d31a243c7f05.rgba",
+    "dimension": 33,
+    "sha256": "9a382584bd4772c1125d6abf51bbf6cadafa1d75a54319de2c6c5bff87dcb4a7"
+  },
+  {
+    "id": "47f893fe-0b3b-7f1b-78ed-b259f6d4608e",
+    "profile": "Samsung_Log_HDR",
+    "name": "Cinema Teal",
+    "file": "47f893fe0b3b7f1b.rgba",
+    "dimension": 33,
+    "sha256": "c349af41c64548f5e86f21aaa5fefc374b7410cb56a28563a7bf21407bd62ae7"
+  },
+  {
+    "id": "0b417c8a-a125-aed6-322e-1867a61b8185",
+    "profile": "Samsung_Log_HDR",
+    "name": "Day Night",
+    "file": "0b417c8aa125aed6.rgba",
+    "dimension": 33,
+    "sha256": "065104ccba10a449386d210844b9a8ab9351b21be8b4f670d06ac9807f758b42"
+  },
+  {
+    "id": "c2041951-491f-5124-5ebe-00fcaaf14483",
+    "profile": "Samsung_Log_HDR",
+    "name": "Dusty",
+    "file": "c2041951491f5124.rgba",
+    "dimension": 33,
+    "sha256": "29c8ec792d5ee67e609c23f90e33c93837cf2b4b5731ed6c98673c65897a2f5d"
+  },
+  {
+    "id": "08c3ad13-5c2f-0137-d200-02b7263bcf54",
+    "profile": "Samsung_Log_HDR",
+    "name": "Monochrome",
+    "file": "08c3ad135c2f0137.rgba",
+    "dimension": 33,
+    "sha256": "7948b0d25b4dbcd2d98be4852bb5d6942c7262b213d11ec5eb27a605ae78109d"
+  },
+  {
+    "id": "bc093cec-0fc2-0e77-359e-21fc35f84c5c",
+    "profile": "Samsung_Log_HDR",
+    "name": "Nature",
+    "file": "bc093cec0fc20e77.rgba",
+    "dimension": 33,
+    "sha256": "c73ef71693efcc2db20cb67a5545d9be0ff8e2b4bfeb0fc33cab533d0590380c"
+  },
+  {
+    "id": "0eeded90-55bf-c58f-0dfd-6e55dadfab94",
+    "profile": "Samsung_Log_HDR",
+    "name": "Neutral Rec. 709",
+    "file": "0eeded9055bfc58f.rgba",
+    "dimension": 33,
+    "sha256": "28395b07cd341b1119fa2a410a4b8c2c55e87a0fcbd6a624dc676299dc39ee2f"
+  },
+  {
+    "id": "924d15a9-61ad-2f3a-bd76-ff51712268d0",
+    "profile": "Samsung_Log_HDR",
+    "name": "Nostalgic",
+    "file": "924d15a961ad2f3a.rgba",
+    "dimension": 33,
+    "sha256": "8e980c4f0dd1564a50072eac2b636e85cff092794bcf2bd151dc24a1b667a9ca"
+  },
+  {
+    "id": "062fc63a-f278-e923-f091-e3632c468050",
+    "profile": "Samsung_Log_HDR",
+    "name": "Paloma",
+    "file": "062fc63af278e923.rgba",
+    "dimension": 33,
+    "sha256": "0d1a8242b89d4451c211a94ed32e3ba2639afa6a7d3c8f8e2684c1f98af333dc"
+  },
+  {
+    "id": "68788917-959f-a6de-a541-32ca3f72938f",
+    "profile": "Samsung_Log_HDR",
+    "name": "Rift",
+    "file": "68788917959fa6de.rgba",
+    "dimension": 33,
+    "sha256": "827fab3d92c9e277a5095a40d8689f5c97dcb5e1321d38d4f002ead601408fb5"
+  },
+  {
+    "id": "53144da3-f1fc-3281-6ad4-a202a660c132",
+    "profile": "Samsung_Log_HDR",
+    "name": "Vivid",
+    "file": "53144da3f1fc3281.rgba",
+    "dimension": 33,
+    "sha256": "90ebd70b8763c66dbf7bdbff88ab921b4680d5db16244e5442c00e3bcdfe1fd7"
+  },
+  {
+    "id": "2ce0cb37-5204-d37a-0f84-af6aaf25a84c",
+    "profile": "Samsung_Log_HDR",
+    "name": "Warm Fade",
+    "file": "2ce0cb375204d37a.rgba",
+    "dimension": 33,
+    "sha256": "bcfeaad9e205b64f9fdce7a88ce74249a8cb8e3fd4d9b3a7d5c0c1bce8c55203"
+  }
+]

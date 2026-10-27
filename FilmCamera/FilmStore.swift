@@ -10,6 +10,8 @@ struct LibraryState: Codable {
     @Published var state = LibraryState()
     @Published var media: [URL] = []
     @Published var error: String?
+    private var bmcLUTCache: [UUID: CubeLUT] = [:]
+    private var missingBMCReported: Set<UUID> = []
     let root: URL
     init(root: URL? = nil) {
         self.root = root ?? FileManager.default.urls(for:.documentDirectory,in:.userDomainMask)[0].appendingPathComponent("FilmCamera")
@@ -19,10 +21,14 @@ struct LibraryState: Codable {
             if FileManager.default.fileExists(atPath:file.path) { state = try JSONDecoder().decode(LibraryState.self,from:Data(contentsOf:file)) }
             state.settings.validate()
             for index in state.presets.indices {state.presets[index].settings.validate()}
-            let lutIDs = Set(state.luts.map(\.id))
-            if let id = state.settings.lutID, !lutIDs.contains(id) {state.settings.lutID = nil}
-            for index in state.presets.indices {
-                if let id = state.presets[index].settings.lutID, !lutIDs.contains(id) {state.presets[index].settings.lutID = nil}
+            let catalog = BMCLUTCatalog.all
+            let lutIDs = Set(state.luts.map(\.id)).union(catalog.map(\.id))
+            if catalog.isEmpty { self.error = "The built-in BMC LUT catalog is unavailable." }
+            else {
+                if let id = state.settings.lutID, !lutIDs.contains(id) {state.settings.lutID = nil}
+                for index in state.presets.indices {
+                    if let id = state.presets[index].settings.lutID, !lutIDs.contains(id) {state.presets[index].settings.lutID = nil}
+                }
             }
             refresh()
             motionWorkspace.onCompletion = {[weak self] _ in self?.refresh()}
@@ -43,7 +49,17 @@ struct LibraryState: Codable {
         let lut = try CubeLUT.parse(String(contentsOf:url,encoding:.utf8),name:url.deletingPathExtension().lastPathComponent)
         state.luts.append(lut); state.settings.lutID = lut.id; persist()
     }
-    var selectedLUT: CubeLUT? { state.luts.first { $0.id == state.settings.lutID } }
+    var selectedLUT: CubeLUT? {
+        guard let id = state.settings.lutID else { return nil }
+        if let lut = state.luts.first(where: { $0.id == id }) { return lut }
+        if let cached = bmcLUTCache[id] { return cached }
+        guard let descriptor = BMCLUTCatalog.all.first(where: { $0.id == id }) else { return nil }
+        do { let lut = try BMCLUTCatalog.load(descriptor); bmcLUTCache[id] = lut; return lut }
+        catch {
+            if missingBMCReported.insert(id).inserted { DispatchQueue.main.async { self.error = error.localizedDescription } }
+            return nil
+        }
+    }
     func destination(_ ext: String) -> URL { root.appendingPathComponent("Film-\(UUID().uuidString).\(ext)") }
     func refresh() { media = ((try? FileManager.default.contentsOfDirectory(at:root,includingPropertiesForKeys:[.creationDateKey])) ?? []).filter { ["jpg","mov","mp4","dng","gcsv","wav","cinemadng","zip","rawseq"].contains($0.pathExtension.lowercased()) }.sorted { $0.lastPathComponent > $1.lastPathComponent } }
     func delete(_ url: URL) { do { try FileManager.default.removeItem(at:url); refresh() } catch { self.error = error.localizedDescription } }

@@ -22,8 +22,11 @@ interoperability by themselves. Field semantics and session behavior still
 need to be traced and tested against a peer.
 Run 40451550437 generated and compiled the media-sync types, and run
 40451904803 passed a clip-chunk request wire fixture. The Android receiver
-checks the expected offset and CRC32 before accepting chunks; the Swift
-checksum building block does not yet implement transfer, retry, or storage.
+checks the expected offset and CRC32 before accepting chunks. The Swift
+`BMCMediaReceiver` validates the clip ID, offset, size and checksum before
+appending to a caller-opened file; run 40453798227 passed its temporary-file
+and resume checks. It is not connected to transport, retry scheduling or a
+media browser.
 
 `BMCControlMessages` builds the recovered controller envelopes for starting and
 stopping recording. Run 40450331698 verified both encoded fixtures with the

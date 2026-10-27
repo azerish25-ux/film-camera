@@ -76,10 +76,14 @@ enum BMCMonitor {
         return vec4(result, c.a);
     }
     """)
+    static func luminanceImage(_ image: CIImage) throws -> CIImage {
+        guard let luminanceCube else { throw PortError.message("Exposure monitoring table is unavailable.") }
+        return image.applyingFilter("CIColorCube", parameters: ["inputCubeDimension": 33, "inputCubeData": luminanceCube])
+    }
     static func render(_ image: CIImage, options: BMCMonitorOptions, zebraShift: Double = 0) throws -> CIImage {
         guard options.falseColor || options.zebra else { return image }
-        guard let luminanceCube, let kernel else { throw PortError.message("Exposure monitoring table is unavailable.") }
-        let luminance = image.applyingFilter("CIColorCube", parameters: ["inputCubeDimension": 33, "inputCubeData": luminanceCube])
+        guard let kernel else { throw PortError.message("Exposure monitoring kernel is unavailable.") }
+        let luminance = try luminanceImage(image)
         guard let result = kernel.apply(extent: image.extent, roiCallback: { _, rect in rect }, arguments: [image, luminance, options.falseColor ? 1.0 : 0.0, options.zebra ? 1.0 : 0.0, min(1, max(0, options.zebraThreshold)), options.midGray.code, zebraShift, image.extent.minX, image.extent.maxY]) else {
             throw PortError.message("Exposure monitoring could not be compiled.")
         }

@@ -15,7 +15,7 @@ javac -source 8 -target 8 -classpath "$SDK/platforms/android-29/android.jar" -d 
 adb shell "mkdir -p $REMOTE"
 adb push "$WORK/bmc-reference.jar" "$REMOTE/bmc-reference.jar"
 adb shell "CLASSPATH=$REMOTE/bmc-reference.jar app_process /system/bin com.azerish.bmc.BMCReferenceMain $REMOTE"
-for name in false-color-input false-color-android zebra-input zebra-android focus-input focus-android; do
+for name in false-color-input false-color-android zebra-input zebra-android focus-input focus-android luminance-f32-input luminance-f32-android; do
   adb exec-out cat "$REMOTE/$name.rgba" > "bmc-reference/$name.rgba"
   test "$(wc -c < "bmc-reference/$name.rgba")" -eq 49152
 done

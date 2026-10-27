@@ -8,6 +8,10 @@ settings:
     SWIFT_VERSION: '5.0'
     TARGETED_DEVICE_FAMILY: '1,2'
     CODE_SIGNING_ALLOWED: NO
+packages:
+  SwiftProtobuf:
+    url: https://github.com/apple/swift-protobuf.git
+    exactVersion: 1.29.0
 targets:
   FilmCamera:
     type: application
@@ -19,6 +23,8 @@ targets:
         buildPhase: resources
       - path: FilmCamera/Resources/BMCLUTs
         buildPhase: resources
+    dependencies:
+      - package: SwiftProtobuf
     settings:
       base:
         ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
@@ -39,6 +45,7 @@ targets:
     sources: [FilmCameraTests]
     dependencies:
       - target: FilmCamera
+      - package: SwiftProtobuf
   FilmCameraUITests:
     type: bundle.ui-testing
     platform: iOS

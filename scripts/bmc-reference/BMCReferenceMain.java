@@ -48,7 +48,7 @@ public final class BMCReferenceMain {
         String vertex = "#version 300 es\nlayout(location=0) in vec2 pos; layout(location=1) in vec2 uv; out vec2 cameraTexCoordinates; void main(){gl_Position=vec4(pos,0.,1.);cameraTexCoordinates=uv;}";
         String fragment = "#version 300 es\nprecision highp float; in vec2 cameraTexCoordinates; uniform sampler2D cameraTexture; uniform int mode; out vec4 result;\n"
             + text("luminance_function.glsl") + text("false_color_effect_fast.glsl") + text("zebra_effect.glsl") + text("focus_assist_effect.glsl")
-            + "\nvoid main(){vec4 c=texture(cameraTexture,cameraTexCoordinates);float l=getLuminance(c);if(mode==1)c=falseColor(l);else if(mode==2)c=zebras(c,l);else if(mode==3)c=focusAssist(c);result=c;}";
+            + "\nvoid main(){vec4 c=texture(cameraTexture,cameraTexCoordinates);float l=getLuminance(c);if(mode==1)c=falseColor(l);else if(mode==2)c=zebras(c,l);else if(mode==3)c=focusAssist(c);else if(mode==4){uint b=floatBitsToUint(l);c=vec4(float(b&255u),float((b>>8u)&255u),float((b>>16u)&255u),float((b>>24u)&255u))/255.0;}result=c;}";
         int vs = compile(vertex, GLES30.GL_VERTEX_SHADER), fs = compile(fragment, GLES30.GL_FRAGMENT_SHADER);
         int program = GLES30.glCreateProgram(); GLES30.glAttachShader(program, vs); GLES30.glAttachShader(program, fs); GLES30.glLinkProgram(program);
         int[] ok = {0}; GLES30.glGetProgramiv(program, GLES30.GL_LINK_STATUS, ok, 0); if (ok[0] == 0) throw new IllegalStateException(GLES30.glGetProgramInfoLog(program));
@@ -70,15 +70,16 @@ public final class BMCReferenceMain {
         GLES30.glUniform1f(GLES30.glGetUniformLocation(program, "zebraThreshold"), .75f); GLES30.glUniform1f(GLES30.glGetUniformLocation(program, "zebraShift"), 0); GLES30.glUniform1f(GLES30.glGetUniformLocation(program, "zebraWidth"), 8);
         GLES30.glUniform4f(GLES30.glGetUniformLocation(program, "zebraColor"), 0,0,0,1); GLES30.glUniform1i(GLES30.glGetUniformLocation(program, "midGreyMode"), 0);
         GLES30.glUniform1i(GLES30.glGetUniformLocation(program, "enableColoredLines"), 1); GLES30.glUniform4f(GLES30.glGetUniformLocation(program, "lineColor"), 1,0,0,1); GLES30.glUniform1f(GLES30.glGetUniformLocation(program, "peakingThreshold"), 3f);
-        for (int mode = 1; mode <= 3; mode++) {
+        for (int mode = 1; mode <= 4; mode++) {
             byte[] source = new byte[W*H*4];
             for (int y=0; y<H; y++) for (int x=0; x<W; x++) {
                 int i=(y*W+x)*4; source[i]=(byte)(mode==3 ? (x < W/2 ? 0 : 255) : x*255/(W-1));
                 source[i+1]=(byte)(mode==3 ? (x < W/2 ? 0 : 255) : y*255/(H-1)); source[i+2]=(byte)(mode==3 ? (x < W/2 ? 0 : 255) : (x+y)*255/(W+H-2)); source[i+3]=(byte)255;
             }
-            String name = mode == 1 ? "false-color" : mode == 2 ? "zebra" : "focus";
+            String name = mode == 1 ? "false-color" : mode == 2 ? "zebra" : mode == 3 ? "focus" : "luminance-f32";
             write(name+"-input.rgba", source);
             GLES30.glActiveTexture(GLES30.GL_TEXTURE0); GLES30.glBindTexture(GLES30.GL_TEXTURE_2D, texture[0]); params(GLES30.GL_TEXTURE_2D); GLES30.glTexImage2D(GLES30.GL_TEXTURE_2D, 0, GLES30.GL_RGBA8, W, H, 0, GLES30.GL_RGBA, GLES30.GL_UNSIGNED_BYTE, buffer(source));
+            if (mode == 4) GLES30.glDisable(GLES30.GL_DITHER); // Preserve the float's packed bits in RGBA8.
             GLES30.glUniform1i(GLES30.glGetUniformLocation(program, "mode"), mode); GLES30.glDrawArrays(GLES30.GL_TRIANGLE_STRIP, 0, 4);
             int error = GLES30.glGetError(); if (error != GLES30.GL_NO_ERROR) throw new IllegalStateException(name+" GLES "+error);
             ByteBuffer output = ByteBuffer.allocateDirect(W*H*4); GLES30.glReadPixels(0, 0, W, H, GLES30.GL_RGBA, GLES30.GL_UNSIGNED_BYTE, output); byte[] result = new byte[W*H*4]; output.get(result); write(name+"-android.rgba", result);

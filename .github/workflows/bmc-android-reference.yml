@@ -63,6 +63,12 @@ jobs:
           xcrun simctl boot "$DEVICE" || true
           xcrun simctl bootstatus "$DEVICE" -b
           xcodebuild -quiet -parallel-testing-enabled NO -scheme FilmCamera -destination "platform=iOS Simulator,id=$DEVICE" -derivedDataPath build/bmc-comparison -resultBundlePath build/BMCComparison.xcresult -only-testing:FilmCameraTests/BMCReferenceTests CODE_SIGNING_ALLOWED=NO test 2>&1 | tee bmc-comparison.log
+      - name: Show comparison test summary
+        if: always()
+        run: |
+          if [ -d build/BMCComparison.xcresult ]; then
+            xcrun xcresulttool get test-results summary --path build/BMCComparison.xcresult || true
+          fi
       - uses: actions/upload-artifact@v4
         if: always()
         with:

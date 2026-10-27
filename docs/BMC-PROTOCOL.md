@@ -53,6 +53,9 @@ exchange with a local mock WebSocket server, the latter using the app's
 local-network plist configuration. They did not test a BMC peer or
 local-network permission on a physical device. The loopback workflow keeps
 that transport check reproducible without contacting an external service.
+Run 40457003174 additionally passed a local mock pairing exchange using the
+real challenge calculation, followed by an authorized media-range request,
+CRC-checked chunk and temporary-file write. This is not a BMC-peer test.
 
 With protoc and the matching SwiftProtobuf 1.29.0 plugin installed, regenerate
 the sources from the repository root with:

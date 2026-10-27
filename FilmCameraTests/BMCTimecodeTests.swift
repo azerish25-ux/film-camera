@@ -19,6 +19,8 @@ final class BMCTimecodeTests: XCTestCase {
         let output = folder.appendingPathComponent("timecode.mov")
         let timecode = try BMCTimecode(secondsOfDay: 3600, framesPerSecond: 24, startingFrame: 7)
         try await BMCTimecodeWriter.write(source: source, destination: output, timecode: timecode, framesPerSecond: 24)
+        let movie = XCTAttachment(contentsOfFile: output)
+        movie.name = "timecode-output.mov"; movie.lifetime = .keepAlways; add(movie)
         let asset = AVURLAsset(url: output)
         let audio = try await asset.loadTracks(withMediaType: .audio)
         let video = try await asset.loadTracks(withMediaType: .video)
@@ -33,6 +35,7 @@ final class BMCTimecodeTests: XCTestCase {
         let trackOutput = AVAssetReaderTrackOutput(track: try XCTUnwrap(tracks.first), outputSettings: nil)
         XCTAssertTrue(reader.canAdd(trackOutput)); reader.add(trackOutput); XCTAssertTrue(reader.startReading())
         let sample = try XCTUnwrap(trackOutput.copyNextSampleBuffer())
+        print("Timecode reader sample count: \(CMSampleBufferGetNumSamples(sample)); total size: \(CMSampleBufferGetTotalSampleSize(sample)); valid: \(CMSampleBufferIsValid(sample)); ready: \(CMSampleBufferDataIsReady(sample))")
         let block = try XCTUnwrap(CMSampleBufferGetDataBuffer(sample))
         var bytes = [UInt8](repeating: 0, count: 4)
         let result = bytes.withUnsafeMutableBytes { CMBlockBufferCopyDataBytes(block, atOffset: 0, dataLength: 4, destination: $0.baseAddress!) }
@@ -40,3 +43,4 @@ final class BMCTimecodeTests: XCTestCase {
         XCTAssertEqual(bytes, Array(timecode.sample))
     }
 }
+

@@ -81,4 +81,22 @@ final class BMCSignalingSessionTests: XCTestCase {
         XCTAssertEqual(try JSONDecoder().decode(BMCSignalingMessage.self, from: Data(last.utf8)), .sdpOffer("offer"))
         await session.close()
     }
+
+    func testAuthorizedSessionCanSendMediaRangeRequest() async throws {
+        let nonce = (0..<64).map { String(format: "%02x", $0) }.joined()
+        let hello = #"{"type":"hello_response","data":{"nonce":"\#(nonce)","info":{"uuid":"00000000-0000-0000-0000-000000000001","model_name":"phone","device_name":"Camera","slate_name":"A","proto_major":5,"proto_minor":0},"status":"ready"}}"#
+        let channel = FakeSignalingChannel(responses: [hello, #"{"type":"conn_response","data":{"status":"authorized"}}"#])
+        let session = BMCRemoteSignalingSession(channel: channel)
+        try await session.authorize(participant: participant, password: "test", nonce: Data(repeating: 1, count: 32))
+        let url = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+        XCTAssertTrue(FileManager.default.createFile(atPath: url.path, contents: Data()))
+        defer { try? FileManager.default.removeItem(at: url) }
+        let receiver = try BMCMediaReceiver(handle: FileHandle(forWritingTo: url), clipID: "A", offset: 0, totalSize: 4)
+        let transfer = BMCMediaTransfer(sender: session, receiver: receiver)
+        try await transfer.requestRemaining()
+        let packets = await channel.binarySnapshot()
+        XCTAssertEqual(packets, [Data([0x0a, 0x07, 0x22, 0x05, 0x0a, 0x01, 0x41, 0x18, 0x04])])
+        try await receiver.close()
+        await session.close()
+    }
 }

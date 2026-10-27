@@ -25,8 +25,12 @@ Run 40451550437 generated and compiled the media-sync types, and run
 checks the expected offset and CRC32 before accepting chunks. The Swift
 `BMCMediaReceiver` validates the clip ID, offset, size and checksum before
 appending to a caller-opened file; run 40453798227 passed its temporary-file
-and resume checks. It is not connected to transport, retry scheduling or a
-media browser.
+and resume checks. `BMCMediaTransfer` forms range, stop and explicit retry
+requests and routes matching chunks; `BMCMediaCatalog` forms list requests and
+returns unrelated messages to the caller. Run 40455159590 passed fake-session,
+wire-fixture, catalog and file-routing tests with a stubbed authentication
+digest. A receive-loop coordinator, automatic retry scheduling, a media browser,
+and real-peer interoperability remain unfinished.
 
 `BMCControlMessages` builds the recovered controller envelopes for starting and
 stopping recording. Run 40450331698 verified both encoded fixtures with the

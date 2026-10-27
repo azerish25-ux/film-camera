@@ -149,3 +149,5 @@ actor BMCRemoteSignalingSession {
         await channel.close()
     }
 }
+
+extension BMCRemoteSignalingSession: BMCMediaSender {}

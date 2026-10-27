@@ -103,6 +103,11 @@ actor BMCRemoteSignalingSession {
 
     init(channel: any BMCSignalingChannel) { self.channel = channel }
 
+    func authorize(participant: BMCParticipant, password: String, timeoutNanoseconds: UInt64 = 15_000_000_000) async throws {
+        let nonce = try BMCRemoteAuthentication.makeNonce()
+        try await authorize(participant: participant, password: password, nonce: nonce, timeoutNanoseconds: timeoutNanoseconds)
+    }
+
     func authorize(participant: BMCParticipant, password: String, nonce: Data, timeoutNanoseconds: UInt64 = 15_000_000_000) async throws {
         guard state == .idle else { throw PortError.message("Remote session is not ready to pair.") }
         state = .authorizing
@@ -145,7 +150,13 @@ actor BMCRemoteSignalingSession {
     }
 
     func close() async {
+        let shouldSendBye = state == .authorized && !sending
         state = .closed
+        if shouldSendBye,
+           let data = try? JSONEncoder().encode(BMCSignalingMessage.bye("app_suspended")),
+           let text = String(data: data, encoding: .utf8) {
+            try? await channel.send(text: text)
+        }
         await channel.close()
     }
 }

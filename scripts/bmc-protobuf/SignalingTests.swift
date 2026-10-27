@@ -71,7 +71,7 @@ final class BMCSignalingSessionTests: XCTestCase {
             try await session.sendSignaling(.sdpOffer("offer"))
             XCTFail("Expected authorization to be required")
         } catch { }
-        try await session.authorize(participant: participant, password: "test", nonce: Data(repeating: 1, count: 32))
+        try await session.authorize(participant: participant, password: "test")
         try await session.sendBinary(Data([1, 2, 3]))
         try await session.sendSignaling(.sdpOffer("offer"))
         let sent = await channel.binarySnapshot()
@@ -80,6 +80,10 @@ final class BMCSignalingSessionTests: XCTestCase {
         let last = try XCTUnwrap(texts.last)
         XCTAssertEqual(try JSONDecoder().decode(BMCSignalingMessage.self, from: Data(last.utf8)), .sdpOffer("offer"))
         await session.close()
+        let (afterClose, closed) = await channel.snapshot()
+        let goodbye = try XCTUnwrap(afterClose.last)
+        XCTAssertEqual(try JSONDecoder().decode(BMCSignalingMessage.self, from: Data(goodbye.utf8)), .bye("app_suspended"))
+        XCTAssertTrue(closed)
     }
 
     func testAuthorizedSessionCanSendMediaRangeRequest() async throws {

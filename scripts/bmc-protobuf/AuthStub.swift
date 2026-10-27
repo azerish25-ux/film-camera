@@ -1,5 +1,6 @@
 import Foundation
 enum BMCRemoteAuthentication {
+    static func makeNonce() throws -> Data { Data(repeating: 1, count: 32) }
     static func decodeHex(_ text: String) throws -> Data {
         var result = Data(); var position = text.startIndex
         while position < text.endIndex {

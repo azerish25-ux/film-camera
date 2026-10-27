@@ -2,7 +2,7 @@ name: BMC portable Swift validation
 on:
   push:
     branches: [bmc-integration]
-    paths: ['FilmCamera/BMCAudioMeter.swift', 'FilmCamera/BMCTimecode.swift', 'FilmCamera/BMCSignaling.swift', 'scripts/bmc-pure/PureLogicMain.swift', '.github/workflows/bmc-pure-validation.yml']
+    paths: ['FilmCamera/BMCAudioMeter.swift', 'FilmCamera/BMCTimecode.swift', 'FilmCamera/BMCSignaling.swift', 'FilmCamera/Resources/BMCLUTs/**', 'scripts/bmc-pure/PureLogicMain.swift', '.github/workflows/bmc-pure-validation.yml']
   workflow_dispatch:
 permissions:
   contents: read

@@ -1,6 +1,7 @@
 import Foundation
 
 enum PortError: Error { case message(String) }
+private struct CatalogEntry: Decodable { let id: UUID; let dimension: Int; let file: String }
 
 @main struct PureLogicMain {
     static func main() throws {
@@ -17,6 +18,14 @@ enum PortError: Error { case message(String) }
         let encoded = try JSONEncoder().encode(message)
         let decoded = try JSONDecoder().decode(BMCSignalingMessage.self, from: encoded)
         precondition(decoded == message)
+        let root = URL(fileURLWithPath: "FilmCamera/Resources/BMCLUTs", isDirectory: true)
+        let catalog = try JSONDecoder().decode([CatalogEntry].self, from: Data(contentsOf: root.appendingPathComponent("bmc-luts.json")))
+        precondition(catalog.count == 41 && Set(catalog.map(\.id)).count == 41)
+        for entry in catalog {
+            precondition(entry.dimension == 33)
+            let bytes = try Data(contentsOf: root.appendingPathComponent(entry.file))
+            precondition(bytes.count == 33 * 33 * 33 * 4)
+        }
         print("BMC platform-independent checks passed")
     }
 }

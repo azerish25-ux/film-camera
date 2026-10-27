@@ -10,6 +10,11 @@ protocol BMCSignalingChannel: Sendable {
     func close() async
 }
 
+enum BMCWebSocketFrame: Equatable, Sendable {
+    case text(String)
+    case binary(Data)
+}
+
 /// URLSession provides WebSocket transport; this channel does not implement
 /// WebRTC or a camera-control data channel.
 actor BMCWebSocketChannel: BMCSignalingChannel {
@@ -27,11 +32,18 @@ actor BMCWebSocketChannel: BMCSignalingChannel {
     }
 
     func send(text: String) async throws { try await socket.send(.string(text)) }
-    func receiveText() async throws -> String {
+    func send(binary: Data) async throws { try await socket.send(.data(binary)) }
+    func receiveFrame() async throws -> BMCWebSocketFrame {
         switch try await socket.receive() {
-        case .string(let text): return text
-        case .data: throw PortError.message("Unexpected binary signaling message during pairing.")
+        case .string(let text): return .text(text)
+        case .data(let data): return .binary(data)
         @unknown default: throw PortError.message("Unknown remote signaling message.")
+        }
+    }
+    func receiveText() async throws -> String {
+        switch try await receiveFrame() {
+        case .text(let text): return text
+        case .binary: throw PortError.message("Unexpected binary signaling message during pairing.")
         }
     }
     func close() async {

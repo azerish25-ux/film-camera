@@ -5,7 +5,7 @@ on:
     paths: ['project.yml', 'FilmCamera/**', 'FilmCameraTests/**', '.github/workflows/bmc-project-validation.yml']
   workflow_dispatch:
 permissions:
-  contents: read
+  contents: write
 concurrency:
   group: bmc-project-${{ github.ref }}
   cancel-in-progress: true
@@ -33,3 +33,13 @@ jobs:
           name: bmc-generated-xcode-project
           path: FilmCamera.xcodeproj/
           retention-days: 14
+      - name: Save generated project if branch has not moved
+        if: ${{ success() && github.ref == 'refs/heads/bmc-integration' }}
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -- FilmCamera.xcodeproj
+          if ! git diff --cached --quiet; then
+            git commit -m "build: refresh generated BMC Xcode project"
+            git push origin HEAD:bmc-integration
+          fi

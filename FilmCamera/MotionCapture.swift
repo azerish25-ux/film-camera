@@ -82,8 +82,9 @@ final class MotionTimelapse {
         guard writer.startWriting() else {throw writer.error ?? PortError.message("Cannot start timelapse.")}
         writer.startSession(atSourceTime:.zero)
     }
+    func needsFrame(at time: Double) -> Bool { time.isFinite && time-last >= interval }
     func append(_ image: CIImage,time: Double) throws {
-        guard time-last >= interval else {return}
+        guard needsFrame(at:time) else {return}
         guard writer.status == .writing else {throw writer.error ?? PortError.message("Timelapse writer stopped.")}
         guard input.isReadyForMoreMediaData else {dropped += 1; return}
         guard let pool = adaptor.pixelBufferPool else {throw PortError.message("Timelapse buffer pool is unavailable.")}

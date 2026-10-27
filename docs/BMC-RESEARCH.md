@@ -21,6 +21,10 @@ An additional text scan found 444 `Method not decompiled` markers and 278
 `Code decompiled incorrectly` markers across the generated sources. These may
 overlap and are not equivalent to JADX's 261 reported errors. The file list is
 saved on D: for smali fallback and method-by-method follow-up.
+An additional JADX `simple` pass reduced its reported errors to 52 and left
+16 `Method not decompiled` markers. It produced a less-structured rendering of
+the audio-meter lambda that corroborates the smali extraction; reduced errors
+do not establish semantic correctness or replace bytecode review.
 
 The D: workspace's `inventory-smali.cjs` recorded 17,199 class declarations
 and 123,886 method declarations across the three decoded DEX files. Of these,
@@ -67,10 +71,12 @@ availability is device-dependent. The current iOS pipeline records a movie and
 then exports a graded movie; it does not yet expose or prove equivalent codec,
 profile, bitrate, bit-depth or color-space selection. Selecting an Apple codec
 with similar characteristics does not establish APV bitstream compatibility.
-An initial H.264/HEVC **export** selection is being added locally. The camera
-still records first and then transcodes; this is not BMC's direct recording
-codec, bitrate, profile, APV or AV1 implementation. Its simulator test checks
-HEVC output when the runner advertises the corresponding export preset.
+An initial H.264/HEVC capture and export selection is being added locally. It
+checks the camera output's advertised codecs and supported settings before
+selecting a capture codec, then re-encodes the film output using the same codec.
+This does not yet implement BMC bitrate, profile, APV or AV1 choices. Simulator
+tests can check the export when supported, but cannot prove camera hardware
+capture behavior.
 
 The native CUBE parser recognizes per-channel `LUT_3D_INPUT_RANGE_R`, `_G`
 and `_B` directives as well as `DOMAIN_MIN` and `DOMAIN_MAX`. The current
@@ -85,6 +91,13 @@ the cube data into user settings. The existing film renderer resamples custom
 tables to 64³ and does not automatically convert the selected profile, so
 this integration is not yet a pixel-identical BMC LUT pipeline. Catalog and
 restoration tests are awaiting simulator validation.
+Local display-versus-record switches are being integrated: the selected LUT can
+be shown in the viewfinder independently from applying it to exported movies
+or timelapse frames. The app's underlying film look remains active in either
+case; the routing and full BMC color management still require verification.
+Portable Swift run 40442261643 verified that all 41 manifest IDs decode and
+that the referenced tables have the expected byte lengths; it does not replace
+the app-bundle loading, checksum or persistence tests.
 
 For native analysis, the D: workspace includes dynamic-symbol inventories for
 all arm64 libraries, including cloud authentication/storage/chat/router,

@@ -4,6 +4,10 @@ enum BMCMovieCodec: String, CaseIterable, Identifiable {
     case h264, hevc
     var id: String { rawValue }
     var title: String { self == .h264 ? "H.264" : "HEVC" }
+    var captureType: AVVideoCodecType { self == .h264 ? .h264 : .hevc }
+    static func supportedCaptureCodecs(_ available: [AVVideoCodecType], canChoose: Bool) -> [BMCMovieCodec] {
+        canChoose ? allCases.filter { available.contains($0.captureType) } : []
+    }
     func exportPreset(fourK: Bool) -> String {
         switch (self, fourK) {
         case (.h264, false): return AVAssetExportPreset1920x1080

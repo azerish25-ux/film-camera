@@ -86,6 +86,8 @@ struct CameraScreen: View {
     @State private var lens = "Wide"
     @State private var fourK = false
     @AppStorage("bmcMovieExportCodec") private var movieCodec = BMCMovieCodec.h264.rawValue
+    @AppStorage("bmcDisplayLUT") private var displayLUT = true
+    @AppStorage("bmcRecordLUT") private var recordLUT = true
     @State private var showHistogram = false
     @State private var motion = MotionCaptureOptions()
     @State private var monitor = BMCMonitorOptions()
@@ -139,6 +141,9 @@ struct CameraScreen: View {
                 camera.updateBMCFocus(bmcFocus)
                 if let raw = UserDefaults.standard.string(forKey:"bmcAudioMeterMode"), let saved = BMCAudioMeter.Mode(rawValue:raw) {bmcAudioMeterMode = saved}
                 camera.updateBMCAudioMeter(enabled:bmcAudioMeterEnabled,mode:bmcAudioMeterMode)
+                camera.updatePreviewLUT(enabled:displayLUT)
+                camera.updateRecordLUT(enabled:recordLUT)
+                camera.selectMovieCodec(BMCMovieCodec(rawValue:movieCodec) ?? .h264)
                 camera.updateMonitor(monitor)
                 camera.onMedia = {_ in store.refresh()}
                 camera.onMovie = { url,settings,lut in
@@ -147,7 +152,7 @@ struct CameraScreen: View {
                         do {
                             let destination = store.destination("mov")
                             let codec = BMCMovieCodec(rawValue:movieCodec) ?? .h264
-                            try await exporter.exportVideo(source:url,destination:destination,settings:settings,lut:lut,slate:slate,resolution:codec.exportPreset(fourK:fourK))
+                            try await exporter.exportVideo(source:url,destination:destination,settings:settings,lut:recordLUT ? lut : nil,slate:slate,resolution:codec.exportPreset(fourK:fourK))
                             let sidecar = url.deletingPathExtension().appendingPathExtension("gcsv")
                             if FileManager.default.fileExists(atPath:sidecar.path) {try FileManager.default.moveItem(at:sidecar,to:destination.deletingPathExtension().appendingPathExtension("gcsv"))}
                             store.refresh()
@@ -168,6 +173,10 @@ struct CameraScreen: View {
             .onChange(of:camera.ready) {_,ready in if ready {controls()} }
             .onChange(of:camera.availableLenses) {_,lenses in if !lenses.contains(lens) {lens = "Wide"} }
             .onChange(of:camera.availableFrameRates) {_,rates in if !rates.contains(fps),let first = rates.first {fps = first; controls()} }
+            .onChange(of:camera.availableMovieCodecs) {_,codecs in if !codecs.contains(where:{$0.rawValue == movieCodec}), let first = codecs.first {movieCodec = first.rawValue; camera.selectMovieCodec(first)} }
+            .onChange(of:movieCodec) {_,value in camera.selectMovieCodec(BMCMovieCodec(rawValue:value) ?? .h264)}
+            .onChange(of:displayLUT) {_,value in camera.updatePreviewLUT(enabled:value)}
+            .onChange(of:recordLUT) {_,value in camera.updateRecordLUT(enabled:value)}
             .onChange(of:scenePhase) {_,phase in if phase == .active {camera.start()} else {camera.stop()} }
             .onChange(of:camera.message) {_,value in if camera.ready {store.error = value} }
         }
@@ -175,6 +184,8 @@ struct CameraScreen: View {
     private var cameraControls: some View {
         VStack(alignment:.leading) {
             Text("Hardware controls").font(.headline)
+            Toggle("Display selected LUT in viewfinder",isOn:$displayLUT)
+            Toggle("Record selected LUT in movie",isOn:$recordLUT).disabled(camera.recording || exporter.busy)
             DisclosureGroup("Audio meter") {
                 Toggle("Show audio meter",isOn:$bmcAudioMeterEnabled)
                 if bmcAudioMeterEnabled {
@@ -227,8 +238,13 @@ struct CameraScreen: View {
             if showHistogram {HistogramPlot(values:camera.histogram)}
             Picker("Lens",selection:$lens) {ForEach(camera.availableLenses,id:\.self) {Text($0).tag($0)}}.onChange(of:lens) {_,value in camera.selectLens(value); controls()}
             Toggle("Record in 4K",isOn:$fourK).disabled(camera.recording || exporter.busy).onChange(of:fourK) {_,value in camera.setResolution(value); controls()}
-            Picker("Movie export codec",selection:$movieCodec) {ForEach(BMCMovieCodec.allCases) {Text($0.title).tag($0.rawValue)}}.disabled(camera.recording || exporter.busy)
-            Text("Video is captured first, then exported with the selected codec.").font(.caption).foregroundStyle(.secondary)
+            if !camera.availableMovieCodecs.isEmpty {
+                Picker("Recording and export codec",selection:$movieCodec) {ForEach(camera.availableMovieCodecs) {Text($0.title).tag($0.rawValue)}}.disabled(camera.recording || exporter.busy)
+                Text("The captured movie is re-encoded with film effects after recording.").font(.caption).foregroundStyle(.secondary)
+            } else {
+                Picker("Movie export codec",selection:$movieCodec) {ForEach(BMCMovieCodec.allCases) {Text($0.title).tag($0.rawValue)}}.disabled(camera.recording || exporter.busy)
+                Text("The camera uses its default recording codec; the selected codec is used for export.").font(.caption).foregroundStyle(.secondary)
+            }
             if camera.ready && !camera.audioEnabled {Label("Microphone access is disabled. Video will have no sound.",systemImage:"mic.slash").font(.caption)}
             Text("Available ranges depend on the selected camera.").font(.caption).foregroundStyle(.secondary)
             Text("Zoom"); Slider(value:$zoom,in:1...8,onEditingChanged:{_ in controls()})

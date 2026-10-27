@@ -3,6 +3,13 @@ import AVFoundation
 @testable import FilmCamera
 
 final class BMCMovieCodecTests: XCTestCase {
+    func testCaptureAndExportCodecMappings() {
+        XCTAssertEqual(BMCMovieCodec.h264.captureType, .h264)
+        XCTAssertEqual(BMCMovieCodec.hevc.captureType, .hevc)
+        XCTAssertEqual(BMCMovieCodec.hevc.exportPreset(fourK: true), AVAssetExportPresetHEVC3840x2160)
+        XCTAssertEqual(BMCMovieCodec.supportedCaptureCodecs([.hevc], canChoose: true), [.hevc])
+        XCTAssertEqual(BMCMovieCodec.supportedCaptureCodecs([.h264, .hevc], canChoose: false), [])
+    }
     @MainActor func testHEVCExportUsesHEVCWhenSupported() async throws {
         let folder = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
         try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)

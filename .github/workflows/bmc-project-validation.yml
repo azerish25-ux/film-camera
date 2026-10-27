@@ -1,0 +1,33 @@
+name: BMC Xcode project generation
+on:
+  push:
+    branches: [bmc-integration]
+    paths: ['project.yml', 'FilmCamera/**', 'FilmCameraTests/**', '.github/workflows/bmc-project-validation.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: bmc-project-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  generate:
+    runs-on: ubuntu-latest
+    container: swift:6.0
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build pinned XcodeGen and generate project
+        run: |
+          git clone --depth 1 --branch 2.46.0 https://github.com/yonaskolb/XcodeGen.git /tmp/XcodeGen
+          test "$(git -C /tmp/XcodeGen rev-parse HEAD)" = 8445e778451c7e44237b90281bde622d764b0084
+          swift build --package-path /tmp/XcodeGen -c release --product xcodegen
+          /tmp/XcodeGen/.build/release/xcodegen generate --spec project.yml
+          grep -q 'BMCLUTCatalog.swift in Sources' FilmCamera.xcodeproj/project.pbxproj
+          grep -q 'rec709-luminance.bin in Resources' FilmCamera.xcodeproj/project.pbxproj
+          grep -q 'bmc-luts.json in Resources' FilmCamera.xcodeproj/project.pbxproj
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: bmc-generated-xcode-project
+          path: FilmCamera.xcodeproj/
+          retention-days: 14

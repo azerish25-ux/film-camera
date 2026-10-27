@@ -31,6 +31,8 @@ final class CameraController: NSObject, ObservableObject, AVCaptureVideoDataOutp
     private var bmcFocusOptions = BMCFocusOptions()
     private var meterEnabled = false
     private var meterMode: BMCAudioMeter.Mode = .vu18
+    private var previewLUTEnabled = true
+    private var recordLUTEnabled = true
     var bmcMeter: BMCAudioMeter?
     var bmcMeterFormat = ""
     var bmcMeterLastUpdate = 0.0
@@ -48,7 +50,9 @@ final class CameraController: NSObject, ObservableObject, AVCaptureVideoDataOutp
     private let poi = MotionPOI()
     @Published var availableLenses: [String] = ["Wide"]
     @Published var availableFrameRates: [Double] = [24,30]
+    @Published var availableMovieCodecs: [BMCMovieCodec] = []
     private var selectedLens = "Wide"
+    private var selectedMovieCodec: BMCMovieCodec = .h264
     let session = AVCaptureSession()
     let queue = DispatchQueue(label:"film.camera")
     let frames = DispatchQueue(label:"film.frames")
@@ -109,6 +113,10 @@ final class CameraController: NSObject, ObservableObject, AVCaptureVideoDataOutp
         }
     }
     func bmcAudioMeterOptions() -> (Bool, BMCAudioMeter.Mode) {lock.lock(); defer {lock.unlock()}; return (meterEnabled,meterMode)}
+    func updatePreviewLUT(enabled: Bool) {lock.lock(); previewLUTEnabled = enabled; lock.unlock()}
+    private func showPreviewLUT() -> Bool {lock.lock(); defer {lock.unlock()}; return previewLUTEnabled}
+    func updateRecordLUT(enabled: Bool) {lock.lock(); recordLUTEnabled = enabled; lock.unlock()}
+    private func applyRecordLUT() -> Bool {lock.lock(); defer {lock.unlock()}; return recordLUTEnabled}
     func setRawAudioWriter(_ writer:RawSequenceWriter?) {lock.lock(); rawAudioWriter = writer; lock.unlock()}
     func rawAudioWriterSnapshot() -> RawSequenceWriter? {lock.lock(); defer {lock.unlock()}; return rawAudioWriter}
     func options() -> MotionCaptureOptions {lock.lock(); defer {lock.unlock()}; return motionOptions}
@@ -173,8 +181,12 @@ final class CameraController: NSObject, ObservableObject, AVCaptureVideoDataOutp
         let ranges = device?.activeFormat.videoSupportedFrameRateRanges ?? []
         let rates = MotionExposure.frameRates.map(Double.init).filter {fps in ranges.contains {$0.minFrameRate <= fps && $0.maxFrameRate >= fps}}.sorted()
         let supportsRAW = !photo.availableRawPhotoPixelFormatTypes.isEmpty
-        DispatchQueue.main.async {self.availableFrameRates = rates.isEmpty ? [24,30] : rates; self.rawSupported = supportsRAW}
+        let supported = movie.connection(with: .video).map { connection in
+            BMCMovieCodec.supportedCaptureCodecs(movie.availableVideoCodecTypes, canChoose: movie.supportedOutputSettingsKeys(for: connection).contains(AVVideoCodecKey))
+        } ?? []
+        DispatchQueue.main.async {self.availableFrameRates = rates.isEmpty ? [24,30] : rates; self.rawSupported = supportsRAW; self.availableMovieCodecs = supported}
     }
+    func selectMovieCodec(_ codec: BMCMovieCodec) {queue.async {self.selectedMovieCodec = codec}}
     func flip() {
         queue.async {
             guard !self.movie.isRecording,self.rawCapture == nil,!self.photoInFlight else { return }
@@ -256,6 +268,12 @@ final class CameraController: NSObject, ObservableObject, AVCaptureVideoDataOutp
             guard self.session.isRunning, !self.photoInFlight,self.rawCapture == nil,self.session.outputs.contains(self.movie) else { return }
             if self.movie.isRecording { self.movie.stopRecording() }
             else {
+                guard let connection = self.movie.connection(with:.video) else {self.report(PortError.message("Video recording is unavailable on this camera.")); return}
+                let supportedCodecs = BMCMovieCodec.supportedCaptureCodecs(self.movie.availableVideoCodecTypes, canChoose:self.movie.supportedOutputSettingsKeys(for:connection).contains(AVVideoCodecKey))
+                if !supportedCodecs.isEmpty {
+                    guard supportedCodecs.contains(self.selectedMovieCodec) else {self.report(PortError.message("The selected recording codec is unavailable on this camera.")); return}
+                    self.movie.setOutputSettings([AVVideoCodecKey:self.selectedMovieCodec.captureType],for:connection)
+                }
                 self.snapshot = self.current()
                 let url = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString+".mov")
                 if let connection = self.movie.connection(with:.audio) {connection.isEnabled = self.options().audio}
@@ -324,10 +342,14 @@ final class CameraController: NSObject, ObservableObject, AVCaptureVideoDataOutp
         }
         if opts.trackPOI,let tracked = try poi.update(source) {focus(at:tracked,tracking:true)}
         if let cg = renderer.context.createCGImage(source,from:source.extent) {preRoll.append(cg,limit:max(16,min(512,opts.memoryMB))*1024*1024)}
-        let state = current(), image = try renderer.render(source,settings:state.0,lut:state.1,time:time.seconds)
+        let state = current(), displayLUT = showPreviewLUT(), recordingLUT = applyRecordLUT()
+        let image = try renderer.render(source,settings:state.0,lut:displayLUT ? state.1 : nil,time:time.seconds)
         if let target = timelapseTarget {
             if timelapse == nil {timelapse = try MotionTimelapse(url:target,size:image.extent.size,interval:opts.interval); timelapseStarted = time.seconds}
-            try timelapse?.append(image,time:time.seconds)
+            if timelapse?.needsFrame(at:time.seconds) == true {
+                let recorded = state.1 != nil && displayLUT != recordingLUT ? try renderer.render(source,settings:state.0,lut:recordingLUT ? state.1 : nil,time:time.seconds) : image
+                try timelapse?.append(recorded,time:time.seconds)
+            }
             if time.seconds-timelapseStarted >= timelapseDeadline {finishTimelapse()}
         }
         let scale = min(1,720/image.extent.width)

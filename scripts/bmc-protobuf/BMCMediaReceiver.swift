@@ -1,5 +1,12 @@
 import Foundation
 
+struct BMCMediaProgress: Sendable {
+    let clipID: String
+    let offset: UInt64
+    let totalSize: UInt64
+    let isClosed: Bool
+}
+
 /// Validates and appends ordered media-sync chunks to a caller-opened file.
 /// The caller must not use the handle concurrently and owns the destination.
 actor BMCMediaReceiver {
@@ -20,6 +27,7 @@ actor BMCMediaReceiver {
     }
 
     var isComplete: Bool { offset == totalSize }
+    var progress: BMCMediaProgress { BMCMediaProgress(clipID: clipID, offset: offset, totalSize: totalSize, isClosed: closed) }
 
     func accept(_ chunk: CamAppMediaSyncClipDataResponse) throws {
         guard !closed, chunk.clipID == clipID, chunk.offset == offset,

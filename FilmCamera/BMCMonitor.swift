@@ -5,7 +5,7 @@ import Foundation
 struct BMCMonitorOptions: Codable, Equatable {
     var falseColor = false
     var zebra = false
-    var zebraThreshold = 0.95
+    var zebraThreshold = 0.75
     var midGray: BMCMonitor.MidGray = .off
 }
 
@@ -50,7 +50,7 @@ enum BMCMonitor {
     float linear709(float v) {
         return v <= 0.081 ? v / 4.5 : pow((v + 0.099) / 1.099, 1.0 / 0.45);
     }
-    kernel vec4 bmcMonitor(sampler image, float falseColor, float zebra, float threshold, float midGray) {
+    kernel vec4 bmcMonitor(sampler image, float falseColor, float zebra, float threshold, float midGray, float shift) {
         vec4 c = sample(image, samplerCoord(image));
         float y = dot(vec3(linear709(c.r), linear709(c.g), linear709(c.b)), vec3(0.212639, 0.715169, 0.072192));
         float l = (y <= 0.008856451679036 ? y * 903.2962962962963 : pow(y, 1.0 / 3.0) * 116.0 - 16.0) / 100.0;
@@ -68,14 +68,14 @@ enum BMCMonitor {
             else result = vec3(1.0, 0.059, 1.0);
         }
         float middle = midGray < 0.5 ? 0.0 : (midGray < 1.5 ? step(0.39550781, l) * (1.0 - step(0.41894531, l)) : step(0.51171875, l) * (1.0 - step(0.53417969, l)));
-        float stripe = step(8.0, mod(destCoord().x + destCoord().y, 16.0));
-        if (zebra > 0.5 && stripe * max(step(threshold, l), middle) > 0.5) result = vec3(1.0);
+        float stripe = step(8.0, mod(destCoord().x + destCoord().y + shift, 16.0));
+        if (zebra > 0.5 && stripe * max(step(threshold, l), middle) > 0.5) result = vec3(0.0);
         return vec4(result, c.a);
     }
     """)
-    static func render(_ image: CIImage, options: BMCMonitorOptions) throws -> CIImage {
+    static func render(_ image: CIImage, options: BMCMonitorOptions, zebraShift: Double = 0) throws -> CIImage {
         guard options.falseColor || options.zebra else { return image }
-        guard let kernel, let result = kernel.apply(extent: image.extent, roiCallback: { _, rect in rect }, arguments: [image, options.falseColor ? 1.0 : 0.0, options.zebra ? 1.0 : 0.0, min(1, max(0, options.zebraThreshold)), options.midGray.code]) else {
+        guard let kernel, let result = kernel.apply(extent: image.extent, roiCallback: { _, rect in rect }, arguments: [image, options.falseColor ? 1.0 : 0.0, options.zebra ? 1.0 : 0.0, min(1, max(0, options.zebraThreshold)), options.midGray.code, zebraShift]) else {
             throw PortError.message("Exposure monitoring could not be compiled.")
         }
         return result

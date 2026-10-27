@@ -36,4 +36,18 @@ final class BMCMonitorTests: XCTestCase {
         XCTAssertLessThan(pixels[1], 30)
         XCTAssertLessThan(pixels[2], 20)
     }
+
+    func testZebraDrawsAnimatedBlackStripes() throws {
+        let input = CIImage(color: CIColor(red: 1, green: 1, blue: 1)).cropped(to: CGRect(x: 0, y: 0, width: 16, height: 16))
+        var options = BMCMonitorOptions(); options.zebra = true
+        let context = CIContext(options: [.workingColorSpace: NSNull(), .outputColorSpace: NSNull()])
+        func pixel(shift: Double) throws -> UInt8 {
+            let output = try BMCMonitor.render(input, options: options, zebraShift: shift)
+            var bytes = [UInt8](repeating: 0, count: 4)
+            context.render(output, toBitmap: &bytes, rowBytes: 4, bounds: CGRect(x: 0, y: 0, width: 1, height: 1), format: .RGBA8, colorSpace: nil)
+            return bytes[0]
+        }
+        XCTAssertEqual(try pixel(shift: 0), 255)
+        XCTAssertEqual(try pixel(shift: 8), 0)
+    }
 }

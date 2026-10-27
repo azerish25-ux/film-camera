@@ -56,6 +56,7 @@ final class CameraController: NSObject, ObservableObject, AVCaptureVideoDataOutp
     private var onPhoto: ((UIImage) -> Void)?
     var onMovie: ((URL,FilmSettings,CubeLUT?) -> Void)?
     private var lastFrame = CMTime.zero
+    private var zebraShift = 0
     private var statistics = MotionStatistics()
     private var lastStatsTime = 0.0
     private var statsText = ""
@@ -312,7 +313,9 @@ final class CameraController: NSObject, ObservableObject, AVCaptureVideoDataOutp
         let bins = needsHistogram() ? FilmHistogram.values(image) : []
         let toneMapped = opts.gradedViewfinder ? try MotionViewfinder.render(small,shadows:state.0.motion.shadows,contrast:state.0.motion.contrast,saturation:state.0.motion.saturation) : small
         let aids = try MotionProcessing.aids(toneMapped,clipping:opts.clipping,peaking:opts.peaking,sensitivity:opts.sensitivity)
-        let display = try BMCMonitor.render(aids,options:monitor())
+        let monitorOptions = monitor()
+        if monitorOptions.zebra { zebraShift = zebraShift >= 16 ? 0 : zebraShift + 1 }
+        let display = try BMCMonitor.render(aids,options:monitorOptions,zebraShift:Double(zebraShift))
         let stats = timelapse.map {"\($0.count) frames • \($0.dropped) dropped"} ?? statsText
         if let cg = renderer.context.createCGImage(display,from:display.extent) { DispatchQueue.main.async { self.preview = UIImage(cgImage:cg); self.histogram = bins; if !self.rawRecording {self.captureStats = stats} } }
         } catch {if timelapseTarget != nil {finishTimelapse()}; report(error)}

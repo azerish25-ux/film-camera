@@ -11,6 +11,13 @@ decompilation errors; absent or malformed output cannot establish that a
 feature is absent. Android resources, shader sources, smali and native binaries
 remain available for corroboration.
 
+The D: workspace's `inventory-smali.cjs` recorded 17,199 class declarations
+and 123,886 method declarations across the three decoded DEX files. Of these,
+5,216 classes and 28,622 methods use the `com.blackmagicdesign.android`
+namespace. The JSONL ledger identifies each method and its smali file; it is an
+inventory, not proof of behavioral analysis. Namespace counts omit obfuscated
+application code and include generated code. Native functions are separate.
+
 ## Feature families found in resources
 
 * Camera controls: lens, focus and exposure, ISO, shutter, white balance,
@@ -27,6 +34,21 @@ establish the behavior, supported configurations, protocols or compatibility.
 These families require method-level tracing, native analysis and, where
 appropriate, physical-device and service tests.
 
+The APK's `AppSettings` adds concrete configuration evidence for recording
+codec, bit rate, open gate, color space and tags, proxy recording, recording
+LUTs, audio format/routing/rate/metering, storage destination, location,
+orientation, desqueeze, lens correction, sharpening, noise reduction, HDMI
+output, remote camera synchronization, cloud uploads, streaming, Bluetooth and
+accessories. `SecondaryControlsData` adds exposure/focus modes and values,
+zoom, stabilization, false color, zebra, focus assist and multiple guides.
+These declarations are a discovery checklist, not confirmation that Swift
+implements each setting or that an iPhone supports the same hardware modes.
+
+For native analysis, the D: workspace includes dynamic-symbol inventories for
+all arm64 libraries, including cloud authentication/storage/chat/router,
+streaming, USB, timecode accessories and audio. Exported symbols identify API
+boundaries but are not a decompilation of their implementations.
+
 ## Initial monitoring port
 
 `assets/glsl/false_color_effect.glsl` specifies Rec. 709 gamma decoding, CIE
@@ -38,6 +60,10 @@ luminance LUT; color management, stripe geometry, animation, other color
 spaces and interaction with other aids need reference validation. Neither
 overlay is applied to recorded media. The initial Swift implementation and
 simulator tests are a starting point, not proof of visual parity.
+
+`C8955i` and its callers specify black stripes with width 8 and a shift that
+advances on each draw and resets after twice that width. The Swift preview now
+models these values; pixel-level Android comparison remains outstanding.
 
 The APK's `EftGuideState` lists eleven frame ratios from 2.76:1 through
 9:16. Its secondary settings also list thirds, crosshairs, center dot, level,
@@ -64,4 +90,16 @@ separate MOV timecode editor. A future AVFoundation port must preserve existing
 metadata and timecode, handle non-MOV inputs deliberately, and verify exported
 files by reading their actual metadata; matching labels alone is insufficient.
 The initial Swift slate writes a subset of those keys using AVFoundation during
-movie export; its round-trip simulator test is pending.
+movie export. GitHub Actions run 40432765227 passed a simulator round-trip test
+for reel, scene and take. This does not establish parity for the remaining
+metadata fields, timecode tracks, editing existing clips or physical devices.
+
+## Focus assist evidence
+
+`focus_assist_effect.glsl` applies a 5×5 Laplacian to the red camera channel,
+with separate colored-line and peaking branches. `C8949c` scales the configured
+focus-assist value by 0.04 before passing it to the shader; `FocusAssist`
+selects colored lines or peaking, and `FocusAssistColor` lists white, black,
+red, green and blue. The existing MotionCam focus peaking is a different
+algorithm. Trace the input range, edge sampling, transform order and visual
+output before treating either implementation as equivalent.

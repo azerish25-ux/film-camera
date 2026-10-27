@@ -88,6 +88,7 @@ struct CameraScreen: View {
     @AppStorage("bmcMovieExportCodec") private var movieCodec = BMCMovieCodec.h264.rawValue
     @AppStorage("bmcDisplayLUT") private var displayLUT = true
     @AppStorage("bmcRecordLUT") private var recordLUT = true
+    @AppStorage("bmcTimecodeOfDay") private var timecodeOfDay = false
     @State private var showHistogram = false
     @State private var motion = MotionCaptureOptions()
     @State private var monitor = BMCMonitorOptions()
@@ -177,15 +178,28 @@ struct CameraScreen: View {
         camera.selectMovieCodec(BMCMovieCodec(rawValue:movieCodec) ?? .h264)
         camera.updateMonitor(monitor)
         camera.onMedia = {_ in store.refresh()}
-        camera.onMovie = { url,settings,lut in
+        camera.onMovie = { url,settings,lut,started in
+            let shouldWriteTimecode = timecodeOfDay
+            let recordedFPS = Int(fps.rounded())
             Task { @MainActor in
                 defer {try? FileManager.default.removeItem(at:url)}
                 do {
                     let destination = store.destination("mov")
                     let codec = BMCMovieCodec(rawValue:movieCodec) ?? .h264
                     try await exporter.exportVideo(source:url,destination:destination,settings:settings,lut:recordLUT ? lut : nil,slate:slate,resolution:codec.exportPreset(fourK:fourK))
+                    var savedURL = destination
+                    if shouldWriteTimecode {
+                        do {
+                            guard let started else {throw PortError.message("Recording start time is unavailable.")}
+                            let code = try BMCTimecode(timeOfDay:started,framesPerSecond:recordedFPS)
+                            let timed = store.destination("mov")
+                            try await BMCTimecodeWriter.write(source:destination,destination:timed,timecode:code,framesPerSecond:recordedFPS)
+                            savedURL = timed
+                            try? FileManager.default.removeItem(at:destination)
+                        } catch {store.error = "Timecode was not added; the exported movie was kept. \(error.localizedDescription)"}
+                    }
                     let sidecar = url.deletingPathExtension().appendingPathExtension("gcsv")
-                    if FileManager.default.fileExists(atPath:sidecar.path) {try FileManager.default.moveItem(at:sidecar,to:destination.deletingPathExtension().appendingPathExtension("gcsv"))}
+                    if FileManager.default.fileExists(atPath:sidecar.path) {try FileManager.default.moveItem(at:sidecar,to:savedURL.deletingPathExtension().appendingPathExtension("gcsv"))}
                     store.refresh()
                 } catch {store.error = error.localizedDescription}
             }
@@ -313,6 +327,8 @@ struct CameraScreen: View {
             TextField("Director",text:$slate.director)
             TextField("Camera operator",text:$slate.cameraOperator)
             TextField("Notes",text:$slate.notes)
+            Toggle("Time-of-day timecode",isOn:$timecodeOfDay)
+            if timecodeOfDay {Text("Added to standard video recordings after export.").font(.caption).foregroundStyle(.secondary)}
             Text("Slate fields are written to recorded movies after export.").font(.caption).foregroundStyle(.secondary)
         }.disabled(camera.recording)
     }

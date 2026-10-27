@@ -5,6 +5,13 @@ import Foundation
 struct BMCTimecode: Equatable {
     let frameNumber: Int32
     let framesPerSecond: Int
+    init(timeOfDay date: Date, framesPerSecond: Int, calendar: Calendar = .current) throws {
+        let components = calendar.dateComponents([.hour, .minute, .second], from: date)
+        guard let hour = components.hour, let minute = components.minute, let second = components.second else {
+            throw PortError.message("Cannot determine the recording time.")
+        }
+        try self.init(secondsOfDay: hour * 3600 + minute * 60 + second, framesPerSecond: framesPerSecond, startingFrame: 0)
+    }
     init(secondsOfDay: Int, framesPerSecond: Int, startingFrame: Int) throws {
         guard (0..<86_400).contains(secondsOfDay), (1...255).contains(framesPerSecond),
               (0..<framesPerSecond).contains(startingFrame) else {

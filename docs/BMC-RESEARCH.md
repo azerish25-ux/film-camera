@@ -272,7 +272,11 @@ sample and video-track association. The current exporter uses
 AVAssetExportSession and does not create such a track. An isolated AVAssetWriter
 remux path and reader-based round-trip test are present. Simulator run
 40452303237 passed the isolated round-trip after the reader skipped its initial
-zero-sample marker; the writer is not connected to capture.
+zero-sample marker. Standard video capture offers an opt-in time-of-day track
+written after export; the recording-start callback supplies its timestamp.
+Simulator run 40453325972 passed four timecode tests, including export metadata
+preservation. Callback alignment on a physical camera, Record Run, Tentacle,
+fractional frame rates, and the full Android timecode behavior remain open.
 The Swift writer uses the recovered integer-fps nanosecond frame duration, but
 currently makes its single timecode sample span the movie as in Apple's writer
 guidance. The APK editor's shown sample table uses a one-frame duration; that

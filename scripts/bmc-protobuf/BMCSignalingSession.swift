@@ -156,8 +156,8 @@ actor BMCRemoteSignalingSession {
            let data = try? JSONEncoder().encode(BMCSignalingMessage.bye("app_suspended")),
            let text = String(data: data, encoding: .utf8) {
             await withTaskGroup(of: Void.self) { group in
-                group.addTask { try? await channel.send(text: text) }
-                group.addTask { try? await Task.sleep(nanoseconds: 1_000_000_000) }
+                group.addTask { _ = try? await channel.send(text: text) }
+                group.addTask { _ = try? await Task.sleep(nanoseconds: 1_000_000_000) }
                 _ = await group.next()
                 group.cancelAll()
                 await channel.close()

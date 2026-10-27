@@ -1,9 +1,18 @@
 import CryptoKit
 import Foundation
+import Security
 
 /// The APK's v5 signaling challenge calculation. Transport and pairing are
 /// deliberately separate and have not yet been implemented.
 enum BMCRemoteAuthentication {
+    static func makeNonce() throws -> Data {
+        var bytes = [UInt8](repeating: 0, count: 32)
+        let status = bytes.withUnsafeMutableBytes { buffer in
+            SecRandomCopyBytes(kSecRandomDefault, buffer.count, buffer.baseAddress!)
+        }
+        guard status == errSecSuccess else { throw PortError.message("Cannot generate a remote pairing nonce.") }
+        return Data(bytes)
+    }
     static func decodeHex(_ input: String) throws -> Data {
         let text = input.utf8.count.isMultiple(of: 2) ? input : "0" + input
         let bytes = Array(text.utf8)
@@ -31,3 +40,4 @@ enum BMCRemoteAuthentication {
         return outer.map { String(format: "%02x", $0) }.joined()
     }
 }
+

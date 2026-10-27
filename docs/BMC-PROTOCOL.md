@@ -43,9 +43,16 @@ fake-peer Actions test (run 40452983221) passed ordered authorization, timeout,
 unexpected-message, unauthorized-send and authorized SDP/binary cases; it substituted a fixed
 digest and did not test a real WebSocket peer. The existing CryptoKit challenge
 implementation is separate. The channel exposes binary frames, and the session
-gates media and ICE/SDP sends on authorization, but no media-sync routing is
-connected. Discovery, app UI, WebRTC, and camera control over the data channel
+gates media and ICE/SDP sends on authorization. A fake-session test connects
+the media request builder to that sender, but no live receive-loop coordinator
+is present. Discovery, app UI, WebRTC, and camera control over the data channel
 are still unfinished.
+
+Runs 40455617389 and 40456651058 passed an iOS simulator URLSession text/binary
+exchange with a local mock WebSocket server, the latter using the app's
+local-network plist configuration. They did not test a BMC peer or
+local-network permission on a physical device. The loopback workflow keeps
+that transport check reproducible without contacting an external service.
 
 With protoc and the matching SwiftProtobuf 1.29.0 plugin installed, regenerate
 the sources from the repository root with:

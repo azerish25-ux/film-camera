@@ -16,9 +16,15 @@ targets:
   FilmCamera:
     type: application
     platform: iOS
+    info:
+      path: FilmCamera/Info.plist
+      properties:
+        NSLocalNetworkUsageDescription: Discover and connect to nearby cameras.
+        NSAppTransportSecurity:
+          NSAllowsLocalNetworking: true
     sources:
       - path: FilmCamera
-        excludes: [Resources/BMC/rec709-luminance.bin, Resources/BMCLUTs/**]
+        excludes: [Info.plist, Resources/BMC/rec709-luminance.bin, Resources/BMCLUTs/**]
       - path: FilmCamera/Resources/BMC/rec709-luminance.bin
         buildPhase: resources
       - path: FilmCamera/Resources/BMCLUTs

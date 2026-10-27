@@ -14,12 +14,13 @@ jobs:
         run: |
           set -o pipefail
           cp scripts/bmc-signaling/BMCBonjourProbeTests.swift FilmCameraTests/
+          cp scripts/bmc-signaling/BMCDiscoveryBrowserTests.swift FilmCameraTests/
           brew install xcodegen
           xcodegen generate
           DEVICE=$(xcrun simctl list devices available -j | python3 -c 'import json,sys; d=json.load(sys.stdin); print(next(x["udid"] for group in d["devices"].values() for x in group if "iPhone" in x["name"]))')
           xcrun simctl boot "$DEVICE" || true
           xcrun simctl bootstatus "$DEVICE" -b
-          xcodebuild -quiet -parallel-testing-enabled NO -scheme FilmCamera -destination "platform=iOS Simulator,id=$DEVICE" -derivedDataPath build/bonjour -resultBundlePath build/Bonjour.xcresult -only-testing:FilmCameraTests/BMCBonjourProbeTests CODE_SIGNING_ALLOWED=NO test 2>&1 | tee bonjour-test.log
+          xcodebuild -quiet -parallel-testing-enabled NO -scheme FilmCamera -destination "platform=iOS Simulator,id=$DEVICE" -derivedDataPath build/bonjour -resultBundlePath build/Bonjour.xcresult -only-testing:FilmCameraTests/BMCBonjourProbeTests -only-testing:FilmCameraTests/BMCDiscoveryBrowserTests CODE_SIGNING_ALLOWED=NO test 2>&1 | tee bonjour-test.log
       - name: Show test summary
         if: always()
         run: |

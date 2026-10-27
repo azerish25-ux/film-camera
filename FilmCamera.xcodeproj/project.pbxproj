@@ -7784,6 +7784,7 @@
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				CURRENT_PROJECT_VERSION = 1;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = FilmCamera/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = "Super 16";
 				INFOPLIST_KEY_NSCameraUsageDescription = "Capture photos and videos with film effects.";
 				INFOPLIST_KEY_NSMicrophoneUsageDescription = "Record sound with your videos.";
@@ -7931,6 +7932,7 @@
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				CURRENT_PROJECT_VERSION = 1;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = FilmCamera/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = "Super 16";
 				INFOPLIST_KEY_NSCameraUsageDescription = "Capture photos and videos with film effects.";
 				INFOPLIST_KEY_NSMicrophoneUsageDescription = "Record sound with your videos.";

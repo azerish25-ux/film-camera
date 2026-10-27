@@ -240,6 +240,7 @@
 		2252ADD99C3A1BCB9C3166A4 /* film-02-p0-s0.7.rgba in Resources */ = {isa = PBXBuildFile; fileRef = D9E879C51172C5CD63BFC287 /* film-02-p0-s0.7.rgba */; };
 		2259B2F52BA6139D322717E0 /* actual-static-kiev-0.rgba in Resources */ = {isa = PBXBuildFile; fileRef = 6F8DE6CCA3D2C5351942182F /* actual-static-kiev-0.rgba */; };
 		2266C49AF8007326D5976E9B /* grain-size-step-072.rgba in Resources */ = {isa = PBXBuildFile; fileRef = FC1AECBB38AD7ADC91C243F2 /* grain-size-step-072.rgba */; };
+		226D8C118D895DF9056AA5EA /* main_messages.pb.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6958C6E6D605A6ED2885C74E /* main_messages.pb.swift */; };
 		22DA0AA2A6CCDD65733EBDA8 /* film-38-p1-s0.rgba in Resources */ = {isa = PBXBuildFile; fileRef = 355183AC75CD1EDB5FD79B5E /* film-38-p1-s0.rgba */; };
 		22F378E95732FA108CF8F039 /* BMCSlateTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 29FE977DA157CB327831D9B6 /* BMCSlateTests.swift */; };
 		233506AC620EBA7D2C60E555 /* film-01-p0-s2.rgba in Resources */ = {isa = PBXBuildFile; fileRef = 4468DDE6BA44050869AE8271 /* film-01-p0-s2.rgba */; };
@@ -248,6 +249,7 @@
 		23C12403D792613FD0C3D0F8 /* chain-film-74.rgba in Resources */ = {isa = PBXBuildFile; fileRef = 98D6F900F8818A625BEC789E /* chain-film-74.rgba */; };
 		23F6E19A5CFDA5E0C6A4F00C /* 588adec161c0923430288e36670a29d2be5871f8.lut in Resources */ = {isa = PBXBuildFile; fileRef = AF31158351012C8DDF16CC26 /* 588adec161c0923430288e36670a29d2be5871f8.lut */; };
 		240FD40D9F3E727566B7DD57 /* film-29-p0-s1.rgba in Resources */ = {isa = PBXBuildFile; fileRef = 7C13D6107704C932C2E8CF98 /* film-29-p0-s1.rgba */; };
+		2418C77B35831EC75A1A9633 /* SwiftProtobuf in Frameworks */ = {isa = PBXBuildFile; productRef = 28B481C5693B4FF8C6F522A6 /* SwiftProtobuf */; };
 		242DA2ADDF546ADC86D2F4BB /* actual-mask-raw2-0.023.rgba in Resources */ = {isa = PBXBuildFile; fileRef = 8C03E37C552B5F315B2C6224 /* actual-mask-raw2-0.023.rgba */; };
 		2450ACEB18916AC6DB9C3449 /* film-81-p1-s0.7.rgba in Resources */ = {isa = PBXBuildFile; fileRef = 7AE806850BE08B7CE4C4E561 /* film-81-p1-s0.7.rgba */; };
 		2451267EB3FDCA8FB6A9BD88 /* vignetteFalloff-0.99.rgba in Resources */ = {isa = PBXBuildFile; fileRef = 70425AB4CF8C3F90BEE1E33B /* vignetteFalloff-0.99.rgba */; };
@@ -930,6 +932,7 @@
 		7DEC85F1C51B33A9B1FD675B /* film-24-p2-s0.rgba in Resources */ = {isa = PBXBuildFile; fileRef = 49207E127535FDAD19946410 /* film-24-p2-s0.rgba */; };
 		7E0AFA32E3F9C574FD0FB77B /* film-77-p0-s1.rgba in Resources */ = {isa = PBXBuildFile; fileRef = 52217BFD70276D901B110C29 /* film-77-p0-s1.rgba */; };
 		7E52C3D9F8D83F9C7A2CB273 /* blur-radius-10.5.rgba in Resources */ = {isa = PBXBuildFile; fileRef = DA788A88ADFD4CC12809FE78 /* blur-radius-10.5.rgba */; };
+		7E58A07DCFF029813482B60D /* settings.pb.swift in Sources */ = {isa = PBXBuildFile; fileRef = AE61E1BDAA11F2CD4B3866B5 /* settings.pb.swift */; };
 		7E6C8CF2F9F8346B6B40F26E /* film-51-p1-s1.rgba in Resources */ = {isa = PBXBuildFile; fileRef = 5B5F8F56EFCEB89FD3029CC5 /* film-51-p1-s1.rgba */; };
 		7E80D613B563F872456D65A3 /* film-49-grain.rgba in Resources */ = {isa = PBXBuildFile; fileRef = BA2B54AE7BC4CD2D9230AC26 /* film-49-grain.rgba */; };
 		7EC34A9ABC5E56166E28C86D /* film-86-p0-s1.rgba in Resources */ = {isa = PBXBuildFile; fileRef = E9C534BFDCFE468F5F750520 /* film-86-p0-s1.rgba */; };
@@ -1230,6 +1233,7 @@
 		A7F21596854D28A730260443 /* film-26-p1-s1.rgba in Resources */ = {isa = PBXBuildFile; fileRef = 3B44A09B865876F90343DF79 /* film-26-p1-s1.rgba */; };
 		A7F51C60B5157856C1EC34C5 /* film-47-p0-s2.rgba in Resources */ = {isa = PBXBuildFile; fileRef = 881F7531653EEA9F4C1D632C /* film-47-p0-s2.rgba */; };
 		A80AAE87506263A8107CCDB6 /* film-72-p1-s1.rgba in Resources */ = {isa = PBXBuildFile; fileRef = 96BFE41DE3C770CC49A91F76 /* film-72-p1-s1.rgba */; };
+		A86CA8069E94664A64FC5CB3 /* common.pb.swift in Sources */ = {isa = PBXBuildFile; fileRef = 058D57DEE57A03E1E919653F /* common.pb.swift */; };
 		A871AED19C999CDC317F28A1 /* film-41-p1-s1.rgba in Resources */ = {isa = PBXBuildFile; fileRef = EA6DAC4E534EE33D5F2E0BE8 /* film-41-p1-s1.rgba */; };
 		A8AA3BB7B098420FAE9545BF /* film-70-p1-s0.7.rgba in Resources */ = {isa = PBXBuildFile; fileRef = 2AB364066C619DD40C2D67CE /* film-70-p1-s0.7.rgba */; };
 		A8ADA18B14C9DBF8ED5D4FA9 /* film-32-p1-s1.rgba in Resources */ = {isa = PBXBuildFile; fileRef = 308C6349B5410178A7E0D087 /* film-32-p1-s1.rgba */; };
@@ -1265,6 +1269,7 @@
 		AEB17F6E4DB3742FE26431C5 /* grain-size-step-020.rgba in Resources */ = {isa = PBXBuildFile; fileRef = F5EBE28D487901F20BAA7FA2 /* grain-size-step-020.rgba */; };
 		AED1EEABBF8B956539B2628C /* film-08-p1-s0.rgba in Resources */ = {isa = PBXBuildFile; fileRef = 5F959D0643C98FD62F76E05E /* film-08-p1-s0.rgba */; };
 		AF00B2BEF40D44273A2F2226 /* grain-size-step-016.rgba in Resources */ = {isa = PBXBuildFile; fileRef = FD747F14B908D8A11DE63DD4 /* grain-size-step-016.rgba */; };
+		AF22B62431700C34F21BCCB5 /* SwiftProtobuf in Frameworks */ = {isa = PBXBuildFile; productRef = 460C4168336BB6254D037E97 /* SwiftProtobuf */; };
 		AF8426DF95AE72D53B85EB33 /* febf7cd5222a2a4c308342a0bdb5a9545d35413d.lut in Resources */ = {isa = PBXBuildFile; fileRef = 82F24C3731290EBE73A96654 /* febf7cd5222a2a4c308342a0bdb5a9545d35413d.lut */; };
 		AF87F3826DBC70F05880990F /* film-50-p1-s0.7.rgba in Resources */ = {isa = PBXBuildFile; fileRef = 302C50A11DD2C9B5FE34A1D3 /* film-50-p1-s0.7.rgba */; };
 		AFDBFD4A9A2E20B231DA8685 /* film-74-p1-s0.7.rgba in Resources */ = {isa = PBXBuildFile; fileRef = 570317428B7141D17BB5B725 /* film-74-p1-s0.7.rgba */; };
@@ -1434,6 +1439,7 @@
 		C433DA838981EDD5195063A8 /* film-87-p1-s1.rgba in Resources */ = {isa = PBXBuildFile; fileRef = 260D2B39F89A4B255ED13DCF /* film-87-p1-s1.rgba */; };
 		C437F0A24F741D6E16AF5098 /* film-32-p2-s1.rgba in Resources */ = {isa = PBXBuildFile; fileRef = D5D52CD1133A4FB0E356CA2E /* film-32-p2-s1.rgba */; };
 		C49697F1D81C3A1E974136B7 /* 3a69788006b2e5b9ca98598ec2ffaf1b47d57f06.lut in Resources */ = {isa = PBXBuildFile; fileRef = 13152E14FC01CD7B5DC517B8 /* 3a69788006b2e5b9ca98598ec2ffaf1b47d57f06.lut */; };
+		C52A8B8E76586FF1B1E2EFA1 /* camera_control.pb.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2BC2390DBA26EA87DC05ACBB /* camera_control.pb.swift */; };
 		C534486CBD18F8A486BBDABC /* film-64-p2-s0.rgba in Resources */ = {isa = PBXBuildFile; fileRef = DCC6F2F18A189618DF036F6D /* film-64-p2-s0.rgba */; };
 		C554F5FF74E5D27248188BC5 /* film-39-p1-s0.rgba in Resources */ = {isa = PBXBuildFile; fileRef = DFF0741133449A92EC8917D7 /* film-39-p1-s0.rgba */; };
 		C56D5488AE15EEE6B198B26E /* film-17-p1-s0.rgba in Resources */ = {isa = PBXBuildFile; fileRef = BC06CD81B1A9194E5C2D7D9B /* film-17-p1-s0.rgba */; };
@@ -1566,6 +1572,7 @@
 		D82D955BAE75B26E91397C8E /* film-14-p1-s1.rgba in Resources */ = {isa = PBXBuildFile; fileRef = 8A1200CA10C567755ED8224F /* film-14-p1-s1.rgba */; };
 		D8C0C856D412201652714EB2 /* film-57-p0-s1.rgba in Resources */ = {isa = PBXBuildFile; fileRef = A3E6DABD80427A0D7750D2A7 /* film-57-p0-s1.rgba */; };
 		D8D843CDD9BF1F3E947ABECC /* film-62-p0-s2.rgba in Resources */ = {isa = PBXBuildFile; fileRef = E17D6B4986303A242803091F /* film-62-p0-s2.rgba */; };
+		D8EB98142CAFAAB46A097304 /* BMCProtocolTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 013F99253035B3AE5C039AD5 /* BMCProtocolTests.swift */; };
 		D8FA0445BC68A84876D59630 /* film-25-p0-s0.rgba in Resources */ = {isa = PBXBuildFile; fileRef = 34FBB7CC021492A0DC65439A /* film-25-p0-s0.rgba */; };
 		D92E9805BD7CA6486CA56CCC /* actual-static-arri-frame-0.023.rgba in Resources */ = {isa = PBXBuildFile; fileRef = F803ADCED9BCF31648602540 /* actual-static-arri-frame-0.023.rgba */; };
 		D95AEC0595185EDDC767E094 /* film-17-p2-s2.rgba in Resources */ = {isa = PBXBuildFile; fileRef = 565AE79400125ED328E2EE4A /* film-17-p2-s2.rgba */; };
@@ -1864,6 +1871,7 @@
 		00DFCAEDC2CAA0DAE70509B8 /* film-44-p0-s2.rgba */ = {isa = PBXFileReference; path = "film-44-p0-s2.rgba"; sourceTree = "<group>"; };
 		00F741901759768B885EB644 /* film-27-p2-s0.7.rgba */ = {isa = PBXFileReference; path = "film-27-p2-s0.7.rgba"; sourceTree = "<group>"; };
 		010D9C44C2B70237E79F9484 /* a_unassigned3.glsl */ = {isa = PBXFileReference; path = a_unassigned3.glsl; sourceTree = "<group>"; };
+		013F99253035B3AE5C039AD5 /* BMCProtocolTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BMCProtocolTests.swift; sourceTree = "<group>"; };
 		015784F490864C4FF83DFB59 /* film-50-grain.rgba */ = {isa = PBXFileReference; path = "film-50-grain.rgba"; sourceTree = "<group>"; };
 		0160F58D9DC6E3B032A76E26 /* film-61-p1-s1.rgba */ = {isa = PBXFileReference; path = "film-61-p1-s1.rgba"; sourceTree = "<group>"; };
 		0174D173D47F5DF1E0CF335E /* film-47-p2-s0.rgba */ = {isa = PBXFileReference; path = "film-47-p2-s0.rgba"; sourceTree = "<group>"; };
@@ -1889,6 +1897,7 @@
 		05311C92F37ED79957620391 /* e1e9a71d85fd2200ef73375fe0e5b5d9d3136e53.lut */ = {isa = PBXFileReference; path = e1e9a71d85fd2200ef73375fe0e5b5d9d3136e53.lut; sourceTree = "<group>"; };
 		055094BC6C337FAAA5DA7BDB /* film-28-p0-s0.rgba */ = {isa = PBXFileReference; path = "film-28-p0-s0.rgba"; sourceTree = "<group>"; };
 		0570EBF8956E5578D90FE2CC /* film-10-p1-s0.rgba */ = {isa = PBXFileReference; path = "film-10-p1-s0.rgba"; sourceTree = "<group>"; };
+		058D57DEE57A03E1E919653F /* common.pb.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = common.pb.swift; sourceTree = "<group>"; };
 		05C23062A1541B96DE04E811 /* film-08-p2-s0.7.rgba */ = {isa = PBXFileReference; path = "film-08-p2-s0.7.rgba"; sourceTree = "<group>"; };
 		05D5705391385926461FD1B4 /* film-65-p1-s0.rgba */ = {isa = PBXFileReference; path = "film-65-p1-s0.rgba"; sourceTree = "<group>"; };
 		05D9E015671E16FD5C0FC771 /* film-52-p2-s0.7.rgba */ = {isa = PBXFileReference; path = "film-52-p2-s0.7.rgba"; sourceTree = "<group>"; };
@@ -2167,6 +2176,7 @@
 		2B320EB5C9E5E473B26BE250 /* film-36-p0-s0.rgba */ = {isa = PBXFileReference; path = "film-36-p0-s0.rgba"; sourceTree = "<group>"; };
 		2B8BE90D9DB45EFD90825488 /* grain-size-step-089.rgba */ = {isa = PBXFileReference; path = "grain-size-step-089.rgba"; sourceTree = "<group>"; };
 		2BAC92C87D643AFFEE78A9F4 /* film-46-grain.rgba */ = {isa = PBXFileReference; path = "film-46-grain.rgba"; sourceTree = "<group>"; };
+		2BC2390DBA26EA87DC05ACBB /* camera_control.pb.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = camera_control.pb.swift; sourceTree = "<group>"; };
 		2BC755CA41D110E5EC874786 /* film-82-scene.rgba */ = {isa = PBXFileReference; path = "film-82-scene.rgba"; sourceTree = "<group>"; };
 		2C115C6CB26AE50424606E17 /* film-29-p1-s2.rgba */ = {isa = PBXFileReference; path = "film-29-p1-s2.rgba"; sourceTree = "<group>"; };
 		2C213C0BD3CFF3DECA6F8CF8 /* film-70-p2-s0.7.rgba */ = {isa = PBXFileReference; path = "film-70-p2-s0.7.rgba"; sourceTree = "<group>"; };
@@ -2641,6 +2651,7 @@
 		691189A85AC182B22905AFC6 /* b_f25846d.glsl */ = {isa = PBXFileReference; path = b_f25846d.glsl; sourceTree = "<group>"; };
 		6950C7118D67E5441D118791 /* grain-size-step-055.rgba */ = {isa = PBXFileReference; path = "grain-size-step-055.rgba"; sourceTree = "<group>"; };
 		6955303855E1991A4C9C86D3 /* film-17-p2-s0.rgba */ = {isa = PBXFileReference; path = "film-17-p2-s0.rgba"; sourceTree = "<group>"; };
+		6958C6E6D605A6ED2885C74E /* main_messages.pb.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = main_messages.pb.swift; sourceTree = "<group>"; };
 		69708C510C3F06AC3664C6D9 /* film-72-p0-s0.7.rgba */ = {isa = PBXFileReference; path = "film-72-p0-s0.7.rgba"; sourceTree = "<group>"; };
 		69C2BBC13BC790F08BCB77EB /* film-79-p2-s1.rgba */ = {isa = PBXFileReference; path = "film-79-p2-s1.rgba"; sourceTree = "<group>"; };
 		69C4B5F5A83F40A4586AA991 /* film-16-scene.rgba */ = {isa = PBXFileReference; path = "film-16-scene.rgba"; sourceTree = "<group>"; };
@@ -3127,6 +3138,7 @@
 		AE2B029CEEF9F7D16B9E4C33 /* film-28-p2-s1.rgba */ = {isa = PBXFileReference; path = "film-28-p2-s1.rgba"; sourceTree = "<group>"; };
 		AE377FF1D473F8D4D2EC38F8 /* film-27-p0-s0.rgba */ = {isa = PBXFileReference; path = "film-27-p0-s0.rgba"; sourceTree = "<group>"; };
 		AE3C3B281FD2263D7696CAE8 /* film-66-p1-s0.rgba */ = {isa = PBXFileReference; path = "film-66-p1-s0.rgba"; sourceTree = "<group>"; };
+		AE61E1BDAA11F2CD4B3866B5 /* settings.pb.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = settings.pb.swift; sourceTree = "<group>"; };
 		AE99D4A3E3CEFEF8A2848CD1 /* film-85-p0-s1.rgba */ = {isa = PBXFileReference; path = "film-85-p0-s1.rgba"; sourceTree = "<group>"; };
 		AEFA77A2DB3B6998DB20A21A /* film-77-p0-s0.7.rgba */ = {isa = PBXFileReference; path = "film-77-p0-s0.7.rgba"; sourceTree = "<group>"; };
 		AF06C6EA5C6C99409F8E680B /* FilmRenderer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FilmRenderer.swift; sourceTree = "<group>"; };
@@ -3696,6 +3708,25 @@
 		FFF249E6F7CB9C63352511C9 /* film-66-p0-s0.rgba */ = {isa = PBXFileReference; path = "film-66-p0-s0.rgba"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
+/* Begin PBXFrameworksBuildPhase section */
+		2B3EB1A2EAA4D007831018D9 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				AF22B62431700C34F21BCCB5 /* SwiftProtobuf in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		F7683E8A7B19A16E3AEB01F3 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				2418C77B35831EC75A1A9633 /* SwiftProtobuf in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
 /* Begin PBXGroup section */
 		06968E5BA9DB8B82A1E7FDA7 /* Resources */ = {
 			isa = PBXGroup;
@@ -3792,6 +3823,7 @@
 				E4C6105589C5161BC5604A5C /* BMCLUTTests.swift */,
 				50A87C4AC007DA1DD7A57B30 /* BMCMonitorTests.swift */,
 				29528825ABC287357DF0A5FF /* BMCMovieCodecTests.swift */,
+				013F99253035B3AE5C039AD5 /* BMCProtocolTests.swift */,
 				D0773CF648042D1822F34138 /* BMCRemoteAuthenticationTests.swift */,
 				94865DDFAFF89206FF223D82 /* BMCSignalingTests.swift */,
 				29FE977DA157CB327831D9B6 /* BMCSlateTests.swift */,
@@ -3928,6 +3960,17 @@
 			path = OriginalAssets;
 			sourceTree = "<group>";
 		};
+		87EB16A8C49DA8C7254276D5 /* BMCProtocol */ = {
+			isa = PBXGroup;
+			children = (
+				2BC2390DBA26EA87DC05ACBB /* camera_control.pb.swift */,
+				058D57DEE57A03E1E919653F /* common.pb.swift */,
+				6958C6E6D605A6ED2885C74E /* main_messages.pb.swift */,
+				AE61E1BDAA11F2CD4B3866B5 /* settings.pb.swift */,
+			);
+			path = BMCProtocol;
+			sourceTree = "<group>";
+		};
 		8A8F1B7D545AE30E4A4130F3 = {
 			isa = PBXGroup;
 			children = (
@@ -4002,6 +4045,7 @@
 				78D8253BF6F593244E882896 /* RawSequence.swift */,
 				378D3335CE46811FCD2D0AF6 /* RawSequenceAudio.swift */,
 				35B3C490BB3B49A78AD76D34 /* ReferenceCase.swift */,
+				87EB16A8C49DA8C7254276D5 /* BMCProtocol */,
 				0BD1467146F3883E1C0808E5 /* Resources */,
 			);
 			path = FilmCamera;
@@ -5655,6 +5699,7 @@
 			buildPhases = (
 				B8D4CD194F427D88218309E9 /* Sources */,
 				3077F135C2A7548B72D5575D /* Resources */,
+				2B3EB1A2EAA4D007831018D9 /* Frameworks */,
 			);
 			buildRules = (
 			);
@@ -5663,6 +5708,7 @@
 			);
 			name = FilmCameraTests;
 			packageProductDependencies = (
+				460C4168336BB6254D037E97 /* SwiftProtobuf */,
 			);
 			productName = FilmCameraTests;
 			productReference = A5D28830943BD1C9A9579157 /* FilmCameraTests.xctest */;
@@ -5674,6 +5720,7 @@
 			buildPhases = (
 				D0B4FB8BBEC8A53C158143DB /* Sources */,
 				8C074CD0CD1DFFB195D4DB66 /* Resources */,
+				F7683E8A7B19A16E3AEB01F3 /* Frameworks */,
 			);
 			buildRules = (
 			);
@@ -5681,6 +5728,7 @@
 			);
 			name = FilmCamera;
 			packageProductDependencies = (
+				28B481C5693B4FF8C6F522A6 /* SwiftProtobuf */,
 			);
 			productName = FilmCamera;
 			productReference = FA18FB4BFC6FC8CD566ADFC7 /* FilmCamera.app */;
@@ -5709,6 +5757,9 @@
 			);
 			mainGroup = 8A8F1B7D545AE30E4A4130F3;
 			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				7E367C680B47E91DF5900FB6 /* XCRemoteSwiftPackageReference "swift-protobuf" */,
+			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 22614925906A67BE78DA7C7C /* Products */;
 			projectDirPath = "";
@@ -7512,6 +7563,7 @@
 				F4EBE5F968FA1604E9353E4C /* BMCLUTTests.swift in Sources */,
 				CD8D70DCCC1AAD193C563168 /* BMCMonitorTests.swift in Sources */,
 				84DC197459B65899410DAD0D /* BMCMovieCodecTests.swift in Sources */,
+				D8EB98142CAFAAB46A097304 /* BMCProtocolTests.swift in Sources */,
 				B24C4349814A0B99FBAECAE3 /* BMCRemoteAuthenticationTests.swift in Sources */,
 				2C64F6694D4C27F900815A21 /* BMCSignalingTests.swift in Sources */,
 				22F378E95732FA108CF8F039 /* BMCSlateTests.swift in Sources */,
@@ -7589,6 +7641,10 @@
 				1535525BFACEA4E295F60C66 /* RawSequence.swift in Sources */,
 				F680D2F3E08EE328421CF4F7 /* RawSequenceAudio.swift in Sources */,
 				28C64A2E067560E356790766 /* ReferenceCase.swift in Sources */,
+				C52A8B8E76586FF1B1E2EFA1 /* camera_control.pb.swift in Sources */,
+				A86CA8069E94664A64FC5CB3 /* common.pb.swift in Sources */,
+				226D8C118D895DF9056AA5EA /* main_messages.pb.swift in Sources */,
+				7E58A07DCFF029813482B60D /* settings.pb.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -7885,6 +7941,30 @@
 			defaultConfigurationName = Debug;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		7E367C680B47E91DF5900FB6 /* XCRemoteSwiftPackageReference "swift-protobuf" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/apple/swift-protobuf.git";
+			requirement = {
+				kind = exactVersion;
+				version = 1.29.0;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		28B481C5693B4FF8C6F522A6 /* SwiftProtobuf */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 7E367C680B47E91DF5900FB6 /* XCRemoteSwiftPackageReference "swift-protobuf" */;
+			productName = SwiftProtobuf;
+		};
+		460C4168336BB6254D037E97 /* SwiftProtobuf */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 7E367C680B47E91DF5900FB6 /* XCRemoteSwiftPackageReference "swift-protobuf" */;
+			productName = SwiftProtobuf;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = FBA3313DA058582D662CE2A2 /* Project object */;
 }

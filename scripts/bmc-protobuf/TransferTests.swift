@@ -19,8 +19,11 @@ final class BMCMediaTransferTests: XCTestCase {
         let transfer = BMCMediaTransfer(sender: sender, receiver: receiver)
         try await transfer.requestRemaining()
         try await transfer.requestStop()
+        try await transfer.requestRetry()
         let sent = await sender.sent()
-        XCTAssertEqual(sent, [Data([0x0a, 0x09, 0x22, 0x07, 0x0a, 0x01, 0x41, 0x10, 0x02, 0x18, 0x04]), Data([0x0a, 0x05, 0x2a, 0x03, 0x0a, 0x01, 0x41])])
+        let start = Data([0x0a, 0x09, 0x22, 0x07, 0x0a, 0x01, 0x41, 0x10, 0x02, 0x18, 0x04])
+        let stop = Data([0x0a, 0x05, 0x2a, 0x03, 0x0a, 0x01, 0x41])
+        XCTAssertEqual(sent, [start, stop, stop + start])
 
         var chunk = CamAppMediaSyncClipDataResponse()
         chunk.clipID = "A"; chunk.offset = 2; chunk.data = Data("3456".utf8)

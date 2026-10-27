@@ -45,6 +45,22 @@ actor BMCMediaTransfer {
         try await sender.sendBinary(root.serializedData())
     }
 
+    /// The APK retries a bad chunk by sending stop and start in one envelope.
+    func requestRetry() async throws {
+        guard !requesting else { throw PortError.message("A media request is already being sent.") }
+        requesting = true
+        defer { requesting = false }
+        let progress = await receiver.progress
+        guard !progress.isClosed, progress.offset < progress.totalSize else { throw PortError.message("The media transfer is closed or complete.") }
+        var stop = CamAppMediaSyncClipDataStopRequest(); stop.clipID = progress.clipID
+        var start = CamAppMediaSyncClipDataStartRequest()
+        start.clipID = progress.clipID; start.offset = progress.offset; start.size = progress.totalSize - progress.offset
+        var stopMessage = CamAppMediaSyncMessage(); stopMessage.clipDataStopRequest = stop
+        var startMessage = CamAppMediaSyncMessage(); startMessage.clipDataStartRequest = start
+        var root = CamAppMediaSyncRootMessage(); root.messages = [stopMessage, startMessage]
+        try await sender.sendBinary(root.serializedData())
+    }
+
     /// Returns messages that do not belong to this transfer for the caller to
     /// route elsewhere; matching chunks are validated and written in order.
     func accept(_ data: Data) async throws -> [CamAppMediaSyncMessage] {

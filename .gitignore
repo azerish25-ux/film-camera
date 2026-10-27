@@ -9,4 +9,6 @@ xcuserdata/
 __pycache__/
 scripts/android-reference/out/
 /android-reference/
+/bmc-reference/
+/scripts/bmc-reference/out/
 

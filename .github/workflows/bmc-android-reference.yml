@@ -1,0 +1,68 @@
+name: BMC Android shader reference
+on:
+  push:
+    branches: [bmc-integration]
+    paths: ['Reference/BMC/**', 'scripts/bmc-reference/**', '.github/workflows/bmc-android-reference.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: bmc-android-reference-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  reference:
+    runs-on: macos-15-intel
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: android-actions/setup-android@v3
+        with:
+          packages: platform-tools
+      - uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 29
+          arch: x86_64
+          target: google_apis
+          profile: pixel_2
+          emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim -camera-back none
+          script: bash scripts/bmc-reference/run.sh
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: bmc-android-shader-reference
+          path: bmc-reference/
+          retention-days: 14
+  ios-compare:
+    needs: reference
+    runs-on: macos-15
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: bmc-android-shader-reference
+          path: FilmCameraTests/Resources/BMCReference
+      - name: Generate project with comparison tests
+        run: |
+          cp scripts/bmc-reference/BMCReferenceTests.swift FilmCameraTests/BMCReferenceTests.swift
+          brew install xcodegen
+          xcodegen generate
+      - name: Compare iOS rendering with Android GLES
+        run: |
+          set -o pipefail
+          DEVICE=$(xcrun simctl list devices available -j | python3 -c 'import json,sys; d=json.load(sys.stdin); print(next(x["udid"] for group in d["devices"].values() for x in group if "iPhone" in x["name"]))')
+          xcrun simctl boot "$DEVICE" || true
+          xcrun simctl bootstatus "$DEVICE" -b
+          xcodebuild -quiet -parallel-testing-enabled NO -scheme FilmCamera -destination "platform=iOS Simulator,id=$DEVICE" -derivedDataPath build/bmc-comparison -resultBundlePath build/BMCComparison.xcresult -only-testing:FilmCameraTests/BMCReferenceTests CODE_SIGNING_ALLOWED=NO test 2>&1 | tee bmc-comparison.log
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: bmc-ios-comparison
+          path: |
+            build/BMCComparison.xcresult
+            bmc-comparison.log
+          retention-days: 14

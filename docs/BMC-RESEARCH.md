@@ -135,6 +135,14 @@ spaces and interaction with other aids need reference validation. Neither
 overlay is applied to recorded media. The initial Swift implementation and
 simulator tests are a starting point, not proof of visual parity.
 
+`Reference/BMC` holds the APK's four monitoring shader snippets and its
+33-cubed Rec. 709 luminance byte table extracted from Java serialization. The
+table SHA-256 is `3736d238eab34b8458f55ad294803576b9df4ddd6bb6c98eb224cb7719386c05`.
+`BMCReferenceMain` runs those snippets with synthetic images in Android GLES;
+a dedicated workflow generates reference frames and compares them to iOS.
+This is a shader harness, not execution of the BMC APK or evidence of hardware
+camera behavior. The first comparison is pending and may expose differences.
+
 `C8955i` and its callers specify black stripes with width 8 and a shift that
 advances on each draw and resets after twice that width. The Swift preview now
 models these values; pixel-level Android comparison remains outstanding.
@@ -217,6 +225,10 @@ and a combined manual ISO/shutter setting; it does not yet reproduce these
 priority modes. Trace the Android control loop and determine how to implement
 the corresponding behavior with iOS capture-device exposure APIs and real
 hardware feedback before marking this capability complete.
+The flicker-free option delegates to Android Camera2's
+`CONTROL_AE_ANTIBANDING_MODE` for off, 50 Hz, 60 Hz or auto after checking
+camera support. An iOS shutter-duration approximation would require device
+testing and should not be presented as the same OEM auto-exposure behavior.
 
 ## Time lapse
 

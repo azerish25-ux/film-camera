@@ -48,7 +48,7 @@ struct BMCAudioMeter {
     }
 
     mutating func process(_ samples: [Int16]) -> [Reading]? {
-        guard !samples.isEmpty else { return nil }
+        guard !samples.isEmpty, samples.count.isMultiple(of: channels.count) else { return nil }
         var updated = false
         for (index, sample) in samples.enumerated() {
             let channel = index % channels.count

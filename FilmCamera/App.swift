@@ -79,6 +79,7 @@ struct CameraScreen: View {
     @State private var fps = 24.0
     @State private var lens = "Wide"
     @State private var fourK = false
+    @AppStorage("bmcMovieExportCodec") private var movieCodec = BMCMovieCodec.h264.rawValue
     @State private var showHistogram = false
     @State private var motion = MotionCaptureOptions()
     @State private var monitor = BMCMonitorOptions()
@@ -139,7 +140,8 @@ struct CameraScreen: View {
                         defer {try? FileManager.default.removeItem(at:url)}
                         do {
                             let destination = store.destination("mov")
-                            try await exporter.exportVideo(source:url,destination:destination,settings:settings,lut:lut,slate:slate,resolution:fourK ? AVAssetExportPreset3840x2160 : AVAssetExportPreset1920x1080)
+                            let codec = BMCMovieCodec(rawValue:movieCodec) ?? .h264
+                            try await exporter.exportVideo(source:url,destination:destination,settings:settings,lut:lut,slate:slate,resolution:codec.exportPreset(fourK:fourK))
                             let sidecar = url.deletingPathExtension().appendingPathExtension("gcsv")
                             if FileManager.default.fileExists(atPath:sidecar.path) {try FileManager.default.moveItem(at:sidecar,to:destination.deletingPathExtension().appendingPathExtension("gcsv"))}
                             store.refresh()
@@ -218,7 +220,9 @@ struct CameraScreen: View {
             Toggle("RGB histogram",isOn:$showHistogram).onChange(of:showHistogram) {_,value in camera.enableHistogram(value)}
             if showHistogram {HistogramPlot(values:camera.histogram)}
             Picker("Lens",selection:$lens) {ForEach(camera.availableLenses,id:\.self) {Text($0).tag($0)}}.onChange(of:lens) {_,value in camera.selectLens(value); controls()}
-            Toggle("Record in 4K",isOn:$fourK).onChange(of:fourK) {_,value in camera.setResolution(value); controls()}
+            Toggle("Record in 4K",isOn:$fourK).disabled(camera.recording || exporter.busy).onChange(of:fourK) {_,value in camera.setResolution(value); controls()}
+            Picker("Movie export codec",selection:$movieCodec) {ForEach(BMCMovieCodec.allCases) {Text($0.title).tag($0.rawValue)}}.disabled(camera.recording || exporter.busy)
+            Text("Video is captured first, then exported with the selected codec.").font(.caption).foregroundStyle(.secondary)
             if camera.ready && !camera.audioEnabled {Label("Microphone access is disabled. Video will have no sound.",systemImage:"mic.slash").font(.caption)}
             Text("Available ranges depend on the selected camera.").font(.caption).foregroundStyle(.secondary)
             Text("Zoom"); Slider(value:$zoom,in:1...8,onEditingChanged:{_ in controls()})

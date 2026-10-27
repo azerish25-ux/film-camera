@@ -13,6 +13,7 @@ final class BMCAudioMeterTests: XCTestCase {
     }
     func testVUMeterRequiresItsCompleteWindowAndSeparatesChannels() throws {
         var meter = try BMCAudioMeter(sampleRate: 48_000, channels: 2, mode: .vu18)
+        XCTAssertNil(meter.process([1]))
         let frame = [Int16(32767), Int16(0)]
         var samples = [Int16](); for _ in 0..<(466 * 17) { samples.append(contentsOf: frame) }
         let readings = try XCTUnwrap(meter.process(samples))

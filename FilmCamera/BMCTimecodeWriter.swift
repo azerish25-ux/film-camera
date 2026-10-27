@@ -31,7 +31,8 @@ enum BMCTimecodeWriter {
                 reader.add(output); writer.add(input); streams.append((output, input))
             }
             var description: CMTimeCodeFormatDescription?
-            let formatStatus = CMTimeCodeFormatDescriptionCreate(allocator: kCFAllocatorDefault, timeCodeFormatType: kCMTimeCodeFormatType_TimeCode32, frameDuration: CMTime(value: 1, timescale: Int32(framesPerSecond)), frameQuanta: UInt32(framesPerSecond), flags: 0, extensions: nil, formatDescriptionOut: &description)
+            let frameDuration = Int64((Float(1) / Float(framesPerSecond) * 1_000_000_000).rounded())
+            let formatStatus = CMTimeCodeFormatDescriptionCreate(allocator: kCFAllocatorDefault, timeCodeFormatType: kCMTimeCodeFormatType_TimeCode32, frameDuration: CMTime(value: frameDuration, timescale: 1_000_000_000), frameQuanta: UInt32(framesPerSecond), flags: 0, extensions: nil, formatDescriptionOut: &description)
             guard formatStatus == noErr, let description else { throw PortError.message("Cannot create timecode format.") }
             let input = AVAssetWriterInput(mediaType: .timecode, outputSettings: nil, sourceFormatHint: description)
             guard writer.canAdd(input) else { throw PortError.message("Timecode output is unavailable.") }

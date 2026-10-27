@@ -12,5 +12,6 @@
 
 *.noise binary
 *.rgba binary
+*.bin binary
 
 *.etc1 binary

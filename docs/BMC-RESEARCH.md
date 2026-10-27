@@ -10,6 +10,17 @@ REA's JADX package evidence. The independently generated JADX source has 261
 decompilation errors; absent or malformed output cannot establish that a
 feature is absent. Android resources, shader sources, smali and native binaries
 remain available for corroboration.
+The checked-out REA 6.8.0 source was compiled on D: with a verified portable
+Node runtime and successfully inspected the APK; its package evidence is saved
+as `rea-source-package.json` in the D: analysis workspace.
+The D:-local Apktool checkout at `fd9d5d4` was built with Gradle and decoded the
+APK's resources separately as `3.1.0-dirty`; the original full smali decode
+used Apktool 3.0.3. The `dirty` version label comes from the shallow checkout
+without a reachable release tag, not a claim that the APK was modified.
+An additional text scan found 444 `Method not decompiled` markers and 278
+`Code decompiled incorrectly` markers across the generated sources. These may
+overlap and are not equivalent to JADX's 261 reported errors. The file list is
+saved on D: for smali fallback and method-by-method follow-up.
 
 The D: workspace's `inventory-smali.cjs` recorded 17,199 class declarations
 and 123,886 method declarations across the three decoded DEX files. Of these,
@@ -56,6 +67,10 @@ availability is device-dependent. The current iOS pipeline records a movie and
 then exports a graded movie; it does not yet expose or prove equivalent codec,
 profile, bitrate, bit-depth or color-space selection. Selecting an Apple codec
 with similar characteristics does not establish APV bitstream compatibility.
+An initial H.264/HEVC **export** selection is being added locally. The camera
+still records first and then transcodes; this is not BMC's direct recording
+codec, bitrate, profile, APV or AV1 implementation. Its simulator test checks
+HEVC output when the runner advertises the corresponding export preset.
 
 The native CUBE parser recognizes per-channel `LUT_3D_INPUT_RANGE_R`, `_G`
 and `_B` directives as well as `DOMAIN_MIN` and `DOMAIN_MAX`. The current
@@ -66,6 +81,8 @@ For native analysis, the D: workspace includes dynamic-symbol inventories for
 all arm64 libraries, including cloud authentication/storage/chat/router,
 streaming, USB, timecode accessories and audio. Exported symbols identify API
 boundaries but are not a decompilation of their implementations.
+The passes described below target the APK's arm64 libraries. A separate
+`armeabi-v7a` decompilation pass has started; ABI comparison remains open.
 Ghidra additionally produced a D:-local decompilation of 52 JNI entries from
 `libbmddavcloudclient.so`; one entry was unavailable. These wrappers call into
 the larger native cloud library, which still requires analysis and service-level
@@ -82,11 +99,17 @@ The larger `libdavcloudclient.so` pass produced 22,236 function outputs; two
 initial timeouts produced output on a longer retry. The GCC exception-handler
 analyzer was disabled after it stalled; exception metadata and any affected
 control flow require separate review. Decompilation is not behavioral proof.
+The D: workspace also contains `readelf` section and frame-information output
+for the cloud library. Its `.gcc_except_table` and `.eh_frame` sections are
+present; their existence or a frame dump does not resolve the skipped
+exception-handler control flow.
 Separate media-core passes produced 1,973 function outputs for
 `libdavstream.so` and 14,166 for `libdavstreamd.so`, with no reported
 decompiler failures. A pass over `libnativeplayer.so` produced 6,218 outputs
 with no reported failures. GCC exception analysis was disabled for these passes as
-well; call paths, exception handling and runtime behavior remain open.
+well; call paths, exception handling and runtime behavior remain open. The
+all-function script excludes external functions and thunks, so its totals are
+not a complete native function inventory.
 The remote-streaming JNI interface explicitly includes SDP offer/answer, ICE
 candidates, data-channel messages, video/audio buffers and stream lifecycle;
 its names indicate a WebRTC-style transport. Session signaling, protocol
@@ -143,6 +166,9 @@ renderers.
 `Reference/BMC` holds the APK's four monitoring shader snippets and its
 33-cubed Rec. 709 luminance byte table extracted from Java serialization. The
 table SHA-256 is `3736d238eab34b8458f55ad294803576b9df4ddd6bb6c98eb224cb7719386c05`.
+The APK expands each luminance byte to RGBA, uploads a 3D texture and uses
+linear filtering with edge clamping; it does not reorder the array in that
+upload path. The harness uses an equivalent single-channel 3D texture.
 `BMCReferenceMain` runs those snippets with synthetic images in Android GLES;
 a dedicated workflow generates reference frames and compares them to iOS.
 This is a shader harness, not execution of the BMC APK or evidence of hardware
@@ -189,11 +215,20 @@ not establish drop-frame or external-device synchronization behavior; those
 paths still require tracing and a round-trip timecode-track test.
 `BMCTimecode` implements the integer starting-frame calculation and big-endian
 sample bytes as a standalone building block.
+The recorder's `C1170b.m2182a` returns local time-of-day in milliseconds and
+frame zero for both `RECORD_RUN` and `TIME_OF_DAY` in this track-generation
+path; the Tentacle branch instead queries the synchronized device and may
+return an unavailable sentinel. This does not by itself establish how the
+display counter behaves or how recording transitions are synchronized.
 Apple's AVAssetWriter supports a QuickTime timecode input, format description,
 sample and video-track association. The current exporter uses
 AVAssetExportSession and does not create such a track. An isolated AVAssetWriter
 remux path and reader-based round-trip test are now in progress locally. They
 are not connected to capture and have not yet passed simulator validation.
+The Swift writer uses the recovered integer-fps nanosecond frame duration, but
+currently makes its single timecode sample span the movie as in Apple's writer
+guidance. The APK editor's shown sample table uses a one-frame duration; that
+difference needs playback and interoperability investigation.
 
 ## Focus assist evidence
 

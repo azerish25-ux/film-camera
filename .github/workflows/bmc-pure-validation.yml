@@ -1,0 +1,22 @@
+name: BMC portable Swift validation
+on:
+  push:
+    branches: [bmc-integration]
+    paths: ['FilmCamera/BMCAudioMeter.swift', 'FilmCamera/BMCTimecode.swift', 'FilmCamera/BMCSignaling.swift', 'scripts/bmc-pure/PureLogicMain.swift', '.github/workflows/bmc-pure-validation.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: bmc-pure-validation-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  swift:
+    runs-on: ubuntu-latest
+    container: swift:6.0
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Compile and exercise portable logic
+        run: |
+          swiftc -swift-version 5 FilmCamera/BMCAudioMeter.swift FilmCamera/BMCTimecode.swift FilmCamera/BMCSignaling.swift scripts/bmc-pure/PureLogicMain.swift -o /tmp/bmc-pure-check
+          /tmp/bmc-pure-check

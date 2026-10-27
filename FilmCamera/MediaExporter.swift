@@ -14,7 +14,7 @@ final class MediaExporter: ObservableObject {
         let asset = AVURLAsset(url:source)
         let duration = try await asset.load(.duration)
         guard duration.seconds.isFinite, duration.seconds > 0 else { throw PortError.message("Invalid video duration.") }
-        guard let export = AVAssetExportSession(asset:asset,presetName:resolution) else { throw PortError.message("Unsupported export resolution.") }
+        guard let export = AVAssetExportSession(asset:asset,presetName:resolution) else { throw PortError.message("The selected export codec or resolution is unavailable.") }
         session = export
         export.outputURL = destination
         export.outputFileType = .mov

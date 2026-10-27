@@ -15,15 +15,18 @@ final class BMCBonjourProbeTests: XCTestCase {
         let txt = NWTXTRecord(["name": "Camera", "slate_name": "A", "model_name": "Phone", "proto": "5.0"])
         listener.service = NWListener.Service(name: id, type: type, domain: nil, txtRecord: txt)
         listener.newConnectionHandler = { $0.cancel() }
-        listener.stateUpdateHandler = { print("listener state: \\($0)") }
+        listener.stateUpdateHandler = { print("listener state:", $0) }
         let browser = NWBrowser(for: .bonjourWithTXTRecord(type: type, domain: nil), using: .tcp)
-        let found = expectation(description: "Discovered \\(type)")
-        browser.stateUpdateHandler = { print("browser state: \\($0)") }
+        let found = expectation(description: "Discovered " + type)
+        found.assertForOverFulfill = false
+        browser.stateUpdateHandler = { print("browser state:", $0) }
         browser.browseResultsChangedHandler = { results, _ in
             for result in results {
                 guard case let .service(name, _, _, _) = result.endpoint, name == id,
-                      case let .bonjour(record) = result.metadata,
-                      let parsed = BMCDiscoveryRecord(serviceName: name, attributes: record.dataDictionary),
+                      case let .bonjour(record) = result.metadata else { continue }
+                let keys = ["name", "slate_name", "model_name", "proto", "ctrl_uuid", "ctrl_name", "ctrl_slate_name", "ctrl_model_name", "ctrl_proto"]
+                let attributes = Dictionary(uniqueKeysWithValues: keys.compactMap { key in record[key].map { (key, Data($0.utf8)) } })
+                guard let parsed = BMCDiscoveryRecord(serviceName: name, attributes: attributes),
                       parsed.name == "Camera", parsed.slateName == "A", parsed.major == 5 else { continue }
                 found.fulfill()
             }

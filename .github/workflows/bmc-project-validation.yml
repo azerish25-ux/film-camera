@@ -17,6 +17,8 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Build pinned XcodeGen and generate project
+        env:
+          USER: runner
         run: |
           git clone --depth 1 --branch 2.46.0 https://github.com/yonaskolb/XcodeGen.git /tmp/XcodeGen
           test "$(git -C /tmp/XcodeGen rev-parse HEAD)" = 8445e778451c7e44237b90281bde622d764b0084

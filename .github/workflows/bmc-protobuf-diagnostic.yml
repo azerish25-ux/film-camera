@@ -24,6 +24,7 @@ jobs:
         run: |
           mkdir -p /tmp/bmc-check/Generated
           protoc --descriptor_set_in=Reference/BMC/bmc-v5.pb --plugin=protoc-gen-swift=/tmp/swift-protobuf/.build/release/protoc-gen-swift --swift_out=/tmp/bmc-check/Generated common.proto camera_control.proto settings.proto main_messages.proto
+          protoc --descriptor_set_in=Reference/BMCProtocol/bmc-media-sync-v1.pb --plugin=protoc-gen-swift=/tmp/swift-protobuf/.build/release/protoc-gen-swift --swift_out=/tmp/bmc-check/Generated media_sync.proto
           cat > /tmp/bmc-check/Package.swift <<'EOF'
           // swift-tools-version: 5.9
           import PackageDescription

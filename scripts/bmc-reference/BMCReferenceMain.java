@@ -83,6 +83,6 @@ public final class BMCReferenceMain {
             int error = GLES30.glGetError(); if (error != GLES30.GL_NO_ERROR) throw new IllegalStateException(name+" GLES "+error);
             ByteBuffer output = ByteBuffer.allocateDirect(W*H*4); GLES30.glReadPixels(0, 0, W, H, GLES30.GL_RGBA, GLES30.GL_UNSIGNED_BYTE, output); byte[] result = new byte[W*H*4]; output.get(result); write(name+"-android.rgba", result);
         }
-        write("renderer.txt", (GLES30.glGetString(GLES30.GL_RENDERER)+"\n"+GLES30.glGetString(GLES30.GL_VERSION)+"\n").getBytes("UTF-8"));
+        write("bmc-renderer.txt", (GLES30.glGetString(GLES30.GL_RENDERER)+"\n"+GLES30.glGetString(GLES30.GL_VERSION)+"\n").getBytes("UTF-8"));
     }
 }

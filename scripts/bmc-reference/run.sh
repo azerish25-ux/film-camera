@@ -19,4 +19,4 @@ for name in false-color-input false-color-android zebra-input zebra-android focu
   adb exec-out cat "$REMOTE/$name.rgba" > "bmc-reference/$name.rgba"
   test "$(wc -c < "bmc-reference/$name.rgba")" -eq 49152
 done
-adb exec-out cat "$REMOTE/renderer.txt" > bmc-reference/renderer.txt
+adb exec-out cat "$REMOTE/bmc-renderer.txt" > bmc-reference/bmc-renderer.txt

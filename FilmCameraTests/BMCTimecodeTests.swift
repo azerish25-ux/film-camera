@@ -34,8 +34,14 @@ final class BMCTimecodeTests: XCTestCase {
         let reader = try AVAssetReader(asset: asset)
         let trackOutput = AVAssetReaderTrackOutput(track: try XCTUnwrap(tracks.first), outputSettings: nil)
         XCTAssertTrue(reader.canAdd(trackOutput)); reader.add(trackOutput); XCTAssertTrue(reader.startReading())
-        let sample = try XCTUnwrap(trackOutput.copyNextSampleBuffer())
-        print("Timecode reader sample count: \(CMSampleBufferGetNumSamples(sample)); total size: \(CMSampleBufferGetTotalSampleSize(sample)); valid: \(CMSampleBufferIsValid(sample)); ready: \(CMSampleBufferDataIsReady(sample))")
+        var candidate = trackOutput.copyNextSampleBuffer()
+        var emptyMarkers = 0
+        while let current = candidate, CMSampleBufferGetNumSamples(current) == 0, emptyMarkers < 16 {
+            emptyMarkers += 1
+            candidate = trackOutput.copyNextSampleBuffer()
+        }
+        let sample = try XCTUnwrap(candidate)
+        XCTAssertGreaterThan(CMSampleBufferGetNumSamples(sample), 0)
         let block = try XCTUnwrap(CMSampleBufferGetDataBuffer(sample))
         var bytes = [UInt8](repeating: 0, count: 4)
         let result = bytes.withUnsafeMutableBytes { CMBlockBufferCopyDataBytes(block, atOffset: 0, dataLength: 4, destination: $0.baseAddress!) }

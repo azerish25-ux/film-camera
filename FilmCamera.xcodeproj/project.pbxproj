@@ -1280,6 +1280,7 @@
 		B070D97879BA1291D1EE6D42 /* film-04-grain.rgba in Resources */ = {isa = PBXBuildFile; fileRef = 7E3ECF9EF5D2191A339446D3 /* film-04-grain.rgba */; };
 		B07A459C7A51486CFFAFE8FD /* film-44-grain.rgba in Resources */ = {isa = PBXBuildFile; fileRef = CB5C59831669E9B6F3715BE2 /* film-44-grain.rgba */; };
 		B08AC39C16A2722911382400 /* film-67-p0-s0.7.rgba in Resources */ = {isa = PBXBuildFile; fileRef = 256C2E227B9BE7E18D3A8FB3 /* film-67-p0-s0.7.rgba */; };
+		B0956691F010BE0E0557A0E8 /* BMCSignalingSessionTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = E78247BAE0FB3B97B82ED071 /* BMCSignalingSessionTests.swift */; };
 		B09A3CD680F41010E64A04BE /* film-32-p0-s2.rgba in Resources */ = {isa = PBXBuildFile; fileRef = 21ABF8FEF7E1AE6896DF564E /* film-32-p0-s2.rgba */; };
 		B0D233E816DAB8A301F83667 /* film-09-p1-s0.7.rgba in Resources */ = {isa = PBXBuildFile; fileRef = AC6E5C50D44D8C8198700594 /* film-09-p1-s0.7.rgba */; };
 		B0D45FAB57CBB3D3B8C572FA /* film-67-scene.rgba in Resources */ = {isa = PBXBuildFile; fileRef = 08BC68088C4FC5D43C45F678 /* film-67-scene.rgba */; };
@@ -1740,6 +1741,7 @@
 		F2B590F2450E382B8C919F79 /* gate-super8.rgba in Resources */ = {isa = PBXBuildFile; fileRef = FAE190F0FA45A18BD48A9562 /* gate-super8.rgba */; };
 		F2BFC9C55A1FDEE5BCCBF50C /* film-72-p0-s0.rgba in Resources */ = {isa = PBXBuildFile; fileRef = 5669D6D22CEE9FA4B8B6EEF4 /* film-72-p0-s0.rgba */; };
 		F301854E4E885469B45AAA24 /* grain-size-step-032.rgba in Resources */ = {isa = PBXBuildFile; fileRef = A33D16A8FDD1363CCD55F9EF /* grain-size-step-032.rgba */; };
+		F31359D2DAD96FB10346CED4 /* BMCSignalingSession.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1FAB7D9ABB3CF58FAF6D2C47 /* BMCSignalingSession.swift */; };
 		F375DF1281B1F6ABA15F380C /* film-47-p0-s1.rgba in Resources */ = {isa = PBXBuildFile; fileRef = 259928A85C26FA37071CD9CB /* film-47-p0-s1.rgba */; };
 		F383EEEB6DBA7A3EA2265702 /* film-49-p2-s0.rgba in Resources */ = {isa = PBXBuildFile; fileRef = 08C9C15749B978F3DC05B5E3 /* film-49-p2-s0.rgba */; };
 		F39D09320529B6341412F7A3 /* grain-size-step-058.rgba in Resources */ = {isa = PBXBuildFile; fileRef = CC4899B6F1F4CB478CEEAD82 /* grain-size-step-058.rgba */; };
@@ -2086,6 +2088,7 @@
 		1F8880F70AF1CA83C447DB3A /* film-85-scene.rgba */ = {isa = PBXFileReference; path = "film-85-scene.rgba"; sourceTree = "<group>"; };
 		1F98E395AF95C9C9E63315FA /* film-86-grain.rgba */ = {isa = PBXFileReference; path = "film-86-grain.rgba"; sourceTree = "<group>"; };
 		1FA250A5CB356779632656F9 /* film-13-p0-s1.rgba */ = {isa = PBXFileReference; path = "film-13-p0-s1.rgba"; sourceTree = "<group>"; };
+		1FAB7D9ABB3CF58FAF6D2C47 /* BMCSignalingSession.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BMCSignalingSession.swift; sourceTree = "<group>"; };
 		1FBD1F45ACC068497F6B46B8 /* chain-film-35.rgba */ = {isa = PBXFileReference; path = "chain-film-35.rgba"; sourceTree = "<group>"; };
 		20925D6DA2D8D30327D0287F /* film-30-p0-s0.7.rgba */ = {isa = PBXFileReference; path = "film-30-p0-s0.7.rgba"; sourceTree = "<group>"; };
 		20C34BECC2F339F2E10066F0 /* grain-size-step-002.rgba */ = {isa = PBXFileReference; path = "grain-size-step-002.rgba"; sourceTree = "<group>"; };
@@ -3536,6 +3539,7 @@
 		E73CB0A0530EFCFF07A97532 /* c_f25856i.glsl */ = {isa = PBXFileReference; path = c_f25856i.glsl; sourceTree = "<group>"; };
 		E764BF2582DB510736EBC1CA /* film-20-grain.rgba */ = {isa = PBXFileReference; path = "film-20-grain.rgba"; sourceTree = "<group>"; };
 		E76CF9777B0A95FAB6627191 /* film-85-p1-s2.rgba */ = {isa = PBXFileReference; path = "film-85-p1-s2.rgba"; sourceTree = "<group>"; };
+		E78247BAE0FB3B97B82ED071 /* BMCSignalingSessionTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BMCSignalingSessionTests.swift; sourceTree = "<group>"; };
 		E8222AE6D6BBCE824FD6D364 /* film-84-grain.rgba */ = {isa = PBXFileReference; path = "film-84-grain.rgba"; sourceTree = "<group>"; };
 		E8679E739E87D71877DDDD74 /* film-73-scene.rgba */ = {isa = PBXFileReference; path = "film-73-scene.rgba"; sourceTree = "<group>"; };
 		E872A5FB6D4D4B7CE336A2C5 /* a_f25835a.glsl */ = {isa = PBXFileReference; path = a_f25835a.glsl; sourceTree = "<group>"; };
@@ -3827,6 +3831,7 @@
 				29528825ABC287357DF0A5FF /* BMCMovieCodecTests.swift */,
 				013F99253035B3AE5C039AD5 /* BMCProtocolTests.swift */,
 				D0773CF648042D1822F34138 /* BMCRemoteAuthenticationTests.swift */,
+				E78247BAE0FB3B97B82ED071 /* BMCSignalingSessionTests.swift */,
 				94865DDFAFF89206FF223D82 /* BMCSignalingTests.swift */,
 				29FE977DA157CB327831D9B6 /* BMCSlateTests.swift */,
 				E194E3F2AB37E252B23B42E5 /* BMCTimecodeTests.swift */,
@@ -4000,6 +4005,7 @@
 				C5020E7F6B4C42373F7AA8C7 /* BMCMovieCodec.swift */,
 				9C02DED520F0B4A642D50C80 /* BMCRemoteAuthentication.swift */,
 				078B63101DDF076E16C5E829 /* BMCSignaling.swift */,
+				1FAB7D9ABB3CF58FAF6D2C47 /* BMCSignalingSession.swift */,
 				8C86838081C9388D79E6E17E /* BMCSlate.swift */,
 				428282975177165F7166B5AA /* BMCTimecode.swift */,
 				0351D1996F8515148FB37034 /* BMCTimecodeWriter.swift */,
@@ -7568,6 +7574,7 @@
 				84DC197459B65899410DAD0D /* BMCMovieCodecTests.swift in Sources */,
 				D8EB98142CAFAAB46A097304 /* BMCProtocolTests.swift in Sources */,
 				B24C4349814A0B99FBAECAE3 /* BMCRemoteAuthenticationTests.swift in Sources */,
+				B0956691F010BE0E0557A0E8 /* BMCSignalingSessionTests.swift in Sources */,
 				2C64F6694D4C27F900815A21 /* BMCSignalingTests.swift in Sources */,
 				22F378E95732FA108CF8F039 /* BMCSlateTests.swift in Sources */,
 				18B2DD51A247DAC8830CF82E /* BMCTimecodeTests.swift in Sources */,
@@ -7597,6 +7604,7 @@
 				459818701FEE0A761984BA75 /* BMCMovieCodec.swift in Sources */,
 				375531B039531FC567FD389B /* BMCRemoteAuthentication.swift in Sources */,
 				3DBB305CCFD66FB003FECDD6 /* BMCSignaling.swift in Sources */,
+				F31359D2DAD96FB10346CED4 /* BMCSignalingSession.swift in Sources */,
 				9FA21D63759EDC1D7E7FF873 /* BMCSlate.swift in Sources */,
 				F7E1CE9A5ADE4BC70FB7D15C /* BMCTimecode.swift in Sources */,
 				7864E764392BBD971251C6F4 /* BMCTimecodeWriter.swift in Sources */,

@@ -36,6 +36,12 @@ jobs:
       - name: Save generated project if branch has not moved
         if: ${{ success() && github.ref == 'refs/heads/bmc-integration' }}
         run: |
+          git fetch origin bmc-integration
+          if ! git diff --quiet HEAD FETCH_HEAD -- project.yml FilmCamera FilmCameraTests FilmCameraUITests; then
+            echo 'Source changed during generation; a later run must regenerate the project.'
+            exit 0
+          fi
+          git merge --ff-only FETCH_HEAD
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add -- FilmCamera.xcodeproj

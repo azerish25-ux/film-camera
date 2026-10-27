@@ -25,6 +25,10 @@ An additional JADX `simple` pass reduced its reported errors to 52 and left
 16 `Method not decompiled` markers. It produced a less-structured rendering of
 the audio-meter lambda that corroborates the smali extraction; reduced errors
 do not establish semantic correctness or replace bytecode review.
+REA retrieved bodies for all 16 remaining marked methods: 15 smali fallbacks
+and one Java result. The D:-local evidence records include exact class and
+method signatures; none is considered semantically complete merely because
+its body was retrieved.
 
 The D: workspace's `inventory-smali.cjs` recorded 17,199 class declarations
 and 123,886 method declarations across the three decoded DEX files. Of these,

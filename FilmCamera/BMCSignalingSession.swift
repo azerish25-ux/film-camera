@@ -124,6 +124,19 @@ actor BMCRemoteSignalingSession {
         try await channel.send(binary: data)
     }
 
+    func sendSignaling(_ message: BMCSignalingMessage) async throws {
+        guard state == .authorized, !sending else { throw PortError.message("Remote session cannot send signaling data.") }
+        switch message {
+        case .iceCandidate, .sdpOffer, .sdpAnswer: break
+        default: throw PortError.message("This message is not valid for an authorized signaling session.")
+        }
+        sending = true
+        defer { sending = false }
+        let data = try JSONEncoder().encode(message)
+        guard let text = String(data: data, encoding: .utf8) else { throw PortError.message("Cannot encode remote signaling message.") }
+        try await channel.send(text: text)
+    }
+
     func receiveFrame() async throws -> BMCWebSocketFrame {
         guard state == .authorized, !receiving else { throw PortError.message("Remote session cannot receive data.") }
         receiving = true

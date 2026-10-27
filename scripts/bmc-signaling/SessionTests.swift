@@ -67,10 +67,18 @@ final class BMCSignalingSessionTests: XCTestCase {
             try await session.sendBinary(Data([1, 2, 3]))
             XCTFail("Expected authorization to be required")
         } catch { }
+        do {
+            try await session.sendSignaling(.sdpOffer("offer"))
+            XCTFail("Expected authorization to be required")
+        } catch { }
         try await session.authorize(participant: participant, password: "test", nonce: Data(repeating: 1, count: 32))
         try await session.sendBinary(Data([1, 2, 3]))
+        try await session.sendSignaling(.sdpOffer("offer"))
         let sent = await channel.binarySnapshot()
         XCTAssertEqual(sent, [Data([1, 2, 3])])
+        let (texts, _) = await channel.snapshot()
+        let last = try XCTUnwrap(texts.last)
+        XCTAssertEqual(try JSONDecoder().decode(BMCSignalingMessage.self, from: Data(last.utf8)), .sdpOffer("offer"))
         await session.close()
     }
 }
